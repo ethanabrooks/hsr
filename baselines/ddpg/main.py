@@ -25,7 +25,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Create envs.
     if env_id == 'navigate':
-        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True)
+        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
@@ -75,8 +75,9 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     # Disable logging for rank != 0 to avoid noise.
     if rank == 0:
         start_time = time.time()
+    del kwargs['tb_dir']
     training.train(env=env, eval_env=eval_env, param_noise=param_noise,
-        action_noise=action_noise, actor=actor, critic=critic, memory=memory, **kwargs)
+                   action_noise=action_noise, actor=actor, critic=critic, memory=memory, **kwargs)
     env.close()
     if eval_env is not None:
         eval_env.close()
@@ -108,6 +109,7 @@ def parse_args():
     parser.add_argument('--nb-eval-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--noise-type', type=str, default='adaptive-param_0.2')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
+    parser.add_argument('--tb-dir', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
@@ -124,5 +126,9 @@ if __name__ == '__main__':
     args = parse_args()
     if MPI.COMM_WORLD.Get_rank() == 0:
         logger.configure()
+    try:
+        logger.configure(dir=args.tb_dir, format_strs=['stdout', 'tensorflow'])
+    except AttributeError:
+        pass
     # Run actual script.
     run(**args)

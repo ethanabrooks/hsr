@@ -33,3 +33,5 @@ src
 
 MUJOCO_LOG.TXT
 
+.runsrc
+.runs
