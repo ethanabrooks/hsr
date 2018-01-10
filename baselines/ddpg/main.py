@@ -14,6 +14,7 @@ from baselines.ddpg.noise import *
 
 import gym
 import tensorflow as tf
+from environment.navigate import NavigateEnv
 from mpi4py import MPI
 
 def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
@@ -23,7 +24,10 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         logger.set_level(logger.DISABLED)
 
     # Create envs.
-    env = gym.make(env_id)
+    if env_id == 'navigate':
+        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True)
+    else:
+        env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
     gym.logger.setLevel(logging.WARN)
 
