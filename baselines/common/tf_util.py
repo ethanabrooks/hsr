@@ -200,10 +200,12 @@ def make_session(num_cpu):
     """Returns a session that will use <num_cpu> CPU's only"""
     tf_config = tf.ConfigProto(
         inter_op_parallelism_threads=num_cpu,
-        intra_op_parallelism_threads=num_cpu)
+        intra_op_parallelism_threads=num_cpu,
+        allow_soft_placement=True)
+
+    config.gpu_options.allow_growth = True
     return tf.Session(config=tf_config)
 
-def single_threaded_session():
     """Returns a session which will only use a single CPU"""
     return make_session(1)
 
