@@ -126,9 +126,7 @@ if __name__ == '__main__':
     args = parse_args()
     if MPI.COMM_WORLD.Get_rank() == 0:
         logger.configure()
-    try:
+    if args['tb_dir'] is not None:
         logger.configure(dir=args['tb_dir'], format_strs=['stdout', 'tensorboard'])
-    except AttributeError:
-        pass
     # Run actual script.
     run(**args)
