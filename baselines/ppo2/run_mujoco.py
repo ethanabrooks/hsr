@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import argparse
 from baselines import bench, logger
+from environment.navigate import NavigateEnv
+
 
 def train(env_id, num_timesteps, seed):
     from baselines.common import set_global_seeds
@@ -16,7 +18,10 @@ def train(env_id, num_timesteps, seed):
                             inter_op_parallelism_threads=ncpu)
     tf.Session(config=config).__enter__()
     def make_env():
-        env = gym.make(env_id)
+        if env_id == 'navigate':
+            env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
+        else:
+            env = gym.make(env_id)
         env = bench.Monitor(env, logger.get_dir())
         return env
     env = DummyVecEnv([make_env])
@@ -37,9 +42,14 @@ def main():
     parser.add_argument('--env', help='environment ID', default='Hopper-v1')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--num-timesteps', type=int, default=int(1e6))
+    parser.add_argument('--tb-dir', default=None)
     args = parser.parse_args()
-    logger.configure()
+    if args.tb_dir is not None:
+        logger.configure(dir=args.tb_dir, format_strs=['stdout', 'tensorboard'])
+    else:
+        logger.configure()
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed)
+
 
 
 if __name__ == '__main__':
