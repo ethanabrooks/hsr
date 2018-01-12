@@ -29,9 +29,9 @@ class NavigateEnv(BaseEnv):
         self._body_radius = 0.25
         self._mask_xy = mask_xy
         if continuous_actions:
-            action_space = Box(-1, 1, 3)
+            self.action_space = Box(-1, 1, 3)
         else:
-            action_space = Discrete(5)
+            self.action_space = Discrete(5)
 
         image_space = Box(
             0, 1, shape=(list(image_dimensions) + [3 * history_len]))
@@ -42,19 +42,17 @@ class NavigateEnv(BaseEnv):
         goal_space = [Box(-1, 1, shape=2)]
 
         if use_camera:
-            observation_space = Tuple(
+            self.observation_space = Tuple(
                 [pos_orientation_space, image_space, goal_space])
         else:
             #observation_space = Tuple([pos_space, orientation_space])
-            observation_space = Box(-1, 1, shape=[pos_orientation_space.shape[0] + goal_space[0].shape[0]])
+            self.observation_space = Box(-1, 1, shape=[pos_orientation_space.shape[0] + goal_space[0].shape[0]])
             #print('obs_shape', observation_space.shape)
 
         super().__init__(
             geofence=geofence,
             max_steps=max_steps,
-            action_space=action_space,
             xml_filepath=join('models', 'navigate', 'world.xml'),
-            observation_space=observation_space,
             tb_dir=tb_dir,
             image_dimensions=image_dimensions,
             use_camera=use_camera,

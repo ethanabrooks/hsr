@@ -17,12 +17,6 @@ class PickAndPlaceEnv(BaseEnv):
                  image_dimensions=(64, 64), action_multiplier=1):
 
         self._dimensions = 64, 64
-        if use_camera:
-            observation_space = spaces.Box(
-                0, 1, shape=(list(self._dimensions) + [3 * history_len]))
-        else:
-            observation_space = spaces.Box(-1, 1, shape=(4 * history_len + 2))
-
         self._action_multiplier = action_multiplier
         self._history_len = history_len
         self._goal_block_name = 'block1'
@@ -34,7 +28,6 @@ class PickAndPlaceEnv(BaseEnv):
         super().__init__(
             geofence=geofence,
             max_steps=max_steps,
-            observation_space=observation_space,
             xml_filepath=join('models', 'pick-and-place', 'world.xml'),
             history_len=history_len,
             tb_dir=tb_dir,
@@ -43,6 +36,13 @@ class PickAndPlaceEnv(BaseEnv):
             body_name="hand_palm_link",
             steps_per_action=10,
             image_dimensions=image_dimensions)
+
+        if use_camera:
+            self.observation_space = spaces.Box(
+                0, 1, shape=(list(self._dimensions) + [3 * history_len]))
+        else:
+            self.observation_space = spaces.Box(-np.inf, np.inf,
+                                                shape=self.obs().shape[0] + 4)
 
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
