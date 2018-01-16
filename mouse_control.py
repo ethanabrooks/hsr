@@ -16,7 +16,7 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
-    env = Arm2Pos(history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False)
+    env = Arm2Pos(action_multiplier=.001, history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False)
 
     shape, = env.action_space.shape
     print(shape)
@@ -24,7 +24,6 @@ def run(port, value_tensor=None, sess=None):
     i = 0
     action = np.zeros(shape)
     moving = False
-    pause = False
 
     while True:
         lastkey = env.sim.get_last_key_press()
@@ -38,30 +37,22 @@ def run(port, value_tensor=None, sess=None):
             moving = not moving
             print('\rmoving:', moving)
 
-        elif lastkey is 'P':
-            pause = not pause
-            print('paused' if pause else 'not paused')
-
-        elif lastkey is 'S':
-            print('step')
-            pause = False
-
         for k in range(10):
             if lastkey == str(k):
                 i = k - 1
                 print('')
                 print(env.sim.id2name(ObjType.ACTUATOR, i))
 
-        if not pause:
+        if lastkey is 'S':
             obs, r, done, _ = env.step(action)
+            print('goal', env._goal)
+            print('ob', env._obs())
+            print(obs)
 
             if done:
                 env.reset()
                 print('\nresetting')
         env.render(labels={'x': env.goal()[:3]})
-
-        if lastkey is 'S':
-            pause = True
 
         assert not env._currently_failed()
         assert_equal(env._goal, env._destructure_goal(env.goal()))

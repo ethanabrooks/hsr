@@ -86,4 +86,8 @@ class Arm2Pos(BaseEnv):
                 ctrl[(action - 1) // 2] = 1 if action % 2 else -1
             return BaseEnv.step(self, ctrl)
         else:
+            action = np.clip(action * self._action_multiplier, -1, 1)
             return BaseEnv.step(self, action)
+
+    def reset_qpos(self):
+        return self.init_qpos
