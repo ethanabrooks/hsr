@@ -17,7 +17,7 @@ class BaseEnv(utils.EzPickle, Server):
 
     def __init__(self, geofence, max_steps,
                  xml_filepath, history_len, tb_dir, image_dimensions, use_camera, neg_reward,
-                 steps_per_action, body_name, action_space=None, observation_space=None,
+                 steps_per_action, body_name,
                  frames_per_step=20):
         utils.EzPickle.__init__(self)
 
@@ -47,26 +47,6 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
-
-        if action_space is None:
-            bounds = self.sim.actuator_ctrlrange.copy().reshape(-1, 2)
-            low = bounds[:, 0]
-            high = bounds[:, 1]
-            self.action_space = spaces.Box(low, high)
-        else:
-            self.action_space = action_space
-
-        if observation_space is None:
-            observation, _reward, done, _info = self.step(np.zeros(self.sim.nu))
-            assert not done
-            self.obs_dim = observation.size
-
-            high = np.inf * np.ones(self.obs_dim)
-            low = -high
-            self.observation_space = spaces.Box(low, high)
-        else:
-            self.observation_space = observation_space
-
         self._history_buffer.update(*self._obs())
 
     def server_values(self):
