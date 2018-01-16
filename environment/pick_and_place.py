@@ -30,7 +30,6 @@ class PickAndPlaceEnv(BaseEnv):
             max_steps=max_steps,
             xml_filepath=join('models', 'pick-and-place', 'world.xml'),
             history_len=history_len,
-            tb_dir=tb_dir,
             use_camera=use_camera,
             neg_reward=neg_reward,
             body_name="hand_palm_link",

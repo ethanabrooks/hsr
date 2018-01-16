@@ -16,7 +16,7 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
-    env = Arm2Pos(history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False, action_multiplier=.01)
+    env = Arm2Pos(history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False)
 
     shape, = env.action_space.shape
     print(shape)
@@ -24,7 +24,7 @@ def run(port, value_tensor=None, sess=None):
     i = 0
     action = np.zeros(shape)
     moving = False
-    pause = True
+    pause = False
 
     while True:
         lastkey = env.sim.get_last_key_press()
@@ -65,7 +65,7 @@ def run(port, value_tensor=None, sess=None):
 
         assert not env._currently_failed()
         assert_equal(env._goal, env._destructure_goal(env.goal()))
-        assert_equal(env._obs(), env._destructure_obs(env.obs()))
+        # assert_equal(env._obs(), env._destructure_obs(env.obs()))
         assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
 
 

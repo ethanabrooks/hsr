@@ -14,7 +14,7 @@ class BaseEnv(utils.EzPickle, Server):
     """ The environment """
 
     def __init__(self, geofence, max_steps,
-                 xml_filepath, history_len, tb_dir, image_dimensions, use_camera, neg_reward,
+                 xml_filepath, history_len, image_dimensions, use_camera, neg_reward,
                  steps_per_action, body_name,
                  frames_per_step=20):
         utils.EzPickle.__init__(self)
@@ -28,7 +28,6 @@ class BaseEnv(utils.EzPickle, Server):
         self._max_steps = max_steps
         self._use_camera = use_camera
         self._step_num = 0
-        self._tb_dir = tb_dir
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
         self._goal = None
@@ -58,15 +57,23 @@ class BaseEnv(utils.EzPickle, Server):
             *self._image_dimensions, camera_name)
 
     def obs(self):
-        return self._vectorize_obs(self._history_buffer.get())
+        obs_history = self._history_buffer.get()
+        assert type(obs_history) in (tuple, list)
+        return self._vectorize_obs(obs_history)
 
     def goal(self):
+        assert isinstance(self._goal, list)
         return self._vectorize_goal(*self._goal)
 
     def obs_and_goal(self):
-        return np.concatenate([self.obs(), self.goal()], axis=0)
+        obs = self.obs()
+        goal = self.goal()
+        assert len(np.shape(obs)) == 1
+        assert len(np.shape(goal)) == 1
+        return np.concatenate([obs, goal], axis=0)
 
     def step(self, action):
+        assert np.shape(action) == np.shape(self.sim.ctrl)
         self._step_num += 1
         step = 0
         reward = 0
@@ -81,6 +88,7 @@ class BaseEnv(utils.EzPickle, Server):
         return self.obs_and_goal(), reward, done, {}
 
     def _step_inner(self, action):
+        assert np.shape(action) == np.shape(self.sim.ctrl)
         self.sim.ctrl[:] = action
         for _ in range(self._frames_per_step):
             self.sim.step()
@@ -119,6 +127,7 @@ class BaseEnv(utils.EzPickle, Server):
         :param obs_history: values corresponding to output of self._obs_history
         :return: tuple of (values for cnn, values for mlp, goal)
         """
+        assert type(obs_history) in (tuple, list)
         mlp_history = [x for x in obs_history if len(x.shape) <= 1]
         mlp_array = np.concatenate(mlp_history, axis=-1).flatten()
         if self._use_camera:
@@ -129,6 +138,7 @@ class BaseEnv(utils.EzPickle, Server):
             return mlp_array
 
     def _destructure_obs(self, mlp_input=None, cnn_input=None):
+        raise RuntimeError("This thing is not valid right now")
         shapes = self._history_buffer.shapes
         if cnn_input is not None:
             raise NotImplemented
