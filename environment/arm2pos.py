@@ -11,7 +11,7 @@ def achieved_goal(goal_pos, gripper_pos, geofence):
 
 
 class Arm2Pos(BaseEnv):
-    def __init__(self, continuous, max_steps, geofence=.08, history_len=1, use_camera=False, neg_reward=True,
+    def __init__(self, continuous, max_steps, geofence=.08, history_len=1, neg_reward=True,
                  image_dimensions=None, action_multiplier=1):
 
         BaseEnv.__init__(self,
@@ -19,7 +19,7 @@ class Arm2Pos(BaseEnv):
                          max_steps=max_steps,
                          xml_filepath=join('models', 'pick-and-place', 'world.xml'),
                          history_len=history_len,
-                         use_camera=use_camera,
+                         use_camera=False,  # TODO
                          neg_reward=neg_reward,
                          body_name="hand_palm_link",
                          steps_per_action=10,
@@ -27,6 +27,10 @@ class Arm2Pos(BaseEnv):
 
         self._action_multiplier = action_multiplier
         self._continuous = continuous
+
+        self.observation_space = spaces.Box(-np.inf, np.inf,
+                                            shape=self.obs().shape[0] + 3)
+
         if continuous:
             self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         else:
