@@ -11,7 +11,7 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
-
+from toy_environment import continuous_gridworld
 import gym
 import tensorflow as tf
 from environment.navigate import NavigateEnv
@@ -26,6 +26,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     # Create envs.
     if env_id == 'navigate':
         env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
+    elif env_id == 'toy':
+        env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))

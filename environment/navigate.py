@@ -84,9 +84,21 @@ class NavigateEnv(BaseEnv):
         return escaped(self._pos(), self._world_upper_bound,
                        self._world_lower_bound)
 
-    def obs_to_goal(self, data=None, images=None):
-        pos, orientation = self._destructure_obs(data, images)
-        return self._vectorize_goal(pos)
+    # TODO this is a workaround. we need to fix this up later.
+    #def obs_to_goal(self, data=None, images=None):
+    #    pos, orientation = self._destructure_obs(data, images)
+    #    return self._vectorize_goal(pos)
+
+    def obs_to_goal(self, obs):
+        without_goal = obs[:-2]
+        position_orientation = without_goal[-4:]
+        position = position_orientation[:2]
+        return position
+
+    def compute_new_obs(self, goal, obs):
+        without_goal = obs[:-2]
+        return np.concatenate([without_goal, goal], axis=0)
+
 
     def _obs(self):
         obs = [self._pos(), self._orientation()]
@@ -154,11 +166,24 @@ class NavigateEnv(BaseEnv):
         pos, orientation = self._destructure_obs(mlp_input)
         return at_goal(pos, goal, self._geofence)
 
-    def compute_reward(self, goal, mlp_input=None, cnn_input=None):
-        if cnn_input:
-            raise NotImplemented
-        pos, orientation = self._destructure_obs(mlp_input)
-        return self._compute_reward(goal, pos)
+    def at_goal(self, goal, new_obs):
+        without_goal = new_obs[:-2]
+        position_orientation = without_goal[-4:]
+        position = position_orientation[:2]
+        return at_goal(position, goal, self._geofence)
+
+    # TODO HAXXXX
+    #def compute_reward(self, goal, mlp_input=None, cnn_input=None):
+    #    if cnn_input:
+    #        raise NotImplemented
+    #    pos, orientation = self._destructure_obs(mlp_input)
+    #    return self._compute_reward(goal, pos)
+
+    def compute_reward(self, goal, obs):
+        without_goal = obs[:-2]
+        position_orientation = without_goal[-4:]
+        position = position_orientation[:2]
+        return self._compute_reward(goal, position)
 
     def _set_new_goal(self):
         self._goal = self._get_new_pos()

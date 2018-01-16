@@ -13,6 +13,17 @@ import tensorflow as tf
 from mpi4py import MPI
 
 
+def replay_with_goal(traj, goal, env):
+    for (obs, action, r, new_obs, done) in traj:
+        obs_ = env.compute_new_obs(goal, obs)
+        action_ = action
+        r_ = env.compute_reward(goal, new_obs)
+        new_obs_ = env.compute_new_obs(goal, new_obs)
+        done_ = env.at_goal(goal, new_obs)
+        yield obs_, action_, r_, new_obs_, done_
+        if done_:
+            break
+
 def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, param_noise, actor, critic,
     normalize_returns, normalize_observations, critic_l2_reg, actor_lr, critic_lr, action_noise,
     popart, gamma, clip_norm, nb_train_steps, nb_rollout_steps, nb_eval_steps, batch_size, memory,
@@ -69,6 +80,7 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
         for epoch in range(nb_epochs):
             for cycle in range(nb_epoch_cycles):
                 # Perform rollouts.
+                transitions = []
                 for t_rollout in range(nb_rollout_steps):
                     # Predict next action.
                     action, q = agent.pi(obs, apply_noise=True, compute_Q=True)
@@ -88,7 +100,8 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
                     # Book-keeping.
                     epoch_actions.append(action)
                     epoch_qs.append(q)
-                    agent.store_transition(obs, action, r, new_obs, done)
+                    transitions.append((obs, action, r, new_obs, done))
+                    #agent.store_transition(obs, action, r, new_obs, done)
                     obs = new_obs
 
                     if done:
@@ -103,6 +116,16 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
 
                         agent.reset()
                         obs = env.reset()
+
+                for (obs, action, r, new_obs, done) in transitions:
+                    agent.store_transition(obs, action, r, new_obs, done)
+                for i in range(4):
+                    # sample a random point in the trajectory
+                    obs, action, r, new_obs, done = transitions[np.random.randint(0, len(transitions))]
+                    # create a goal from that point
+                    goal = env.env.obs_to_goal(new_obs)
+                    for (obs, action, r, new_obs, done) in replay_with_goal(transitions, goal, env.env):
+                        agent.store_transition(obs, action, r, new_obs, done)
 
                 # Train.
                 epoch_actor_losses = []
@@ -173,7 +196,6 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
             combined_stats['total/episodes'] = mpi_mean(episodes)
             combined_stats['total/epochs'] = epoch + 1
             combined_stats['total/steps'] = t
-            print('moop!')
             for key in sorted(combined_stats.keys()):
                 logger.record_tabular(key, combined_stats[key])
             logger.dump_tabular()
