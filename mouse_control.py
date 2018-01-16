@@ -6,7 +6,8 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
-from environment.arm2pos import Arm2PosEnv
+from environment.arm2pos import Arm2Pos
+from environment.pick_and_place import PickAndPlaceEnv
 
 saved_pos = None
 
@@ -15,13 +16,15 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
-    # env = PickAndPlaceEnv(max_steps=9999999, neg_reward=True, use_camera=False, action_multiplier=.01)
-    env = Arm2PosEnv(continuous=True, max_steps=9999999, neg_reward=True, use_camera=False, action_multiplier=.01)
+    env = Arm2Pos(history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False, action_multiplier=.01)
 
     shape, = env.action_space.shape
+    print(shape)
+
     i = 0
     action = np.zeros(shape)
     moving = False
+    pause = True
 
     while True:
         lastkey = env.sim.get_last_key_press()
@@ -35,22 +38,34 @@ def run(port, value_tensor=None, sess=None):
             moving = not moving
             print('\rmoving:', moving)
 
+        elif lastkey is 'P':
+            pause = not pause
+            print('paused' if pause else 'not paused')
+
+        elif lastkey is 'S':
+            print('step')
+            pause = False
+
         for k in range(10):
             if lastkey == str(k):
                 i = k - 1
                 print('')
                 print(env.sim.id2name(ObjType.ACTUATOR, i))
 
-        obs, r, done, _ = env.step(action)
-        env.render()
+        if not pause:
+            obs, r, done, _ = env.step(action)
 
-        if done:
-            env.reset()
-            print('\nresetting')
+            if done:
+                env.reset()
+                print('\nresetting')
+        env.render(labels={'x': env.goal()[:3]})
+
+        if lastkey is 'S':
+            pause = True
 
         assert not env._currently_failed()
-        assert_equal(env._goal, env._destructure_goal(env._vector_goal()))
-        assert_equal(env._obs(), env._destructure_obs(env._vector_obs()))
+        assert_equal(env._goal, env._destructure_goal(env.goal()))
+        assert_equal(env._obs(), env._destructure_obs(env.obs()))
         assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
 
 

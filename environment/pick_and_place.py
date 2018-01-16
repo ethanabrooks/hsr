@@ -38,13 +38,12 @@ class PickAndPlaceEnv(BaseEnv):
             image_dimensions=image_dimensions)
 
         if use_camera:
-            self.observation_space = spaces.Box(
-                0, 1, shape=(list(self._dimensions) + [3 * history_len]))
+            raise NotImplemented
         else:
             self.observation_space = spaces.Box(-np.inf, np.inf,
                                                 shape=self.obs().shape[0] + 4)
 
-        self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
+        self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
     # goal stuff
@@ -55,7 +54,7 @@ class PickAndPlaceEnv(BaseEnv):
 
     @_goal.setter
     def _goal(self, value):
-        pass
+        raise NotImplemented
 
     def _set_new_goal(self):
         pass
@@ -152,11 +151,11 @@ class PickAndPlaceEnv(BaseEnv):
         action = np.clip(action * self._action_multiplier, -1, 1)
 
         mirrored = [
-            'hand_l_proximal_motor',
+            # 'hand_l_proximal_motor',
             # 'hand_l_distal_motor'
         ]
         mirroring = [
-            'hand_r_proximal_motor',
+            # 'hand_r_proximal_motor',
             # 'hand_r_distal_motor'
         ]
 

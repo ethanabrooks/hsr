@@ -4,8 +4,6 @@ import os
 
 import mujoco
 import numpy as np
-import time
-from gym import spaces
 from gym import utils
 
 from environment.history_buffer import HistoryBuffer
@@ -65,6 +63,9 @@ class BaseEnv(utils.EzPickle, Server):
     def goal(self):
         return self._vectorize_goal(*self._goal)
 
+    def obs_and_goal(self):
+        return np.concatenate([self.obs(), self.goal()], axis=0)
+
     def step(self, action):
         self._step_num += 1
         step = 0
@@ -77,8 +78,7 @@ class BaseEnv(utils.EzPickle, Server):
             step += 1
 
         self._history_buffer.update(*self._obs())
-        return np.concatenate([self.obs(), self.goal()], axis=0), reward, done, {}
-        #return (self.obs(), self.goal()), reward, done, {}
+        return self.obs_and_goal(), reward, done, {}
 
     def _step_inner(self, action):
         self.sim.ctrl[:] = action
@@ -88,10 +88,10 @@ class BaseEnv(utils.EzPickle, Server):
         hit_max_steps = self._step_num >= self._max_steps
         done = False
         if self._terminal():
-            #print('terminal')
+            # print('terminal')
             done = True
         elif hit_max_steps:
-            #print('hit max steps')
+            # print('hit max steps')
             done = True
         elif self._currently_failed():
             done = True
@@ -112,9 +112,7 @@ class BaseEnv(utils.EzPickle, Server):
 
         self._history_buffer.reset()
         self._history_buffer.update(*self._obs())
-        #print(self.obs().shape, self.goal().shape)
-        return np.concatenate([self.obs(), self.goal()], axis=0)
-        #return self.obs(), self.goal()
+        return self.obs_and_goal()
 
     def _vectorize_obs(self, obs_history):
         """
@@ -152,7 +150,6 @@ class BaseEnv(utils.EzPickle, Server):
     @staticmethod
     def seed(seed):
         np.random.seed(seed)
-
 
     def __enter__(self):
         return self
