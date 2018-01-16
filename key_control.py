@@ -6,14 +6,15 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
-from environment.arm2pos import Arm2Pos
+from environment.arm2posenv import Arm2PosEnv
 from environment.base import distance_between
 
 saved_pos = None
 
 
 def run():
-    env = Arm2Pos(continuous=False, max_steps=9999999, neg_reward=True, action_multiplier=.01)
+    env = Arm2PosEnv(continuous=False, max_steps=9999999, neg_reward=True, action_multiplier=.01)
+    total_r = 0
 
     while True:
         keypress = env.sim.get_last_key_press()
@@ -27,9 +28,12 @@ def run():
             action = 0
         assert isinstance(action, int)
         obs, r, done, _ = env.step(action)
+        total_r += r
         env.render(labels={'x': env._goal[0]})
 
         if done:
+            print(total_r)
+            total_r = 0
             env.reset()
             print('\nresetting')
 

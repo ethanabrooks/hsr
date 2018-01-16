@@ -11,6 +11,7 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
+from environment.arm2posenv import Arm2PosEnv
 from toy_environment import continuous_gridworld
 import gym
 import tensorflow as tf
@@ -28,6 +29,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
     elif env_id == 'toy':
         env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
+    elif env_id == 'arm2pos':
+        env = Arm2PosEnv(continuous=True, max_steps=500)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
@@ -43,6 +46,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     # Parse noise_type
     action_noise = None
     param_noise = None
+
     nb_actions = env.action_space.shape[-1]
     for current_noise_type in noise_type.split(','):
         current_noise_type = current_noise_type.strip()

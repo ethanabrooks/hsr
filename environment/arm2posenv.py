@@ -10,7 +10,7 @@ def achieved_goal(goal_pos, gripper_pos, geofence):
     return at_goal(gripper_pos, goal_pos, geofence)
 
 
-class Arm2Pos(BaseEnv):
+class Arm2PosEnv(BaseEnv):
     def __init__(self, continuous, max_steps, geofence=.08, history_len=1, neg_reward=True,
                  image_dimensions=None, action_multiplier=1):
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from baselines import bench, logger
-from environment.arm2pos import Arm2Pos
+from environment.arm2posenv import Arm2PosEnv
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
@@ -23,7 +23,7 @@ def train(env_id, num_timesteps, seed):
         if env_id == 'navigate':
             env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
         elif env_id == 'arm2pos':
-            env = Arm2Pos(continuous=False, max_steps=500)
+            env = Arm2PosEnv(continuous=False, max_steps=500)
         else:
             env = gym.make(env_id)
         env = bench.Monitor(env, logger.get_dir())

@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
-from environment.arm2pos import Arm2Pos
+from environment.arm2posenv import Arm2PosEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
 saved_pos = None
@@ -16,7 +16,7 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
-    env = Arm2Pos(action_multiplier=.001, history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False)
+    env = Arm2PosEnv(action_multiplier=.001, history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False)
 
     shape, = env.action_space.shape
     print(shape)
