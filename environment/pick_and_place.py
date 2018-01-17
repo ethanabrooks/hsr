@@ -15,7 +15,7 @@ def failed(resting_block_height, goal_block_height):
 class PickAndPlaceEnv(BaseEnv):
     def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1, action_multiplier=1):
         self._goal_block_name = 'block1'
-        self._resting_block_height = .49  # empirically determined
+        self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
 
         super().__init__(
@@ -35,7 +35,7 @@ class PickAndPlaceEnv(BaseEnv):
         obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
         assert obs_size != 0
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
-        self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
+        self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
     def reset_qpos(self):
@@ -84,11 +84,11 @@ class PickAndPlaceEnv(BaseEnv):
         action = np.clip(action * self._action_multiplier, -1, 1)
 
         mirrored = [
-            # 'hand_l_proximal_motor',
+            'hand_l_proximal_motor',
             # 'hand_l_distal_motor'
         ]
         mirroring = [
-            # 'hand_r_proximal_motor',
+            'hand_r_proximal_motor',
             # 'hand_r_distal_motor'
         ]
 
