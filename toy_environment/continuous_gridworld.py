@@ -352,7 +352,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         intersects = False
 
         tl = self.image_size * (position + 1) / 2. - 0.5 * (3 / np.sqrt(2))
-        agent_rect = pygame.Rect(tl[0], tl[1], 3 / np.sqrt(2), 3 / np.sqrt(2))
+        agent_rect = pygame.Rect(tl[0], tl[1], 0.01, 0.01)
         for obstacle in self.obstacles:
             collision = obstacle.collides(agent_rect)
             intersects |= collision
@@ -362,6 +362,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
                 obstacle.color = (0, 0, 0)
             if intersects:
                 break
+        print(intersects)
         return intersects
 
     def goal(self):
