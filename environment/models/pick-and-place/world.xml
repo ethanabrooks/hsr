@@ -107,9 +107,9 @@
         <include file="3dof.mjcf"/>
     </worldbody>
     <actuator>
-        <!--<motor gear="1000.0" name="slide_x_motor" joint="slide_x"/>-->
+        <motor gear="1000.0" name="slide_x_motor" joint="slide_x"/>
         <motor gear="1000.0" name="slide_y_motor" joint="slide_y"/>
-        <!--<motor gear="1000.0" name="arm_flex_motor" joint="arm_flex_joint" forcelimited="true" forcerange="-.2 .2"/>-->
+        <motor gear="1000.0" name="arm_flex_motor" joint="arm_flex_joint" forcelimited="true" forcerange="-.2 .2"/>
         <!--<motor gear="1000.0" name="arm_lift_motor" joint="arm_lift_joint"/>-->
         <!--<motor gear="1000.0" name="arm_roll_motor" joint="arm_roll_joint"/>-->
         <!--<motor gear="1000.0" name="wrist_flex_motor" joint="wrist_flex_joint"/>-->

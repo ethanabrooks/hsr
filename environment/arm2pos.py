@@ -63,8 +63,8 @@ class Arm2PosEnv(BaseEnv):
     def _new_goal(self):
         # [-0.02368331  0.31957946  0.5147059]
         # [-0.02229058 - 0.17246746  0.50834088]
-        high = np.array([-.022, .32, .51])
-        low = np.array([-.022, -.18, .51])
+        high = np.array([.117, .328, .51])
+        low = np.array([-.27, -.17, .51])
         goal = np.random.uniform(low, high)
         assert np.all(low <= goal) and np.all(goal <= high)
         return goal
@@ -87,7 +87,7 @@ class Arm2PosEnv(BaseEnv):
         if not self._continuous:
             ctrl = np.zeros(self.sim.nu)
             if action != 0:
-                ctrl[(action - 1) // 2] = 1 if action % 2 else -1
+                ctrl[(action - 1) // 2] = (1 if action % 2 else -1) * self._action_multiplier
             return BaseEnv.step(self, ctrl)
         else:
             action = np.clip(action * self._action_multiplier, -1, 1)

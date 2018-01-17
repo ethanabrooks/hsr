@@ -13,7 +13,7 @@ saved_pos = None
 
 
 def run():
-    env = Arm2PosEnv(continuous=False, max_steps=9999999, neg_reward=True, action_multiplier=.01)
+    env = Arm2PosEnv(continuous=False, max_steps=9999999, neg_reward=True, action_multiplier=.1)
     total_r = 0
 
     while True:
@@ -27,15 +27,14 @@ def run():
         except (KeyError, TypeError, AssertionError, ValueError):
             action = 0
         assert isinstance(action, int)
-        if keypress is not None:
-            obs, r, done, _ = env.step(action)
-            total_r += r
+        obs, r, done, _ = env.step(action)
+        total_r += r
 
-            if done:
-                print(total_r)
-                total_r = 0
-                env.reset()
-                print('\nresetting')
+        if done:
+            print(total_r)
+            total_r = 0
+            env.reset()
+            print('\nresetting')
 
         env.render(labels={'x': env._goal()[0]})
         assert not env._currently_failed()

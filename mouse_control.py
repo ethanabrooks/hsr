@@ -36,6 +36,8 @@ def run(port, value_tensor=None, sess=None):
         if lastkey is ' ':
             moving = not moving
             print('\rmoving:', moving)
+        if lastkey is 'P':
+            print(env._gripper_pos())
 
         for k in range(10):
             if lastkey == str(k):
