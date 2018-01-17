@@ -1,13 +1,14 @@
 #!/usr/bin/env python
-import sys
 import argparse
+import sys
+
 from baselines import bench, logger
 from baselines.ppo2.policies import MlpPolicy
+from environment.arm2posenv import Arm2PosEnv
 
 
 def train(env_id, num_timesteps, seed, policy):
     from baselines.common import set_global_seeds
-    from baselines.common.atari_wrappers import make_atari, wrap_deepmind
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
     from baselines.common.vec_env.vec_frame_stack import VecFrameStack
     from baselines.ppo2 import ppo2
@@ -18,7 +19,8 @@ def train(env_id, num_timesteps, seed, policy):
     import os.path as osp
     import tensorflow as tf
     ncpu = multiprocessing.cpu_count()
-    if sys.platform == 'darwin': ncpu //= 2
+    if sys.platform == 'darwin':
+        ncpu //= 2
     config = tf.ConfigProto(allow_soft_placement=True,
                             intra_op_parallelism_threads=ncpu,
                             inter_op_parallelism_threads=ncpu)
@@ -28,10 +30,12 @@ def train(env_id, num_timesteps, seed, policy):
 
     def make_env(rank):
         def env_fn():
-            env = gym.make(env_id)
+            if env_id == 'arm2pos':
+                env = Arm2PosEnv(continuous=True, max_steps=500)
+            else:
+                env = gym.make(env_id)
             env.seed(seed + rank)
-            env = bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
-            return env
+            return bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
 
         return env_fn
 
@@ -55,9 +59,9 @@ def main():
     parser.add_argument('--policy', help='Policy architecture', choices=['cnn', 'lstm', 'lnlstm'], default='mlp')
     parser.add_argument('--num-timesteps', type=int, default=int(10e6))
     parser.add_argument('--tb-dir', default=None)
-    parser.add_argument('--output-modes', nargs='+', default=['tensorboard'])
+    parser.add_argument('--output', nargs='+', default=['tensorboard'])
     args = parser.parse_args()
-    logger.configure(dir=args.tb_dir, format_strs=args.output_modes)
+    logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
           policy=args.policy)
 

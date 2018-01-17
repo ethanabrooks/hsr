@@ -29,13 +29,13 @@ class Arm2PosEnv(BaseEnv):
         self._continuous = continuous
 
         self.observation_space = spaces.Box(-np.inf, np.inf,
-                                            shape=self.obs().shape[0] + 3)
+                                            shape=self._obs()[0].shape[0] + 3)
 
         if continuous:
             self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         else:
             self.action_space = spaces.Discrete(self.sim.nu * 2 + 1)
-        self._goal = [self._new_goal()]
+        self.__goal = [self._new_goal()]
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name, left_finger_name.replace('_l_', '_r_')]
 
@@ -45,7 +45,7 @@ class Arm2PosEnv(BaseEnv):
         return (finger1 + finger2) / 2.
 
     def _current_reward(self):
-        return self._compute_reward(self._goal, self._gripper_pos())
+        return self._compute_reward(self._goal(), self._gripper_pos())
 
     def _compute_reward(self, goal_pos, gripper_pos):
         if at_goal(gripper_pos, goal_pos, self._geofence):
@@ -55,15 +55,8 @@ class Arm2PosEnv(BaseEnv):
         else:
             return 0
 
-    def _vectorize_goal(self, goal):
-        assert isinstance(goal, np.ndarray) and len(goal) == 3
-        return goal
-
-    def _destructure_goal(self, goal):
-        return [goal]
-
     def _set_new_goal(self):
-        self._goal = [self._new_goal()]
+        self.__goal = [self._new_goal()]
 
     def _new_goal(self):
         # [-0.02368331  0.31957946  0.5147059]
@@ -77,11 +70,14 @@ class Arm2PosEnv(BaseEnv):
     def _obs(self):
         return [self.sim.qpos]
 
+    def _goal(self):
+        return self.__goal
+
     def _currently_failed(self):
         return False
 
     def _terminal(self):
-        return at_goal(self._gripper_pos(), self._goal, self._geofence)
+        return at_goal(self._gripper_pos(), self._goal(), self._geofence)
 
     def step(self, action):
         if not self._continuous:

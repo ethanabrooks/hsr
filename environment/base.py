@@ -20,7 +20,7 @@ class BaseEnv(utils.EzPickle, Server):
         utils.EzPickle.__init__(self)
 
         self._history_len = history_len
-        self._history_buffer = HistoryBuffer(history_len)
+        # self._history_buffer = HistoryBuffer(history_len)
         self._geofence = geofence
         self._body_name = body_name
         self._steps_per_action = steps_per_action
@@ -30,7 +30,6 @@ class BaseEnv(utils.EzPickle, Server):
         self._step_num = 0
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
-        self._goal = None
 
         # required for gym
         self.metadata = {}
@@ -44,7 +43,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
-        self._history_buffer.update(*self._obs())
+        # self._history_buffer.update(*self._obs())
 
     def server_values(self):
         return self.sim.qpos, self.sim.qvel
@@ -56,21 +55,10 @@ class BaseEnv(utils.EzPickle, Server):
         return self.sim.render_offscreen(
             *self._image_dimensions, camera_name)
 
-    def obs(self):
-        obs_history = self._history_buffer.get()
-        assert type(obs_history) in (tuple, list)
-        return self._vectorize_obs(obs_history)
-
-    def goal(self):
-        assert isinstance(self._goal, list)
-        return self._vectorize_goal(*self._goal)
-
-    def obs_and_goal(self):
-        obs = self.obs()
-        goal = self.goal()
-        assert len(np.shape(obs)) == 1
-        assert len(np.shape(goal)) == 1
-        return np.concatenate([obs, goal], axis=0)
+    def mlp_input(self):
+        assert isinstance(self._obs(), list)
+        assert isinstance(self._goal(), list)
+        return np.concatenate(self._obs() + self._goal(), axis=0)
 
     def step(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
@@ -84,8 +72,7 @@ class BaseEnv(utils.EzPickle, Server):
             reward += new_reward
             step += 1
 
-        self._history_buffer.update(*self._obs())
-        return self.obs_and_goal(), reward, done, {}
+        return self.mlp_input(), reward, done, {}
 
     def _step_inner(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
@@ -117,45 +104,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim.qpos[:] = qpos
         self.sim.qvel[:] = qvel
         self.sim.forward()
-
-        self._history_buffer.reset()
-        self._history_buffer.update(*self._obs())
-        return self.obs_and_goal()
-
-    def _vectorize_obs(self, obs_history):
-        """
-        :param obs_history: values corresponding to output of self._obs_history
-        :return: tuple of (values for cnn, values for mlp, goal)
-        """
-        assert type(obs_history) in (tuple, list)
-        mlp_history = [x for x in obs_history if len(x.shape) <= 1]
-        mlp_array = np.concatenate(mlp_history, axis=-1).flatten()
-        if self._use_camera:
-            cnn_history = [x for x in obs_history if len(x.shape) > 1]
-            cnn_array = np.concatenate(cnn_history, axis=-1)
-            return mlp_array, cnn_array
-        else:
-            return mlp_array
-
-    def _destructure_obs(self, mlp_input=None, cnn_input=None):
-        raise RuntimeError("This thing is not valid right now")
-        shapes = self._history_buffer.shapes
-        if cnn_input is not None:
-            raise NotImplemented
-        if mlp_input is not None:
-            assert isinstance(mlp_input, np.ndarray), mlp_input
-            mlp_shapes = [1 if len(shape) == 0 else shape[0]
-                          for shape in shapes
-                          if len(shape) <= 1]
-            mlp_shapes_over_history = np.repeat(mlp_shapes, self._history_len)
-            assert mlp_input.size == sum(mlp_shapes_over_history), \
-                'mlp_input should not include `goal`.'
-            indices = np.cumsum(mlp_shapes_over_history)
-            raw_elements = np.split(mlp_input, indices)[:-1]
-            by_type = np.split(np.array(raw_elements), len(mlp_shapes))
-            observations = list(zip(*by_type))
-            return observations[-1]
-        raise RuntimeError("either data or images must not be None")
+        return self.mlp_input()
 
     @staticmethod
     def seed(seed):
@@ -173,12 +122,6 @@ class BaseEnv(utils.EzPickle, Server):
     def compute_reward(self, goal, args):
         raise NotImplemented
 
-    def _vectorize_goal(self, *goal):
-        raise NotImplemented
-
-    def _destructure_goal(self, goal):
-        raise NotImplemented
-
     def reset_qpos(self):
         raise NotImplemented
 
@@ -190,6 +133,9 @@ class BaseEnv(utils.EzPickle, Server):
         raise NotImplemented
 
     def _obs(self):
+        raise NotImplemented
+
+    def _goal(self):
         raise NotImplemented
 
     def _currently_failed(self):
