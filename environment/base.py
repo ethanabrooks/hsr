@@ -136,7 +136,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim.qpos[:] = qpos
         self.sim.qvel[:] = qvel
         self.sim.forward()
-        return self.mlp_input()
+        return self.mlp_input(self._goal(), self._history_buffer)
 
     @staticmethod
     def seed(seed):
