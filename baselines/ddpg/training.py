@@ -20,7 +20,7 @@ def replay_with_goal(traj, goal, env):
         action_ = action
         r_ = env.compute_reward(goal, new_obs)
         new_obs_ = env.change_goal(goal, new_obs)
-        done_ = env.compute_terminal(goal, new_obs)
+        done_ = env.compute_terminal(new_obs)
         yield obs_, action_, r_, new_obs_, done_
         if done_:
             break

@@ -25,17 +25,17 @@ class Arm2PosEnv(BaseEnv):
                          steps_per_action=10,
                          image_dimensions=image_dimensions)
 
+        self.__goal = [self._new_goal()]
         self._action_multiplier = action_multiplier
         self._continuous = continuous
 
-        self.observation_space = spaces.Box(-np.inf, np.inf,
-                                            shape=self._obs()[0].shape[0] + 3)
+        obs_shape = history_len * np.size(self._obs()[0]) + np.size(self._goal())
+        self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_shape)
 
         if continuous:
             self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         else:
             self.action_space = spaces.Discrete(self.sim.nu * 2 + 1)
-        self.__goal = [self._new_goal()]
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name, left_finger_name.replace('_l_', '_r_')]
 
@@ -45,10 +45,12 @@ class Arm2PosEnv(BaseEnv):
         return (finger1 + finger2) / 2.
 
     def _current_reward(self):
-        return self._compute_reward(self._goal(), self._gripper_pos())
+        return self._compute_reward(self._goal(), self._obs())
 
-    def _compute_reward(self, goal_pos, gripper_pos):
-        if at_goal(gripper_pos, goal_pos, self._geofence):
+    def _compute_reward(self, goal, obs):
+        goal_pos, = goal
+        qpos, = obs
+        if at_goal(self._gripper_pos(qpos), goal_pos, self._geofence):
             return 1
         elif self._neg_reward:
             return -.0001
@@ -76,8 +78,10 @@ class Arm2PosEnv(BaseEnv):
     def _currently_failed(self):
         return False
 
-    def _terminal(self):
-        return at_goal(self._gripper_pos(), self._goal(), self._geofence)
+    def _compute_terminal(self, goal, obs):
+        goal, = goal
+        qpos, = obs
+        return at_goal(self._gripper_pos(qpos), goal, self._geofence)
 
     def step(self, action):
         if not self._continuous:
@@ -92,11 +96,6 @@ class Arm2PosEnv(BaseEnv):
     def reset_qpos(self):
         return self.init_qpos
 
-    # hindsight stuff
-    def obs_to_goal(self, mlp_input):
-        goal, obs_history = self.destructure_mlp_input(mlp_input)
-        return goal
-
-    def change_goal(self, goal, mlp_input):
-        _, obs_history = self.destructure_mlp_input(mlp_input)
-        return self.mlp_input(goal, obs_history)
+    def _obs_to_goal(self, obs):
+        qpos, = obs
+        return [self._gripper_pos(qpos)]
