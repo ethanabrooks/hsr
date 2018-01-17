@@ -2,9 +2,10 @@
 
 import os
 
+import gym
 import mujoco
 import numpy as np
-from gym import utils
+from gym import utils, spaces
 
 from environment.history_buffer import HistoryBuffer
 from environment.server import Server
@@ -43,6 +44,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
         self._history_buffer += [self._obs()]
+        self._observation_space = self._action_space = None
 
     def server_values(self):
         return self.sim.qpos, self.sim.qvel
@@ -57,7 +59,22 @@ class BaseEnv(utils.EzPickle, Server):
     def mlp_input(self):
         assert len(self._history_buffer) > 0
         obs_history = [np.concatenate(x, axis=0) for x in self._history_buffer]
-        return np.concatenate(obs_history + self._goal(), axis=0)
+        return np.concatenate(self._goal() + obs_history, axis=0)
+
+    def destructure_mlp_input(self, mlp_input):
+        assert isinstance(self._observation_space, gym.Space)
+        assert self._observation_space.contains(mlp_input)
+        goal_shapes = [np.shape(x) for x in self._goal()]
+        goal_size = sum([shape[0] for shape in goal_shapes])
+        obs_history, goal = mlp_input[:-goal_size], mlp_input[-goal_size:]
+
+        history_len = len(self._history_buffer)
+        assert (np.shape(mlp_input)[0]) % history_len == 0
+        history = np.split(mlp_input, history_len, axis=0)
+        obs_shapes = [np.shape(x) for x in self._obs()]
+        goal_shapes = [np.shape(x) for x in self._goal()]
+        return [np.split(obs, obs_shapes + goal_shapes, 0) for obs in history]
+
 
     def step(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)

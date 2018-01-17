@@ -55,8 +55,8 @@ def run(port, value_tensor=None, sess=None):
         env.render(labels={'x': env.goal()[:3]})
 
         assert not env._currently_failed()
-        assert_equal(env._goal, env._destructure_goal(env.goal()))
-        # assert_equal(env._obs(), env._destructure_obs(env.obs()))
+        # assert_equal(env._goal, env._destructure_goal(env.goal()))
+        assert_equal(env._obs(), env.destructure_mlp_input(env.obs()))
         assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
 
 
