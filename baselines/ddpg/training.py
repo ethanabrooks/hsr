@@ -16,9 +16,6 @@ from mpi4py import MPI
 def replay_with_goal(traj, goal, env):
     for (obs, action, r, new_obs, done) in traj:
         obs_ = env.change_goal(goal, obs)
-        print(obs_)
-        print(obs)
-        exit(0)
         assert np.shape(obs_) == np.shape(obs)
         action_ = action
         r_ = env.compute_reward(goal, new_obs)
