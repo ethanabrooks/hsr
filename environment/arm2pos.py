@@ -17,7 +17,7 @@ class Arm2PosEnv(BaseEnv):
         BaseEnv.__init__(self,
                          geofence=geofence,
                          max_steps=max_steps,
-                         xml_filepath=join('models', 'pick-and-place', 'world.xml'),
+                         xml_filepath=join('models', 'arm2pos', 'world.xml'),
                          history_len=history_len,
                          use_camera=False,  # TODO
                          neg_reward=neg_reward,
@@ -61,10 +61,8 @@ class Arm2PosEnv(BaseEnv):
         self.__goal = [self._new_goal()]
 
     def _new_goal(self):
-        # [-0.02368331  0.31957946  0.5147059]
-        # [-0.02229058 - 0.17246746  0.50834088]
-        high = np.array([.117, .328, .51])
-        low = np.array([-.27, -.17, .51])
+        high = np.array([0.11725151,  0.07799973,  0.50806907])
+        low = np.array([-0.27217179,  0.07799973,  0.50806907])
         goal = np.random.uniform(low, high)
         assert np.all(low <= goal) and np.all(goal <= high)
         return goal

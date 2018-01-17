@@ -31,7 +31,7 @@ def train(env_id, num_timesteps, seed, policy):
     def make_env(rank):
         def env_fn():
             if env_id == 'arm2pos':
-                env = Arm2PosEnv(continuous=True, max_steps=500)
+                env = Arm2PosEnv(continuous=True, max_steps=500, history_len=2)
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
@@ -59,7 +59,7 @@ def main():
     parser.add_argument('--policy', help='Policy architecture', choices=['cnn', 'lstm', 'lnlstm'], default='mlp')
     parser.add_argument('--num-timesteps', type=int, default=int(10e6))
     parser.add_argument('--tb-dir', default=None)
-    parser.add_argument('--output', nargs='+', default=['tensorboard'])
+    parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
     args = parser.parse_args()
     logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
