@@ -4,7 +4,7 @@ from baselines import bench, logger
 from environment.arm2pos import Arm2Pos
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
-
+from toy_environment import continuous_gridworld, continuous_gridworld2
 
 def train(env_id, num_timesteps, seed):
     from baselines.common import set_global_seeds
@@ -20,7 +20,11 @@ def train(env_id, num_timesteps, seed):
                             inter_op_parallelism_threads=ncpu)
     tf.Session(config=config).__enter__()
     def make_env():
-        if env_id == 'navigate':
+        if env_id == 'toy':
+            #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
+            #                                           obstacle_mode=continuous_gridworld.NO_OBJECTS)
+            env = continuous_gridworld2.ContinuousGridworld2()
+        elif env_id == 'navigate':
             env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
         elif env_id == 'arm2pos':
             env = Arm2Pos(use_camera=False, continuous=False, max_steps=500)
@@ -45,7 +49,7 @@ def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--env', help='environment ID', default='Hopper-v1')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
-    parser.add_argument('--num-timesteps', type=int, default=int(1e6))
+    parser.add_argument('--num-timesteps', type=int, default=int(1e7))
     parser.add_argument('--tb-dir', default=None)
     args = parser.parse_args()
     if args.tb_dir is not None:

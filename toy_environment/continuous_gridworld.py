@@ -334,7 +334,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         if self.use_cnn:
             return xy, img
         else:
-            return np.concatenate([xy, self.goal()], axis=0)
+            return np.concatenate([self.agent_position, self.goal()], axis=0)
 
 
     @property
@@ -395,7 +395,6 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
 
 
         num_subchecks = 4
-        overall_intersects = False
         scaled_subaction = 0.0
         for i in range(num_subchecks):
             intersects = self.check_intersects(self.agent_position, scaled_action, mult=i/float(num_subchecks))
@@ -411,9 +410,9 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         self.buffer.update(self.agent_position, observation.copy())
         self.draw_target()
 
-        goal_dist = np.sqrt(np.sum(np.square(self.agent_position - self._goal)))
+        goal_dist = np.sqrt(np.sum(np.square(self.agent_position - self.goal())))
         #reward  = 1 if goal_dist < self.closeness_cutoff else -0.01
-        reward = 1 if self.at_goal(self._goal, self.obs()) else -0.01
+        reward = 1 if self.at_goal(self.goal(), self.obs()) else -0.01
         subtask_complete = False
         if reward == 1:
             print('AT GOAL')
@@ -452,6 +451,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
     def at_goal(self, goal, obs):
         state_without_goal = obs[:-2]
         agent_position = state_without_goal[-2:]
+        #print('agent_position', agent_position)
         goal_dist = np.sqrt(np.sum(np.square(agent_position - goal)))
         return goal_dist < self.closeness_cutoff
 
@@ -471,6 +471,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         self.buffer.reset()
         self.agent_position = self.get_non_intersecting_position()
         self._goal = self.get_non_intersecting_position()
+        self.buffer.update(self.agent_position, self.render_agent())
         self.step_counter = 0
         return self.obs()
 

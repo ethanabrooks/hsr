@@ -134,6 +134,7 @@ class MlpPolicy(object):
         ob_shape = (nbatch,) + ob_space.shape
         actdim = 1 if ac_space.shape == () else ac_space.shape[0]
         X = tf.placeholder(tf.float32, ob_shape, name='Ob') #obs
+
         with tf.variable_scope("model", reuse=reuse):
             if ob_space.shape == ():
                 h0 = tf.reshape(X, [nbatch, 1])
