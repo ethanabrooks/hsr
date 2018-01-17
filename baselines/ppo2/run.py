@@ -5,6 +5,7 @@ import sys
 from baselines import bench, logger
 from baselines.ppo2.policies import MlpPolicy
 from environment.arm2pos import Arm2PosEnv
+from environment.pick_and_place import PickAndPlaceEnv
 
 
 def train(env_id, num_timesteps, seed, policy):
@@ -32,6 +33,8 @@ def train(env_id, num_timesteps, seed, policy):
         def env_fn():
             if env_id == 'arm2pos':
                 env = Arm2PosEnv(continuous=True, max_steps=500, history_len=2)
+            elif env_id == 'pick-and-place':
+                env = PickAndPlaceEnv(max_steps=500)
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)

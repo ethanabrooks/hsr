@@ -47,6 +47,8 @@ class PickAndPlaceEnv(BaseEnv):
     def _obs(self):
         x, y, z = self.sim.get_body_xpos(self._goal_block_name)
         block_lifted = z - self._resting_block_height > self._min_lift_height
+        if block_lifted:
+            print('Lifted!')
         return self.sim.qpos, [block_lifted]
 
     def _goal(self):
