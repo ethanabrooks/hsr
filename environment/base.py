@@ -8,7 +8,7 @@ from gym import utils
 
 from environment.history_buffer import HistoryBuffer
 from environment.server import Server
-
+from collections import deque
 
 class BaseEnv(utils.EzPickle, Server):
     """ The environment """
@@ -19,8 +19,7 @@ class BaseEnv(utils.EzPickle, Server):
                  frames_per_step=20):
         utils.EzPickle.__init__(self)
 
-        self._history_len = history_len
-        # self._history_buffer = HistoryBuffer(history_len)
+        self._history_buffer = deque(maxlen=history_len)
         self._geofence = geofence
         self._body_name = body_name
         self._steps_per_action = steps_per_action
@@ -43,7 +42,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
-        # self._history_buffer.update(*self._obs())
+        self._history_buffer += [self._obs()]
 
     def server_values(self):
         return self.sim.qpos, self.sim.qvel
@@ -56,9 +55,9 @@ class BaseEnv(utils.EzPickle, Server):
             *self._image_dimensions, camera_name)
 
     def mlp_input(self):
-        assert isinstance(self._obs(), list)
-        assert isinstance(self._goal(), list)
-        return np.concatenate(self._obs() + self._goal(), axis=0)
+        assert len(self._history_buffer) > 0
+        obs_history = [np.concatenate(x, axis=0) for x in self._history_buffer]
+        return np.concatenate(obs_history + self._goal(), axis=0)
 
     def step(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
@@ -71,7 +70,7 @@ class BaseEnv(utils.EzPickle, Server):
             new_reward, done = self._step_inner(action)
             reward += new_reward
             step += 1
-
+        self._history_buffer.append(self._obs())
         return self.mlp_input(), reward, done, {}
 
     def _step_inner(self, action):
