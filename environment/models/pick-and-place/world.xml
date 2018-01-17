@@ -94,21 +94,21 @@
             <!--<geom type="box" size=".1651 .001 .381" pos="0 -.6096  .381" class="cubby"/>-->
         <!--</body>-->
 
-        <!--<body name="block1" pos="0 0 .49">-->
-          <!--<geom type="box" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>-->
-           <!--<freejoint name='box1joint'/>-->
-        <!--</body>-->
+        <body name="block1" pos="0 0 .49">
+          <geom type="box" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
+           <freejoint name='box1joint'/>
+        </body>
 
         <!--<body name="block2" pos="0 0 .44">-->
           <!--<geom type="box" size=".0317 .0317 .0234" rgba=".1 .8 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>-->
           <!--<freejoint name='box2joint'/>-->
         <!--</body>-->
 
-        <include file="3dof.mjcf"/>
+        <include file="hsr.mjcf"/>
     </worldbody>
     <actuator>
         <motor gear="1000.0" name="slide_x_motor" joint="slide_x"/>
-        <motor gear="1000.0" name="slide_y_motor" joint="slide_y"/>
+        <!--<motor gear="1000.0" name="slide_y_motor" joint="slide_y"/>-->
         <motor gear="1000.0" name="arm_flex_motor" joint="arm_flex_joint" forcelimited="true" forcerange="-.2 .2"/>
         <!--<motor gear="1000.0" name="arm_lift_motor" joint="arm_lift_joint"/>-->
         <!--<motor gear="1000.0" name="arm_roll_motor" joint="arm_roll_joint"/>-->

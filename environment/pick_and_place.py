@@ -13,18 +13,10 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=4,
-                 image_dimensions=(64, 64), action_multiplier=1):
-
-        self._dimensions = 64, 64
-        self._action_multiplier = action_multiplier
-        self._history_len = history_len
-
+    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1, action_multiplier=1):
         self._goal_block_name = 'block1'
-        self._min_lift_height = 0.02
         self._resting_block_height = .49  # empirically determined
-        left_finger_name = 'hand_l_distal_link'
-        self._finger_names = [left_finger_name, left_finger_name.replace('_l_', '_r_')]
+        self._min_lift_height = 0.02
 
         super().__init__(
             geofence=geofence,
@@ -35,117 +27,58 @@ class PickAndPlaceEnv(BaseEnv):
             neg_reward=neg_reward,
             body_name="hand_palm_link",
             steps_per_action=10,
-            image_dimensions=image_dimensions)
+            image_dimensions=None)
 
-        if use_camera:
-            raise NotImplemented
-        else:
-            self.observation_space = spaces.Box(-np.inf, np.inf,
-                                                shape=self.obs().shape[0] + 4)
-
+        self._action_multiplier = action_multiplier
+        left_finger_name = 'hand_l_distal_link'
+        self._finger_names = [left_finger_name, left_finger_name.replace('_l_', '_r_')]
+        obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
+        assert obs_size != 0
+        self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         self._table_height = self.sim.get_body_xpos('pan')[2]
-
-    # goal stuff
-
-    @property
-    def _goal(self):
-        return self.sim.get_body_xpos(self._goal_block_name), True
-
-    @_goal.setter
-    def _goal(self, value):
-        raise NotImplemented
-
-    def _set_new_goal(self):
-        pass
-
-    @staticmethod
-    def achieved_goal(goal_pos, should_grasp, gripper_pos, block_lifted, geofence):
-        return at_goal(gripper_pos, goal_pos, geofence) and should_grasp == block_lifted
-
-    def _vectorize_goal(self, goal, should_grasp):
-        return np.append(goal, should_grasp)
-
-    def _destructure_goal(self, goal):
-        return goal[:-1], goal[-1] == 1
-
-    # obs stuff
-
-    def _obs(self):
-        block_lifted, should_grasp = map(np.array, [[self._block_lifted()], [True]])
-        return self.sim.qpos, block_lifted
-
-    def _obs_to_goal(self, qpos, block_lifted):
-        """
-        :return: goal that would make obs be `at_goal`
-        """
-        should_grasp = block_lifted  # reward whatever the agent actually did
-        return self._gripper_pos(qpos), should_grasp
-
-    def obs_to_goal(self, data=None, images=None):
-        return self._vectorize_goal(*self._obs_to_goal(*self._destructure_obs(data, images)))
-
-    # positions
-
-    def _gripper_pos(self, qpos=None):
-        finger1, finger2 = [self.sim.get_body_xpos(name, qpos)
-                            for name in self._finger_names]
-        return (finger1 + finger2) / 2.
-
-    def _goal_block_height(self, qpos=None):
-        x, y, z = self.sim.get_body_xpos(self._goal_block_name, qpos)
-        return z
-
-    def _block_lifted(self):
-        return self._goal_block_height() - self._resting_block_height > self._min_lift_height
-
-    # terminal stuff
-
-    def _compute_terminal(self):
-        return self.achieved_goal(*self._goal, self._gripper_pos(),
-                                  self._block_lifted(), self._geofence)
-
-    def compute_terminal(self, goal, mlp_input=None, cnn_input=None):
-        if cnn_input:
-            raise NotImplemented
-        goal_pos, should_grasp = self._destructure_goal(goal)
-        qpos, block_lifted = self._destructure_obs(mlp_input)
-        gripper_pos = self._gripper_pos(qpos)
-        return self.achieved_goal(goal_pos, should_grasp, gripper_pos, block_lifted, self._geofence)
-
-    def _stuck(self):
-        return False
-
-    def _currently_failed(self):
-        return failed(self._resting_block_height, self._goal_block_height())
 
     def reset_qpos(self):
         return self.init_qpos
 
-    # reward stuff
+    def _set_new_goal(self):
+        pass
 
-    def _current_reward(self):
-        return self._compute_reward(*self._goal, self._gripper_pos(), self._block_lifted(), self._currently_failed())
+    def _obs(self):
+        x, y, z = self.sim.get_body_xpos(self._goal_block_name)
+        block_lifted = z - self._resting_block_height > self._min_lift_height
+        return self.sim.qpos, [block_lifted]
 
-    def _compute_reward(self, goal_pos, should_grasp, gripper_pos, block_lifted, failed):
-        if at_goal(gripper_pos, goal_pos, self._geofence) and should_grasp == block_lifted:
+    def _goal(self):
+        return self.sim.get_body_xpos(self._goal_block_name), [True]
+
+    def _currently_failed(self):
+        return False
+
+    def _compute_terminal(self, goal, obs):
+        goal, should_lift = goal
+        qpos, block_lifted = obs
+        return at_goal(self._gripper_pos(qpos), goal, self._geofence) and should_lift == block_lifted
+
+    def _compute_reward(self, goal, obs):
+        goal_pos, should_lift = goal
+        qpos, block_lifted = obs
+        if at_goal(self._gripper_pos(qpos), goal_pos, self._geofence) and block_lifted == should_lift:
             return 1
-        elif failed:
-            return -1
         elif self._neg_reward:
             return -.0001
         else:
             return 0
 
-    def compute_reward(self, goal, mlp_input=None, cnn_input=None):
-        if cnn_input:
-            raise NotImplemented
-        goal_pos, should_grasp = self._destructure_goal(goal)
-        qpos, block_lifted = self._destructure_obs(mlp_input)
-        gripper_pos = self._gripper_pos(qpos)
-        _failed = failed(self._resting_block_height, self._goal_block_height(qpos))
-        return self._compute_reward(goal_pos, should_grasp, gripper_pos,
-                                    block_lifted, _failed)
+    def _obs_to_goal(self, obs):
+        qpos, block_lifted = obs
+        should_lift = block_lifted
+        return self._gripper_pos(qpos), should_lift
+
+    def _gripper_pos(self, qpos=None):
+        finger1, finger2 = [self.sim.get_body_xpos(name, qpos)
+                            for name in self._finger_names]
+        return (finger1 + finger2) / 2.
 
     def step(self, action):
         action = np.clip(action * self._action_multiplier, -1, 1)

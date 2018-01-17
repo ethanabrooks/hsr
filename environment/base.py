@@ -1,15 +1,14 @@
 """Create gym environment for HSR"""
 
 import os
+from collections import deque
 
 import gym
 import mujoco
 import numpy as np
-from gym import utils, spaces
+from gym import utils
 
-from environment.history_buffer import HistoryBuffer
 from environment.server import Server
-from collections import deque
 
 
 class BaseEnv(utils.EzPickle, Server):
@@ -60,7 +59,7 @@ class BaseEnv(utils.EzPickle, Server):
     def mlp_input(self, goal, history):
         assert len(history) > 0
         obs_history = [np.concatenate(x, axis=0) for x in history]
-        return np.concatenate(goal + obs_history, axis=0)
+        return np.concatenate(list(goal) + obs_history, axis=0)
 
     def destructure_mlp_input(self, mlp_input):
         assert isinstance(self.observation_space, gym.Space)
@@ -76,7 +75,7 @@ class BaseEnv(utils.EzPickle, Server):
         assert (np.size(obs_history)) % history_len == 0
 
         # break goal vector into individual goals
-        goals = np.split(goal_vector, goal_shapes, axis=0)[:-1]
+        goals = np.split(goal_vector, np.cumsum(goal_shapes), axis=0)[:-1]
 
         # break history into individual observations in history
         history = np.split(obs_history, history_len, axis=0)
@@ -87,7 +86,7 @@ class BaseEnv(utils.EzPickle, Server):
         # break each observation in history into observation pieces
         for o in history:
             assert np.size(o) == sum(obs_shapes)
-            obs.append(np.split(o, obs_shapes, axis=0)[:-1])
+            obs.append(np.split(o, np.cumsum(obs_shapes), axis=0)[:-1])
 
         return goals, obs
 
@@ -139,6 +138,9 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim.forward()
         return self.mlp_input(self._goal(), self._history_buffer)
 
+    def _current_reward(self):
+        return self._compute_reward(self._goal(), self._obs())
+
     @staticmethod
     def seed(seed):
         np.random.seed(seed)
@@ -153,10 +155,6 @@ class BaseEnv(utils.EzPickle, Server):
         raise RuntimeError("This doesn't work")
 
     def reset_qpos(self):
-        raise NotImplemented
-
-    def _current_reward(self):
-        """Probably should call `compute_reward`"""
         raise NotImplemented
 
     def _set_new_goal(self):

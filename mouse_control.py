@@ -16,7 +16,8 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
-    env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
+    # env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
+    env = PickAndPlaceEnv(max_steps=9999999)
 
     shape, = env.action_space.shape
     print(shape)
@@ -51,7 +52,7 @@ def run(port, value_tensor=None, sess=None):
         if done:
             env.reset()
             print('\nresetting')
-        env.render(labels={'x': np.ravel(env._goal())})
+        env.render(labels={'x': np.ravel(env._goal()[0])})
 
 
 def run_tests(env, obs):
