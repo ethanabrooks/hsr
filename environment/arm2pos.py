@@ -31,7 +31,6 @@ class Arm2PosEnv(BaseEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf,
                                             shape=self._obs()[0].shape[0] + 3)
 
-
         if continuous:
             self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         else:
@@ -92,3 +91,12 @@ class Arm2PosEnv(BaseEnv):
 
     def reset_qpos(self):
         return self.init_qpos
+
+    # hindsight stuff
+    def obs_to_goal(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
+        return goal
+
+    def change_goal(self, goal, mlp_input):
+        _, obs_history = self.destructure_mlp_input(mlp_input)
+        return self.mlp_input(goal, obs_history)

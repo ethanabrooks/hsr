@@ -57,10 +57,10 @@ class BaseEnv(utils.EzPickle, Server):
         return self.sim.render_offscreen(
             *self._image_dimensions, camera_name)
 
-    def mlp_input(self):
-        assert len(self._history_buffer) > 0
-        obs_history = [np.concatenate(x, axis=0) for x in self._history_buffer]
-        return np.concatenate(self._goal() + obs_history, axis=0)
+    def mlp_input(self, goal, history):
+        assert len(history) > 0
+        obs_history = [np.concatenate(x, axis=0) for x in history]
+        return np.concatenate(goal + obs_history, axis=0)
 
     def destructure_mlp_input(self, mlp_input):
         assert isinstance(self.observation_space, gym.Space)
@@ -103,7 +103,8 @@ class BaseEnv(utils.EzPickle, Server):
             reward += new_reward
             step += 1
         self._history_buffer.append(self._obs())
-        return self.mlp_input(), reward, done, {}
+        mlp_input = self.mlp_input(self._goal(), self._history_buffer)
+        return mlp_input, reward, done, {}
 
     def _step_inner(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
@@ -150,9 +151,6 @@ class BaseEnv(utils.EzPickle, Server):
     def normalize(self, pos):
         raise RuntimeError("This doesn't work")
 
-    def compute_reward(self, goal, args):
-        raise NotImplemented
-
     def reset_qpos(self):
         raise NotImplemented
 
@@ -173,6 +171,19 @@ class BaseEnv(utils.EzPickle, Server):
         raise NotImplemented
 
     def _terminal(self):
+        raise NotImplemented
+
+    # hindsight stuff
+    def obs_to_goal(self, obs):
+        raise NotImplemented
+
+    def change_goal(self, obs, goal):
+        raise NotImplemented
+
+    def compute_reward(self, goal, obs):
+        raise NotImplemented
+
+    def compute_terminal(self, goal, obs):
         raise NotImplemented
 
 

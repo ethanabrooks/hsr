@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
-from environment.arm2posenv import Arm2PosEnv
+from environment.arm2pos import Arm2PosEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
 saved_pos = None

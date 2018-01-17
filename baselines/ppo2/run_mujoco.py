@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 from baselines import bench, logger
-from environment.arm2posenv import Arm2PosEnv
+from environment.arm2pos import Arm2PosEnv
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 

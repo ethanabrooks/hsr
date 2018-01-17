@@ -4,7 +4,7 @@ import sys
 
 from baselines import bench, logger
 from baselines.ppo2.policies import MlpPolicy
-from environment.arm2posenv import Arm2PosEnv
+from environment.arm2pos import Arm2PosEnv
 
 
 def train(env_id, num_timesteps, seed, policy):

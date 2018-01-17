@@ -11,7 +11,7 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
-from environment.arm2posenv import Arm2PosEnv
+from environment.arm2pos import Arm2PosEnv
 from toy_environment import continuous_gridworld
 import gym
 import tensorflow as tf
