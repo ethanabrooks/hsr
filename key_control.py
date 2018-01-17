@@ -27,20 +27,18 @@ def run():
         except (KeyError, TypeError, AssertionError, ValueError):
             action = 0
         assert isinstance(action, int)
-        obs, r, done, _ = env.step(action)
-        total_r += r
-        env.render(labels={'x': env._goal[0]})
+        if keypress is not None:
+            obs, r, done, _ = env.step(action)
+            total_r += r
 
-        if done:
-            print(total_r)
-            total_r = 0
-            env.reset()
-            print('\nresetting')
+            if done:
+                print(total_r)
+                total_r = 0
+                env.reset()
+                print('\nresetting')
 
+        env.render(labels={'x': env._goal()[0]})
         assert not env._currently_failed()
-        assert_equal(env._goal, env._destructure_goal(env.goal()))
-        # assert_equal(env._obs(), env._destructure_obs(env.obs()))
-        assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
 
 
 def assert_equal(val1, val2, atol=1e-5):
