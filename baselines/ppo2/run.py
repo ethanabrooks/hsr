@@ -31,7 +31,7 @@ def train(env_id, num_timesteps, seed, policy):
     def make_env(rank):
         def env_fn():
             if env_id == 'arm2pos':
-                env = Arm2PosEnv(continuous=True, max_steps=500)
+                env = Arm2PosEnv(continuous=True, max_steps=500, history_len=2)
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)

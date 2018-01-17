@@ -13,12 +13,13 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, use_camera, geofence=.05, tb_dir=None, neg_reward=True, history_len=4,
+    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=4,
                  image_dimensions=(64, 64), action_multiplier=1):
 
         self._dimensions = 64, 64
         self._action_multiplier = action_multiplier
         self._history_len = history_len
+
         self._goal_block_name = 'block1'
         self._min_lift_height = 0.02
         self._resting_block_height = .49  # empirically determined
@@ -30,7 +31,7 @@ class PickAndPlaceEnv(BaseEnv):
             max_steps=max_steps,
             xml_filepath=join('models', 'pick-and-place', 'world.xml'),
             history_len=history_len,
-            use_camera=use_camera,
+            use_camera=False,
             neg_reward=neg_reward,
             body_name="hand_palm_link",
             steps_per_action=10,
