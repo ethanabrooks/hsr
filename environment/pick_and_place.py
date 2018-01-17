@@ -100,7 +100,7 @@ class PickAndPlaceEnv(BaseEnv):
 
     # terminal stuff
 
-    def _terminal(self):
+    def _compute_terminal(self):
         return self.achieved_goal(*self._goal, self._gripper_pos(),
                                   self._block_lifted(), self._geofence)
 

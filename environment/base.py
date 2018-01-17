@@ -76,7 +76,7 @@ class BaseEnv(utils.EzPickle, Server):
         assert (np.size(obs_history)) % history_len == 0
 
         # break goal vector into individual goals
-        goals = np.split(goal_vector, goal_shapes, axis=0)
+        goals = np.split(goal_vector, goal_shapes, axis=0)[:-1]
 
         # break history into individual observations in history
         history = np.split(obs_history, history_len, axis=0)
@@ -87,7 +87,7 @@ class BaseEnv(utils.EzPickle, Server):
         # break each observation in history into observation pieces
         for o in history:
             assert np.size(o) == sum(obs_shapes)
-            obs += [np.split(o, obs_shapes, axis=0)]
+            obs.append(np.split(o, obs_shapes, axis=0)[:-1])
 
         return goals, obs
 
@@ -102,6 +102,7 @@ class BaseEnv(utils.EzPickle, Server):
             new_reward, done = self._step_inner(action)
             reward += new_reward
             step += 1
+
         self._history_buffer.append(self._obs())
         mlp_input = self.mlp_input(self._goal(), self._history_buffer)
         return mlp_input, reward, done, {}
@@ -114,7 +115,7 @@ class BaseEnv(utils.EzPickle, Server):
 
         hit_max_steps = self._step_num >= self._max_steps
         done = False
-        if self._terminal():
+        if self._compute_terminal(self._goal(), self._obs()):
             # print('terminal')
             done = True
         elif hit_max_steps:
@@ -170,21 +171,31 @@ class BaseEnv(utils.EzPickle, Server):
     def _currently_failed(self):
         raise NotImplemented
 
-    def _terminal(self):
+    def _compute_terminal(self, goal, obs):
+        raise NotImplemented
+
+    def _compute_reward(self, goal, obs):
         raise NotImplemented
 
     # hindsight stuff
-    def obs_to_goal(self, obs):
+    def _obs_to_goal(self, obs):
         raise NotImplemented
 
-    def change_goal(self, obs, goal):
-        raise NotImplemented
+    def obs_to_goal(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
+        return self._obs_to_goal(obs_history[-1])
 
-    def compute_reward(self, goal, obs):
-        raise NotImplemented
+    def change_goal(self, goal, mlp_input):
+        _, obs_history = self.destructure_mlp_input(mlp_input)
+        return self.mlp_input(goal, obs_history)
 
-    def compute_terminal(self, goal, obs):
-        raise NotImplemented
+    def compute_reward(self, goal, mlp_input):
+        _, obs_history = self.destructure_mlp_input(mlp_input)
+        return sum(self._compute_reward(goal, obs) for obs in obs_history)
+
+    def compute_terminal(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
+        return any(self._compute_terminal(goal, obs) for obs in obs_history)
 
 
 def quaternion2euler(w, x, y, z):
