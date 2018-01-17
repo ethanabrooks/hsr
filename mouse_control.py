@@ -16,7 +16,7 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
-    env = Arm2PosEnv(action_multiplier=.001, history_len=1, continuous=True, max_steps=9999999, neg_reward=True, use_camera=False)
+    env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
 
     shape, = env.action_space.shape
     print(shape)
@@ -43,26 +43,27 @@ def run(port, value_tensor=None, sess=None):
                 print('')
                 print(env.sim.id2name(ObjType.ACTUATOR, i))
 
-        if lastkey is 'S':
-            obs, r, done, _ = env.step(action)
-            print('goal', env._goal)
-            print('ob', env._obs())
-            print(obs)
-
-            if done:
-                env.reset()
-                print('\nresetting')
-        env.render(labels={'x': env.goal()[:3]})
+        obs, r, done, _ = env.step(action)
 
         assert not env._currently_failed()
-        # assert_equal(env._goal, env._destructure_goal(env.goal()))
-        assert_equal(env._obs(), env.destructure_mlp_input(env.obs()))
+        goal, obs_history = env.destructure_mlp_input(obs)
+        assert_equal(env._goal(), goal)
+        assert_equal(env._obs(), obs_history[-1])
         assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
+
+        if done:
+            env.reset()
+            print('\nresetting')
+        env.render(labels={'x': np.ravel(env._goal())})
 
 
 def assert_equal(val1, val2, atol=1e-5):
-    for a, b in zip(val1, val2):
-        assert np.allclose(a, b, atol=atol), "{} vs. {}".format(a, b)
+    try:
+        for a, b in zip(val1, val2):
+            assert_equal(a, b, atol=atol)
+    except TypeError:
+        assert np.allclose(val1, val2, atol=atol), "{} vs. {}".format(val1, val2)
+
 
 
 if __name__ == '__main__':

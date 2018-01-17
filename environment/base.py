@@ -11,6 +11,7 @@ from environment.history_buffer import HistoryBuffer
 from environment.server import Server
 from collections import deque
 
+
 class BaseEnv(utils.EzPickle, Server):
     """ The environment """
 
@@ -44,7 +45,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
         self._history_buffer += [self._obs()]
-        self._observation_space = self._action_space = None
+        self.observation_space = self.action_space = None
 
     def server_values(self):
         return self.sim.qpos, self.sim.qvel
@@ -62,19 +63,33 @@ class BaseEnv(utils.EzPickle, Server):
         return np.concatenate(self._goal() + obs_history, axis=0)
 
     def destructure_mlp_input(self, mlp_input):
-        assert isinstance(self._observation_space, gym.Space)
-        assert self._observation_space.contains(mlp_input)
-        goal_shapes = [np.shape(x) for x in self._goal()]
-        goal_size = sum([shape[0] for shape in goal_shapes])
-        obs_history, goal = mlp_input[:-goal_size], mlp_input[-goal_size:]
+        assert isinstance(self.observation_space, gym.Space)
+        assert self.observation_space.contains(mlp_input)
+        goal_shapes = [np.size(x) for x in self._goal()]
+        goal_size = sum(goal_shapes)
+
+        # split mlp_input into goal and obs pieces
+        goal_vector, obs_history = mlp_input[:goal_size], mlp_input[goal_size:]
 
         history_len = len(self._history_buffer)
-        assert (np.shape(mlp_input)[0]) % history_len == 0
-        history = np.split(mlp_input, history_len, axis=0)
-        obs_shapes = [np.shape(x) for x in self._obs()]
-        goal_shapes = [np.shape(x) for x in self._goal()]
-        return [np.split(obs, obs_shapes + goal_shapes, 0) for obs in history]
+        assert np.size(goal_vector) == goal_size
+        assert (np.size(obs_history)) % history_len == 0
 
+        # break goal vector into individual goals
+        goals = np.split(goal_vector, goal_shapes, axis=0)
+
+        # break history into individual observations in history
+        history = np.split(obs_history, history_len, axis=0)
+
+        obs_shapes = [np.size(x) for x in self._obs()]
+        obs = []
+
+        # break each observation in history into observation pieces
+        for o in history:
+            assert np.size(o) == sum(obs_shapes)
+            obs += [np.split(o, obs_shapes, axis=0)]
+
+        return goals, obs
 
     def step(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)

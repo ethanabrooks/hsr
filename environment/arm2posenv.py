@@ -31,6 +31,7 @@ class Arm2PosEnv(BaseEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf,
                                             shape=self._obs()[0].shape[0] + 3)
 
+
         if continuous:
             self.action_space = spaces.Box(-1, 1, shape=self.sim.nu)
         else:
