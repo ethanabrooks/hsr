@@ -46,23 +46,25 @@ def run(port, value_tensor=None, sess=None):
                 print(env.sim.id2name(ObjType.ACTUATOR, i))
 
         obs, r, done, _ = env.step(action)
-        assert env.observation_space.contains(obs)
-
-        assert not env._currently_failed()
-        assert np.shape(env._goal()) == np.shape(env.obs_to_goal(obs))
-
-        goal, obs_history = env.destructure_mlp_input(obs)
-        assert_equal(env._goal(), goal)
-        assert_equal(env._obs(), obs_history[-1])
-        assert_equal((goal, obs_history), env.destructure_mlp_input(env.mlp_input(goal, obs_history)))
-        assert_equal(obs, env.mlp_input(*env.destructure_mlp_input(obs)))
-        assert_equal(obs, env.change_goal(goal, obs))
-        assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
+        run_tests(env, obs)
 
         if done:
             env.reset()
             print('\nresetting')
         env.render(labels={'x': np.ravel(env._goal())})
+
+
+def run_tests(env, obs):
+    assert env.observation_space.contains(obs)
+    assert not env._currently_failed()
+    assert np.shape(env._goal()) == np.shape(env.obs_to_goal(obs))
+    goal, obs_history = env.destructure_mlp_input(obs)
+    assert_equal(env._goal(), goal)
+    assert_equal(env._obs(), obs_history[-1])
+    assert_equal((goal, obs_history), env.destructure_mlp_input(env.mlp_input(goal, obs_history)))
+    assert_equal(obs, env.mlp_input(*env.destructure_mlp_input(obs)))
+    assert_equal(obs, env.change_goal(goal, obs))
+    assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
 
 
 def assert_equal(val1, val2, atol=1e-5):

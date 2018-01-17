@@ -8,6 +8,7 @@ from mujoco import ObjType
 
 from environment.arm2pos import Arm2PosEnv
 from environment.base import distance_between
+from mouse_control import run_tests
 
 saved_pos = None
 
@@ -19,7 +20,6 @@ def run():
     while True:
         keypress = env.sim.get_last_key_press()
         if keypress == ' ':
-            # print(distance_between(env._gripper_pos(), env._goal[0]))
             print(env._gripper_pos())
         try:
             action = int(keypress)
@@ -28,6 +28,7 @@ def run():
             action = 0
         assert isinstance(action, int)
         obs, r, done, _ = env.step(action)
+        run_tests(env, obs)
         total_r += r
 
         if done:
