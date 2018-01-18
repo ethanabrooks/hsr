@@ -31,11 +31,6 @@ class BaseEnv(utils.EzPickle, Server):
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
 
-        # required for gym
-        self.metadata = {}
-        self.reward_range = -np.inf, np.inf
-        self.spec = None
-
         fullpath = os.path.join(os.path.dirname(__file__), xml_filepath)
         if not fullpath.startswith("/"):
             fullpath = os.path.join(os.path.dirname(__file__),
