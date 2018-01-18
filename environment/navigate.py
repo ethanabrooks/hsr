@@ -11,7 +11,6 @@ from environment.base import BaseEnv, escaped, quaternion2euler, at_goal, point_
 class NavigateEnv(BaseEnv):
     def __init__(self,
                  geofence=.3,
-                 tb_dir=None,
                  goal_log_file=None,
                  max_steps=6000,
                  history_len=4,
@@ -19,41 +18,13 @@ class NavigateEnv(BaseEnv):
                  use_camera=True,
                  continuous_actions=False,
                  neg_reward=False,
-                 mask_xy=False,
                  steps_per_action=20,
                  action_multiplier=1):
-
-        self._goal_log_file = goal_log_file
-        self._continuous_actions = continuous_actions
-        self._action_multiplier = action_multiplier
-        self._body_radius = 0.25
-        self._mask_xy = mask_xy
-        if continuous_actions:
-            self.action_space = Box(-1, 1, 3)
-        else:
-            self.action_space = Discrete(5)
-
-        image_space = Box(
-            0, 1, shape=(list(image_dimensions) + [3 * history_len]))
-        pos_space, orientation_space = [
-            Box(-1, 1, shape=(2 * history_len)) for _ in range(2)
-        ]
-        pos_orientation_space = Box(-1, 1, shape=(4 * history_len))
-        goal_space = [Box(-1, 1, shape=2)]
-
-        if use_camera:
-            self.observation_space = Tuple(
-                [pos_orientation_space, image_space, goal_space])
-        else:
-            #observation_space = Tuple([pos_space, orientation_space])
-            self.observation_space = Box(-1, 1, shape=[pos_orientation_space.shape[0] + goal_space[0].shape[0]])
-            #print('obs_shape', observation_space.shape)
 
         super().__init__(
             geofence=geofence,
             max_steps=max_steps,
             xml_filepath=join('models', 'navigate', 'world.xml'),
-            tb_dir=tb_dir,
             image_dimensions=image_dimensions,
             use_camera=use_camera,
             neg_reward=neg_reward,
@@ -66,8 +37,29 @@ class NavigateEnv(BaseEnv):
         self._world_offset = self.sim.get_geom_pos(self._floor_id)[:2]
         self._world_upper_bound = self._world_offset + self._world_size
         self._world_lower_bound = self._world_offset - self._world_size
-        self._goal = None
+        self._goal_log_file = goal_log_file
+        self._continuous_actions = continuous_actions
+        self._action_multiplier = action_multiplier
+        self._body_radius = 0.25
+
         self._set_new_goal()
+
+        if continuous_actions:
+            self.action_space = Box(-1, 1, 3)
+        else:
+            self.action_space = Discrete(5)
+
+        cnn_space = Box(
+            0, 1, shape=(list(image_dimensions) + [3 * history_len]))
+        obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
+        mlp_space = Box(-1, 1, shape=obs_size)
+
+        if use_camera:
+            self.observation_space = Tuple([mlp_space, cnn_space])
+        else:
+            self.observation_space = Box(-1, 1, shape=mlp_space.shape)
+
+        # log positions
         self.log_start_pos = None
         if self._goal_log_file:
             try:
@@ -78,25 +70,13 @@ class NavigateEnv(BaseEnv):
     def server_values(self):
         return self.sim.qpos, self.sim.qvel, self._goal
 
-    def _currently_failed(self):
-        return escaped(self._pos(), self._world_upper_bound,
-                       self._world_lower_bound)
+    def reset_qpos(self):
+        qpos = np.append(self._get_new_pos(), [0])
+        self.log_start_pos = qpos
+        return qpos
 
-    # TODO this is a workaround. we need to fix this up later.
-    #def obs_to_goal(self, data=None, images=None):
-    #    pos, orientation = self._destructure_obs(data, images)
-    #    return self._vectorize_goal(pos)
-
-    def obs_to_goal(self, obs):
-        without_goal = obs[:-2]
-        position_orientation = without_goal[-4:]
-        position = position_orientation[:2]
-        return position
-
-    def compute_new_obs(self, goal, obs):
-        without_goal = obs[:-2]
-        return np.concatenate([without_goal, goal], axis=0)
-
+    def _set_new_goal(self):
+        self._goal = self._get_new_pos()
 
     def _obs(self):
         obs = [self._pos(), self._orientation()]
@@ -104,13 +84,39 @@ class NavigateEnv(BaseEnv):
             obs += [self.image()]
         return obs
 
-    def _heading(self):
+    def _goal(self):
+        return self.__goal
+
+    def _currently_failed(self):
+        return escaped(self._pos(), self._world_upper_bound,
+                       self._world_lower_bound)
+
+    def _orientation(self):
         quat = self.sim.get_body_xquat(self._body_name)
         x, y, z = quaternion2euler(*quat)
-        return z
+        return np.array([np.cos(z), np.sin(z)])
 
     def _pos(self):
         return self.sim.get_body_xpos(self._body_name)[:2]
+
+    def _compute_terminal(self, goal, obs):
+        goal, = goal
+        pos = obs[0]
+        return at_goal(pos, goal, self._geofence)
+
+    def _compute_reward(self, goal, obs):
+        pos = obs[0]
+        if at_goal(pos, goal, self._geofence):
+            return 1
+        elif escaped(pos, self._world_upper_bound, self._world_lower_bound):
+            return -1
+        elif self._neg_reward:
+            return -0.01
+        else:
+            return 0
+
+    def _obs_to_goal(self, obs):
+        return obs[0]
 
     def step(self, action):
         if self._continuous_actions:
@@ -133,58 +139,11 @@ class NavigateEnv(BaseEnv):
             self._write_log_file()
         return obs, reward, done, meta
 
-    def reset_qpos(self):
-        qpos = np.append(self._get_new_pos(), [0])
-        self.log_start_pos = qpos
-        return qpos
-
-    def _compute_terminal(self):
-        return at_goal(self._pos(), self.goal(), self._geofence)
-
-    def _orientation(self):
-        heading = self._heading()
-        return np.array([np.cos(heading), np.sin(heading)])
-
-    def _current_reward(self):
-        return self._compute_reward(self.goal(), self._pos())
-
-    def _compute_reward(self, goal, xy):
-        if at_goal(xy, goal, self._geofence):
-            return 1
-        elif escaped(xy, self._world_upper_bound, self._world_lower_bound):
-            return -1
-        elif self._neg_reward:
-            return -0.01
-        else:
-            return 0
-
-    def compute_terminal(self, goal, mlp_input=None, cnn_input=None):
-        if cnn_input:
-            raise NotImplemented
-        pos, orientation = self._destructure_obs(mlp_input)
-        return at_goal(pos, goal, self._geofence)
-
     def at_goal(self, goal, new_obs):
         without_goal = new_obs[:-2]
         position_orientation = without_goal[-4:]
         position = position_orientation[:2]
         return at_goal(position, goal, self._geofence)
-
-    # TODO HAXXXX
-    #def compute_reward(self, goal, mlp_input=None, cnn_input=None):
-    #    if cnn_input:
-    #        raise NotImplemented
-    #    pos, orientation = self._destructure_obs(mlp_input)
-    #    return self._compute_reward(goal, pos)
-
-    def compute_reward(self, goal, obs):
-        without_goal = obs[:-2]
-        position_orientation = without_goal[-4:]
-        position = position_orientation[:2]
-        return self._compute_reward(goal, position)
-
-    def _set_new_goal(self):
-        self._goal = self._get_new_pos()
 
     def _get_new_pos(self, rel_to=None):
         while True:
@@ -225,10 +184,3 @@ class NavigateEnv(BaseEnv):
                                      self.goal(), self._pos()])
             with open(self._goal_log_file, 'a') as f:
                 f.write(' '.join(map(str, values)))
-
-    def _vectorize_goal(self, *goal):
-        return np.array(goal)
-
-    def _destructure_goal(self, goal):
-        return tuple(goal)
-
