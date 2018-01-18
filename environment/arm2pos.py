@@ -23,7 +23,7 @@ class Arm2PosEnv(BaseEnv):
 
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name, left_finger_name.replace('_l_', '_r_')]
-        self.__goal = [self._new_goal()]
+        self._set_new_goal()
         self._action_multiplier = action_multiplier
         self._continuous = continuous
         obs_shape = history_len * np.size(self._obs()) + np.size(self._goal())
@@ -38,19 +38,19 @@ class Arm2PosEnv(BaseEnv):
         return self.init_qpos
 
     def _set_new_goal(self):
-        self.__goal = [self._new_goal()]
-
-    def _new_goal(self):
         high = np.array([0.11725151,  0.07799973,  0.50806907])
         low = np.array([-0.27217179,  0.07799973,  0.50806907])
         goal = np.random.uniform(low, high)
         assert np.all(low <= goal) and np.all(goal <= high)
-        return goal
+        self.__goal = goal
 
     def _obs(self):
         return [self.sim.qpos]
 
     def _goal(self):
+        return [self.__goal]
+
+    def goal_3d(self):
         return self.__goal
 
     def _currently_failed(self):

@@ -42,7 +42,7 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
-        self._history_buffer += [self._obs()]
+        self._history_buffer += [self._obs()] * history_len
         self.observation_space = self.action_space = None
 
     def server_values(self):
@@ -163,6 +163,9 @@ class BaseEnv(utils.EzPickle, Server):
         raise NotImplemented
 
     def _goal(self):
+        raise NotImplemented
+
+    def goal_3d(self):
         raise NotImplemented
 
     def _currently_failed(self):

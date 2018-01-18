@@ -6,6 +6,7 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
+from environment.arm2pos import Arm2PosEnv
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
@@ -32,7 +33,8 @@ def run(port, value_tensor=None, sess=None):
         if moving:
             action[i] += env.sim.get_mouse_dy()
         else:
-            for name in ['wrist_roll_motor']:  # , 'slide_x_motor', 'slide_y_motor']:
+            # for name in ['wrist_roll_motor']:
+            for name in ['slide_x_motor', 'slide_y_motor']:
                 k = env.sim.name2id(ObjType.ACTUATOR, name)
                 action[k] = 0
         if lastkey is ' ':
@@ -55,7 +57,8 @@ def run(port, value_tensor=None, sess=None):
             env.reset()
             print('\nresetting', total_reward)
             total_reward = 0
-        env.render(labels={'x': np.ravel(env._goal()[0])})
+
+        env.render(labels={'x': env.goal_3d()})
 
 
 def run_tests(env, obs):
@@ -68,7 +71,10 @@ def run_tests(env, obs):
     assert_equal((goal, obs_history), env.destructure_mlp_input(env.mlp_input(goal, obs_history)))
     assert_equal(obs, env.mlp_input(*env.destructure_mlp_input(obs)))
     assert_equal(obs, env.change_goal(goal, obs))
-    assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
+    try:
+        assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
+    except AttributeError:
+        pass
 
 
 def assert_equal(val1, val2, atol=1e-5):

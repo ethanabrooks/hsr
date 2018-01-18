@@ -52,12 +52,13 @@ class NavigateEnv(BaseEnv):
         cnn_space = Box(
             0, 1, shape=(list(image_dimensions) + [3 * history_len]))
         obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
-        mlp_space = Box(-1, 1, shape=obs_size)
+        mlp_space = Box(np.min(self._world_lower_bound),
+                        np.min(self._world_upper_bound), shape=obs_size)
 
         if use_camera:
             self.observation_space = Tuple([mlp_space, cnn_space])
         else:
-            self.observation_space = Box(-1, 1, shape=mlp_space.shape)
+            self.observation_space = mlp_space
 
         # log positions
         self.log_start_pos = None
@@ -76,7 +77,7 @@ class NavigateEnv(BaseEnv):
         return qpos
 
     def _set_new_goal(self):
-        self._goal = self._get_new_pos()
+        self.__goal = self._get_new_pos()
 
     def _obs(self):
         obs = [self._pos(), self._orientation()]
@@ -85,7 +86,10 @@ class NavigateEnv(BaseEnv):
         return obs
 
     def _goal(self):
-        return self.__goal
+        return [self.__goal]
+
+    def goal_3d(self):
+        return np.append(self.__goal, 0)
 
     def _currently_failed(self):
         return escaped(self._pos(), self._world_upper_bound,
@@ -116,7 +120,7 @@ class NavigateEnv(BaseEnv):
             return 0
 
     def _obs_to_goal(self, obs):
-        return obs[0]
+        return [obs[0]]
 
     def step(self, action):
         if self._continuous_actions:
@@ -184,3 +188,4 @@ class NavigateEnv(BaseEnv):
                                      self.goal(), self._pos()])
             with open(self._goal_log_file, 'a') as f:
                 f.write(' '.join(map(str, values)))
+

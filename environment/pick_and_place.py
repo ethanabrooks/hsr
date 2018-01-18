@@ -56,6 +56,9 @@ class PickAndPlaceEnv(BaseEnv):
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
 
+    def goal_3d(self):
+        return self._goal()[0]
+
     def _currently_failed(self):
         return False
 
