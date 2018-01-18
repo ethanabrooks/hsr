@@ -45,11 +45,12 @@ class PickAndPlaceEnv(BaseEnv):
         pass
 
     def _obs(self):
+        return self.sim.qpos, [self._block_lifted()]
+
+    def _block_lifted(self):
         x, y, z = self.sim.get_body_xpos(self._goal_block_name)
         block_lifted = z - self._resting_block_height > self._min_lift_height
-        if block_lifted:
-            print('Lifted!')
-        return self.sim.qpos, [block_lifted]
+        return block_lifted
 
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
@@ -102,4 +103,7 @@ class PickAndPlaceEnv(BaseEnv):
         # necessary because np.insert can't append multiple values to end:
         mirroring_indexes = np.minimum(mirroring_indexes, self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
-        return super().step(action)
+        return_vals = super().step(action)
+        if self._block_lifted():
+            print('Lifted!')
+        return return_vals
