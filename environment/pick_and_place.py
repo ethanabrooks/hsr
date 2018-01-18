@@ -16,7 +16,7 @@ class PickAndPlaceEnv(BaseEnv):
     def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1, action_multiplier=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
-        self._min_lift_height = 0.02
+        self._min_lift_height = 0.05
 
         super().__init__(
             geofence=geofence,
@@ -67,6 +67,7 @@ class PickAndPlaceEnv(BaseEnv):
         goal_pos, should_lift = goal
         qpos, block_lifted = obs
         if at_goal(self._gripper_pos(qpos), goal_pos, self._geofence) and block_lifted == should_lift:
+            print('Lifted!')
             return 1
         elif self._neg_reward:
             return -.0001
@@ -104,6 +105,4 @@ class PickAndPlaceEnv(BaseEnv):
         mirroring_indexes = np.minimum(mirroring_indexes, self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return_vals = super().step(action)
-        if self._block_lifted():
-            print('Lifted!')
         return return_vals
