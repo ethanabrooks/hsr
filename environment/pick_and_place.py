@@ -68,7 +68,6 @@ class PickAndPlaceEnv(BaseEnv):
         goal_pos, should_lift = goal
         qpos, block_lifted = obs
         if at_goal(self._gripper_pos(qpos), goal_pos, self._geofence) and block_lifted == should_lift:
-            print('Lifted!')
             return 1
         elif self._neg_reward:
             return -.0001
