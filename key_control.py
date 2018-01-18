@@ -6,19 +6,20 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
-from environment.arm2pos import Arm2Pos
+from environment.arm2pos import Arm2PosEnv
 from environment.base import distance_between
+from mouse_control import run_tests
 
 saved_pos = None
 
 
 def run():
-    env = Arm2Pos(continuous=False, max_steps=9999999, neg_reward=True, use_camera=False, action_multiplier=.01)
+    env = Arm2PosEnv(continuous=False, max_steps=9999999, neg_reward=True, action_multiplier=.1)
+    total_r = 0
 
     while True:
         keypress = env.sim.get_last_key_press()
         if keypress == ' ':
-            # print(distance_between(env._gripper_pos(), env._goal[0]))
             print(env._gripper_pos())
         try:
             action = int(keypress)
@@ -27,16 +28,17 @@ def run():
             action = 0
         assert isinstance(action, int)
         obs, r, done, _ = env.step(action)
-        env.render(labels={'x': env._goal[0]})
+        run_tests(env, obs)
+        total_r += r
 
         if done:
+            print(total_r)
+            total_r = 0
             env.reset()
             print('\nresetting')
 
+        env.render(labels={'x': env._goal()[0]})
         assert not env._currently_failed()
-        assert_equal(env._goal, env._destructure_goal(env.goal()))
-        assert_equal(env._obs(), env._destructure_obs(env.obs()))
-        assert_equal(env._gripper_pos(), env._gripper_pos(env.sim.qpos), atol=1e-2)
 
 
 def assert_equal(val1, val2, atol=1e-5):

@@ -11,11 +11,14 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
+from environment.arm2pos import Arm2PosEnv
+from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 import gym
 import tensorflow as tf
 from environment.navigate import NavigateEnv
 from mpi4py import MPI
+
 
 def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     # Configure things.
@@ -27,14 +30,19 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     if env_id == 'navigate':
         env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
     elif env_id == 'toy':
-        #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
+        # env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
+        #                                               obstacle_mode=continuous_gridworld.NO_OBJECTS)
         env = continuous_gridworld2.ContinuousGridworld2()
+    elif env_id == 'arm2pos':
+        env = Arm2PosEnv(continuous=True, max_steps=500)
+    elif env_id == 'pick-and-place':
+        env = PickAndPlaceEnv(max_steps=500)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
     gym.logger.setLevel(logging.WARN)
 
-    if evaluation and rank==0:
+    if evaluation and rank == 0:
         eval_env = gym.make(env_id)
         eval_env = bench.Monitor(eval_env, os.path.join(logger.get_dir(), 'gym_eval'))
         env = bench.Monitor(env, None)
@@ -44,6 +52,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     # Parse noise_type
     action_noise = None
     param_noise = None
+
     nb_actions = env.action_space.shape[-1]
     for current_noise_type in noise_type.split(','):
         current_noise_type = current_noise_type.strip()
@@ -57,7 +66,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
             action_noise = NormalActionNoise(mu=np.zeros(nb_actions), sigma=float(stddev) * np.ones(nb_actions))
         elif 'ou' in current_noise_type:
             _, stddev = current_noise_type.split('_')
-            action_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(nb_actions), sigma=float(stddev) * np.ones(nb_actions))
+            action_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(nb_actions),
+                                                        sigma=float(stddev) * np.ones(nb_actions))
         else:
             raise RuntimeError('unknown noise type "{}"'.format(current_noise_type))
 
@@ -111,7 +121,8 @@ def parse_args():
     parser.add_argument('--nb-train-steps', type=int, default=50)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-eval-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
-    parser.add_argument('--noise-type', type=str, default='adaptive-param_0.2')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
+    parser.add_argument('--noise-type', type=str,
+                        default='adaptive-param_0.2')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
     boolean_flag(parser, 'evaluation', default=False)
@@ -119,7 +130,7 @@ def parse_args():
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
     # they agree with the other parameters
     if args.num_timesteps is not None:
-        assert(args.num_timesteps == args.nb_epochs * args.nb_epoch_cycles * args.nb_rollout_steps)
+        assert (args.num_timesteps == args.nb_epochs * args.nb_epoch_cycles * args.nb_rollout_steps)
     dict_args = vars(args)
     del dict_args['num_timesteps']
     return dict_args

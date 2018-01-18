@@ -138,7 +138,7 @@ class NavigateEnv(BaseEnv):
         self.log_start_pos = qpos
         return qpos
 
-    def _terminal(self):
+    def _compute_terminal(self):
         return at_goal(self._pos(), self.goal(), self._geofence)
 
     def _orientation(self):

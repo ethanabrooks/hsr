@@ -2,7 +2,7 @@
     <body name="base_link" pos="-.46 0 0">
         <site name="touchsensor_site" size="0.25 .5" pos="0 0 .5" type="cylinder" rgba="1 0 0 0"/>
         <joint axis="1 0 0" damping="1000" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
-        <joint axis="0 1 0" damping="1000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
+        <!--<joint axis="0 1 0" damping="1000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>-->
         <!--<joint axis="0 0 1" damping="1000" name="turn" pos="0 0 0" type="hinge"/>-->
         <inertial pos="-0.025978 -0.005498 0.17633" quat="0.995796 0.0411155 -0.0685908 0.0446655" mass="50"
                   diaginertia="0.378627 0.344913 0.145159"/>
@@ -10,7 +10,7 @@
         <geom type="mesh" group="1" mesh="body_light"/>
         <geom type="mesh" group="1" mesh="torso_base"/>
         <geom type="mesh" mesh="base"/>
-        <body name="base_roll_link" pos="0 0 0">
+        <body name="base_roll_link" pos="0 0hsr">
             <inertial pos="-0.019482 0.002191 0.071013" quat="-0.163088 0.695987 0.176074 0.676759" mass="10.2394"
                       diaginertia="0.145076 0.0958414 0.0713624"/>
             <!--<joint name="base_roll_joint" pos="0 0 0" axis="0 0 1" />-->
@@ -128,7 +128,8 @@
             <body name="arm_flex_link" pos="0.141 0.078 0">
                 <inertial pos="0.000632 0.006404 0.118529" quat="0.999966 -0.00826681 1.5355e-06 -1.33584e-06"
                           mass="1.33929" diaginertia="2.51222 2.51222 2.51222"/>
-                <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-55 0" damping="100"/>
+                <!--<joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-55 0" damping="100"/>-->
+                <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-55 -50" damping="100"/>
                 <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="arm_flex_light"/>
                 <geom type="mesh" mesh="arm_flex"/>
                 <body name="arm_roll_link" pos="0.005 0 0.345">

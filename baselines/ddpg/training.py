@@ -15,11 +15,12 @@ from mpi4py import MPI
 
 def replay_with_goal(traj, goal, env):
     for (obs, action, r, new_obs, done) in traj:
-        obs_ = env.compute_new_obs(goal, obs)
+        obs_ = env.change_goal(goal, obs)
+        assert np.shape(obs_) == np.shape(obs)
         action_ = action
         r_ = env.compute_reward(goal, new_obs)
-        new_obs_ = env.compute_new_obs(goal, new_obs)
-        done_ = env.at_goal(goal, new_obs)
+        new_obs_ = env.change_goal(goal, new_obs)
+        done_ = env.compute_terminal(new_obs)
         yield obs_, action_, r_, new_obs_, done_
         if done_:
             break

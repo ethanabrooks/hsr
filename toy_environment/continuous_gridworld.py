@@ -440,7 +440,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         goal_dist = np.sqrt(np.sum(np.square(agent_position - goal)))
         return goal_dist < self.closeness_cutoff
 
-    def compute_new_obs(self, goal, obs):
+    def update_with_new_goal(self, goal, obs):
         state_without_goal = obs[:-2]
         return np.concatenate([state_without_goal, goal], axis=0)
 
