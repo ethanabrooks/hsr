@@ -16,7 +16,7 @@ class PickAndPlaceEnv(BaseEnv):
     def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1, action_multiplier=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
-        self._min_lift_height = 0.05
+        self._min_lift_height = 0.02
 
         super().__init__(
             geofence=geofence,
@@ -104,5 +104,4 @@ class PickAndPlaceEnv(BaseEnv):
         # necessary because np.insert can't append multiple values to end:
         mirroring_indexes = np.minimum(mirroring_indexes, self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
-        return_vals = super().step(action)
-        return return_vals
+        return super().step(action)
