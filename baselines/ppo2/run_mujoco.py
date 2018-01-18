@@ -23,7 +23,7 @@ def train(env_id, num_timesteps, seed):
         if env_id == 'toy':
             #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
             #                                           obstacle_mode=continuous_gridworld.NO_OBJECTS)
-            env = continuous_gridworld2.ContinuousGridworld2()
+            env = continuous_gridworld2.ContinuousGridworld2(lambda x: [])
         elif env_id == 'navigate':
             env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
         elif env_id == 'arm2pos':

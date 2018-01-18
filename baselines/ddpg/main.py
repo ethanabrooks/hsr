@@ -16,7 +16,6 @@ import gym
 import tensorflow as tf
 from environment.navigate import NavigateEnv
 from mpi4py import MPI
-
 def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     # Configure things.
     rank = MPI.COMM_WORLD.Get_rank()
@@ -28,7 +27,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
     elif env_id == 'toy':
         #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
-        env = continuous_gridworld2.ContinuousGridworld2()
+        from toy_environment import room_obstacle_list
+        env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
@@ -46,7 +46,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     param_noise = None
     nb_actions = env.action_space.shape[-1]
     for current_noise_type in noise_type.split(','):
-        current_noise_type = current_noise_type.strip()
+        dcurrent_noise_type = current_noise_type.strip()
         if current_noise_type == 'none':
             pass
         elif 'adaptive-param' in current_noise_type:
@@ -65,6 +65,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     memory = Memory(limit=int(1e6), action_shape=env.action_space.shape, observation_shape=env.observation_space.shape)
     critic = Critic(layer_norm=layer_norm)
     actor = Actor(nb_actions, layer_norm=layer_norm)
+
+
 
     # Seed everything to make things reproducible.
     seed = seed + 1000000 * rank
@@ -111,9 +113,11 @@ def parse_args():
     parser.add_argument('--nb-train-steps', type=int, default=50)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-eval-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
-    parser.add_argument('--noise-type', type=str, default='adaptive-param_0.2')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
+    parser.add_argument('--noise-type', type=str, default='ou_0.2')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
+    parser.add_argument('--restore-path', type=str, default=None)
+    parser.add_argument('--save-path', type=str, default=None)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
