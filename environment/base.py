@@ -38,8 +38,7 @@ class BaseEnv(utils.EzPickle, Server):
 
         fullpath = os.path.join(os.path.dirname(__file__), xml_filepath)
         if not fullpath.startswith("/"):
-            fullpath = os.path.join(os.path.dirname(__file__),
-                                    "assets", fullpath)
+            fullpath = os.path.join(os.path.dirname(__file__), "assets", fullpath)
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
