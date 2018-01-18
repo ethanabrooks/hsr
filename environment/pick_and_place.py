@@ -16,7 +16,7 @@ class PickAndPlaceEnv(BaseEnv):
     def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1, action_multiplier=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
-        self._min_lift_height = 0.05
+        self._min_lift_height = 0.02
 
         super().__init__(
             geofence=geofence,
@@ -39,6 +39,7 @@ class PickAndPlaceEnv(BaseEnv):
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
     def reset_qpos(self):
+        self.init_qpos[3:7] = np.random.random(4)
         return self.init_qpos
 
     def _set_new_goal(self):

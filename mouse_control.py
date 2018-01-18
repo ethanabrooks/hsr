@@ -6,7 +6,6 @@ import argparse
 import numpy as np
 from mujoco import ObjType
 
-from environment.arm2pos import Arm2PosEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
 saved_pos = None
@@ -17,10 +16,9 @@ def run(port, value_tensor=None, sess=None):
     #                   use_camera=False, action_multiplier=.1, image_dimensions=image_dimensions[:2])
 
     # env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    env = PickAndPlaceEnv(max_steps=9999999)
+    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.0001)
 
     shape, = env.action_space.shape
-    print(shape)
 
     i = 0
     action = np.zeros(shape)
@@ -30,10 +28,10 @@ def run(port, value_tensor=None, sess=None):
         lastkey = env.sim.get_last_key_press()
         if moving:
             action[i] += env.sim.get_mouse_dy()
-        else:
-            for name in ['slide_x_motor', 'slide_y_motor', 'turn_motor']:
-                k = env.sim.name2id(ObjType.ACTUATOR, name)
-                action[k] = 0
+        # else:
+            # for name in ['slide_x_motor', 'slide_y_motor', 'turn_motor']:
+            #     k = env.sim.name2id(ObjType.ACTUATOR, name)
+            #     action[k] = 0
         if lastkey is ' ':
             moving = not moving
             print('\rmoving:', moving)
@@ -74,7 +72,6 @@ def assert_equal(val1, val2, atol=1e-5):
             assert_equal(a, b, atol=atol)
     except TypeError:
         assert np.allclose(val1, val2, atol=atol), "{} vs. {}".format(val1, val2)
-
 
 
 if __name__ == '__main__':
