@@ -24,15 +24,16 @@ def run(port, value_tensor=None, sess=None):
     i = 0
     action = np.zeros(shape)
     moving = False
+    total_reward = 0
 
     while True:
         lastkey = env.sim.get_last_key_press()
         if moving:
             action[i] += env.sim.get_mouse_dy()
-        # else:
-            # for name in ['slide_x_motor', 'slide_y_motor', 'turn_motor']:
-            #     k = env.sim.name2id(ObjType.ACTUATOR, name)
-            #     action[k] = 0
+        else:
+            for name in ['wrist_roll_motor']:  # , 'slide_x_motor', 'slide_y_motor']:
+                k = env.sim.name2id(ObjType.ACTUATOR, name)
+                action[k] = 0
         if lastkey is ' ':
             moving = not moving
             print('\rmoving:', moving)
@@ -46,11 +47,13 @@ def run(port, value_tensor=None, sess=None):
                 print(env.sim.id2name(ObjType.ACTUATOR, i))
 
         obs, r, done, _ = env.step(action)
+        total_reward += r
         run_tests(env, obs)
 
         if done:
             env.reset()
-            print('\nresetting')
+            print('\nresetting', total_reward)
+            total_reward = 0
         env.render(labels={'x': np.ravel(env._goal()[0])})
 
 
