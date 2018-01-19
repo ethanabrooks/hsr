@@ -25,7 +25,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             self.screen = pygame.Surface((image_size, image_size))
 
         self.max_action_step = max_action_step
-        self.dist_cutoff = 0.1
+        self.dist_cutoff = 0.2
         self.max_time_steps = max_time_steps
         self.time_step = 0
 
@@ -110,7 +110,12 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.screen.fill((255,255,255))
         x_int = int(x*self.image_size)
         y_int = int(y*self.image_size)
+        x_goal, y_goal = (self.goal[0] + 1) / 2, (self.goal[1] + 1)/2
+        x_goal_int = int(x_goal * self.image_size)
+        y_goal_int = int(y_goal * self.image_size)
         pygame.draw.circle(self.screen, (0, 0, 0), (x_int, y_int), 3)
+        pygame.draw.circle(self.screen, (255, 0, 0), (x_goal_int, y_goal_int), 3)
+
         for obs in self.obstacles:
             obs.draw(self.screen, (0,0,0))
         if self.visualize:

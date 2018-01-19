@@ -11,8 +11,8 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
-from environment.arm2pos import Arm2PosEnv
-from environment.pick_and_place import PickAndPlaceEnv
+#from environment.arm2pos import Arm2PosEnv
+#from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 import gym
 import tensorflow as tf
@@ -34,9 +34,11 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         from toy_environment import room_obstacle_list
         env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
     elif env_id == 'arm2pos':
-        env = Arm2PosEnv(continuous=True, max_steps=500)
+        #env = Arm2PosEnv(continuous=True, max_steps=500)
+        pass
     elif env_id == 'pick-and-place':
-        env = PickAndPlaceEnv(max_steps=500)
+        #env = PickAndPlaceEnv(max_steps=500)
+        pass
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
