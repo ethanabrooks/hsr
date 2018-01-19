@@ -11,7 +11,7 @@ setup(name='baselines',
                 if package.startswith('baselines')
                 or package.startswith('environment')],
       install_requires=[
-          'gym[mujoco,atari,classic_control]',
+          'gym[atari,classic_control]',
           'scipy',
           'tqdm',
           'joblib',
