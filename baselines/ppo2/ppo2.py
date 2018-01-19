@@ -118,9 +118,9 @@ class Runner(object):
             mb_rewards.append(rewards)
 
             # render in slow-mo
-            if self.restore:
-                while time.time() - tick < .001:
-                    self.env.render()
+            # if self.restore:
+            #     while time.time() - tick < .001:
+            #         self.env.render()
 
         #batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
@@ -159,7 +159,7 @@ def constfn(val):
         return val
     return f
 
-def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr, restore,
+def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr, restore_path,
             vf_coef=0.5,  max_grad_norm=0.5, gamma=0.99, lam=0.95, 
             log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
             save_interval=0):
@@ -184,12 +184,17 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr, restore,
         with open(osp.join(logger.get_dir(), 'make_model.pkl'), 'wb') as fh:
             fh.write(cloudpickle.dumps(make_model))
     model = make_model()
+
+    restore = restore_path is not None
+
     runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, restore=restore)
 
     epinfobuf = deque(maxlen=100)
     tfirststart = time.time()
 
     nupdates = total_timesteps//nbatch
+    if restore_path:
+        model.load(restore_path)
     for update in range(1, nupdates+1):
         assert nbatch % nminibatches == 0
         nbatch_train = nbatch // nminibatches
