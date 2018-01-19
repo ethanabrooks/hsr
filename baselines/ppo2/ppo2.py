@@ -111,9 +111,9 @@ class Runner(object):
             mb_rewards.append(rewards)
 
             # render in slow-mo
-            if self.render:
-                while time.time() - tick < .001:
-                    self.env.render()
+            # if self.render:
+            #     while time.time() - tick < .1:
+            #         self.env.render()
 
         # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
