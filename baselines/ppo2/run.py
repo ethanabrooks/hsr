@@ -42,8 +42,7 @@ def train(env_id, num_timesteps, seed, policy, render, restore_path, save_path):
                 env = gym.make(env_id)
             env.seed(seed + rank)
             # return bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)),)
-            return gym.wrappers.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)),
-                                        video_callable=lambda episode_id: True)
+            return gym.wrappers.Monitor(env, '/tmp/ppo-video')
 
         return env_fn
 

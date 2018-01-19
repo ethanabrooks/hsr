@@ -40,6 +40,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
+    # env = gym.wrappers.Monitor(env, '/tmp/ddpg/', force=True)
     gym.logger.setLevel(logging.WARN)
 
     if evaluation and rank == 0:

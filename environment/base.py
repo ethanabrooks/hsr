@@ -32,7 +32,7 @@ class BaseEnv(utils.EzPickle, Server):
         self._image_dimensions = image_dimensions
 
         # required for OpenAI code
-        self.metadata = {}
+        self.metadata = {'render.modes': 'rgb_array'}
         self.reward_range = -np.inf, np.inf
         self.spec = None
 
@@ -48,7 +48,9 @@ class BaseEnv(utils.EzPickle, Server):
     def server_values(self):
         return self.sim.qpos, self.sim.qvel
 
-    def render(self, camera_name=None, labels=None):
+    def render(self, mode=None, camera_name=None, labels=None):
+        if mode == 'rgb_array':
+            return self.sim.render_offscreen(height=256, width=256)
         self.sim.render(camera_name, labels)
 
     def image(self, camera_name='rgb'):
