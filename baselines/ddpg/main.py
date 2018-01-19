@@ -89,6 +89,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     if rank == 0:
         start_time = time.time()
     del kwargs['tb_dir']
+    del kwargs['save_path']
     training.train(env=env, eval_env=eval_env, param_noise=param_noise,
                    action_noise=action_noise, actor=actor, critic=critic, memory=memory, **kwargs)
     env.close()
@@ -123,11 +124,14 @@ def parse_args():
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--noise-type', type=str, default='normal_0.05')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
+    parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
     # they agree with the other parameters
+    if args.save_path is not None:
+        print('Warning: saving is not implemented yet')
     if args.num_timesteps is not None:
         assert (args.num_timesteps == args.nb_epochs * args.nb_epoch_cycles * args.nb_rollout_steps)
     dict_args = vars(args)
