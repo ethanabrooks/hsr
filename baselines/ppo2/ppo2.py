@@ -69,8 +69,6 @@ class Model(object):
         self.step = act_model.step
         self.value = act_model.value
         self.initial_state = act_model.initial_state
-        # self.save = save
-        # self.load = load
         self.sess = sess
         tf.global_variables_initializer().run(session=sess)  # pylint: disable=E1101
 
