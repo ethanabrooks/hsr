@@ -1,11 +1,11 @@
-import os
-import time
-import joblib
-import numpy as np
 import os.path as osp
-import tensorflow as tf
-from baselines import logger
+import time
 from collections import deque
+
+import numpy as np
+import tensorflow as tf
+
+from baselines import logger
 from baselines.common import explained_variance
 
 
@@ -64,16 +64,16 @@ class Model(object):
 
         self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
 
-        def save(save_path):
-            ps = sess.run(params)
-            joblib.dump(ps, save_path)
+        # def save(save_path):
+        #     ps = sess.run(params)
+            # joblib.dump(ps, save_path)
 
-        def load(load_path):
-            loaded_params = joblib.load(load_path)
-            restores = []
-            for p, loaded_p in zip(params, loaded_params):
-                restores.append(p.assign(loaded_p))
-            sess.run(restores)
+        # def load(load_path):
+        #     loaded_params = joblib.load(load_path)
+        #     restores = []
+        #     for p, loaded_p in zip(params, loaded_params):
+        #         restores.append(p.assign(loaded_p))
+        #     sess.run(restores)
 
         self.train = train
         self.train_model = train_model
@@ -81,14 +81,15 @@ class Model(object):
         self.step = act_model.step
         self.value = act_model.value
         self.initial_state = act_model.initial_state
-        self.save = save
-        self.load = load
+        # self.save = save
+        # self.load = load
+        self.sess = sess
         tf.global_variables_initializer().run(session=sess)  # pylint: disable=E1101
 
 
 class Runner(object):
 
-    def __init__(self, *, env, model, nsteps, gamma, lam, restore):
+    def __init__(self, *, env, model, nsteps, gamma, lam, render):
         self.env = env
         self.model = model
         nenv = env.num_envs
@@ -99,7 +100,7 @@ class Runner(object):
         self.nsteps = nsteps
         self.states = model.initial_state
         self.dones = [False for _ in range(nenv)]
-        self.restore = restore
+        self.render = render
 
     def run(self):
         mb_obs, mb_rewards, mb_actions, mb_values, mb_dones, mb_neglogpacs = [], [], [], [], [], []
@@ -121,9 +122,9 @@ class Runner(object):
             mb_rewards.append(rewards)
 
             # render in slow-mo
-            # if self.restore:
-            #     while time.time() - tick < .001:
-            #         self.env.render()
+            if self.render:
+                while time.time() - tick < .001:
+                    self.env.render()
 
         # batch of steps to batch of rollouts
         mb_obs = np.asarray(mb_obs, dtype=self.obs.dtype)
@@ -168,7 +169,7 @@ def constfn(val):
 
 
 def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
-          restore_path, save_path,
+          render, restore_path, save_path,
           vf_coef=0.5, max_grad_norm=0.5, gamma=0.99, lam=0.95,
           log_interval=10, nminibatches=4, noptepochs=4, cliprange=0.2,
           save_interval=0):
@@ -192,22 +193,21 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
                                nbatch_train=nbatch_train,
                                nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
                                max_grad_norm=max_grad_norm)
-    if save_interval and logger.get_dir():
-        import cloudpickle
-        with open(osp.join(logger.get_dir(), 'make_model.pkl'), 'wb') as fh:
-            fh.write(cloudpickle.dumps(make_model))
+    # if save_interval and logger.get_dir():
+    #     import cloudpickle
+    #     with open(osp.join(logger.get_dir(), 'make_model.pkl'), 'wb') as fh:
+    #         fh.write(cloudpickle.dumps(make_model))
     model = make_model()
-
-    restore = restore_path is not None
-
-    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, restore=restore)
+    runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, render=render)
 
     epinfobuf = deque(maxlen=100)
     tfirststart = time.time()
 
     nupdates = total_timesteps // nbatch
+    saver = tf.train.Saver()
     if restore_path:
-        model.load(restore_path)
+        saver.restore(model.sess, restore_path)
+        print("Model restored from file:", restore_path)
     for update in range(1, nupdates + 1):
         assert nbatch % nminibatches == 0
         nbatch_train = nbatch // nminibatches
@@ -246,25 +246,27 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
         lossvals = np.mean(mblossvals, axis=0)
         tnow = time.time()
         fps = int(nbatch / (tnow - tstart))
-        if update % log_interval == 0 or update == 1 and not restore:
+        if update % log_interval == 0 or update == 1:
             ev = explained_variance(values, returns)
-            logger.logkv("serial_timesteps", update * nsteps)
-            logger.logkv("nupdates", update)
-            logger.logkv("total_timesteps", update * nbatch)
+            # logger.logkv("serial_timesteps", update * nsteps)
+            # logger.logkv("nupdates", update)
+            # logger.logkv("total_timesteps", update * nbatch)
             logger.logkv("fps", fps)
             logger.logkv("explained_variance", float(ev))
             logger.logkv('eprewmean', safemean([epinfo['r'] for epinfo in epinfobuf]))
             logger.logkv('eplenmean', safemean([epinfo['l'] for epinfo in epinfobuf]))
-            logger.logkv('time_elapsed', tnow - tfirststart)
+            # logger.logkv('time_elapsed', tnow - tfirststart)
             for (lossval, lossname) in zip(lossvals, model.loss_names):
                 logger.logkv(lossname, lossval)
             logger.dumpkvs()
-        if save_interval and (update % save_interval == 0 or update == 1) and logger.get_dir() and not restore:
-            checkdir = osp.join(logger.get_dir(), 'checkpoints')
-            os.makedirs(checkdir, exist_ok=True)
-            savepath = osp.join(checkdir, '%.5i' % update)
-            print('Saving to', savepath)
-            model.save(savepath)
+        if save_interval and (update % save_interval == 0 or update == 1) and save_path:
+            saver.save(model.sess, save_path)
+            print("Model saved in file:", save_path)
+            # checkdir = osp.join(logger.get_dir(), 'checkpoints')
+            # os.makedirs(checkdir, exist_ok=True)
+            # savepath = osp.join(checkdir, '%.5i' % update)
+            # print('Saving to', savepath)
+            # model.save(savepath)
     env.close()
 
 
