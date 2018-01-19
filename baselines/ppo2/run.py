@@ -8,7 +8,7 @@ from environment.arm2pos import Arm2PosEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
 
-def train(env_id, num_timesteps, seed, policy, restore_path):
+def train(env_id, num_timesteps, seed, policy, restore_path, save_path):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
     from baselines.common.vec_env.vec_frame_stack import VecFrameStack
@@ -52,7 +52,8 @@ def train(env_id, num_timesteps, seed, policy, restore_path):
                ent_coef=.01, save_interval=30,
                lr=lambda f: f * 2.5e-4,
                cliprange=lambda f: f * 0.1,
-               total_timesteps=int(num_timesteps * 1.1), restore_path=restore_path)
+               total_timesteps=int(num_timesteps * 1.1),
+               restore_path=restore_path, save_path=save_path)
 
 
 def main():
@@ -64,11 +65,11 @@ def main():
     parser.add_argument('--tb-dir', default=None)
     parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
     parser.add_argument('--restore-path', default=None)
+    parser.add_argument('--save-path', default=None)
     args = parser.parse_args()
-    if not args.restore_path:
-        logger.configure(dir=args.tb_dir, format_strs=args.output)
+    logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
-          policy=args.policy, restore_path=args.restore_path)
+          policy=args.policy, restore_path=args.restore_path, save_path=args.save_path)
 
 
 if __name__ == '__main__':
