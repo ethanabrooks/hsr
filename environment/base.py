@@ -1,12 +1,13 @@
 """Create gym environment for HSR"""
 
 import os
+from collections import deque
 
+import gym
 import mujoco
 import numpy as np
 from gym import utils
 
-from environment.history_buffer import HistoryBuffer
 from environment.server import Server
 
 
@@ -14,13 +15,12 @@ class BaseEnv(utils.EzPickle, Server):
     """ The environment """
 
     def __init__(self, geofence, max_steps,
-                 xml_filepath, history_len, tb_dir, image_dimensions, use_camera, neg_reward,
+                 xml_filepath, history_len, image_dimensions, use_camera, neg_reward,
                  steps_per_action, body_name,
                  frames_per_step=20):
         utils.EzPickle.__init__(self)
 
-        self._history_len = history_len
-        self._history_buffer = HistoryBuffer(history_len)
+        self._history_buffer = deque(maxlen=history_len)
         self._geofence = geofence
         self._body_name = body_name
         self._steps_per_action = steps_per_action
@@ -28,24 +28,22 @@ class BaseEnv(utils.EzPickle, Server):
         self._max_steps = max_steps
         self._use_camera = use_camera
         self._step_num = 0
-        self._tb_dir = tb_dir
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
-        self._goal = None
 
-        # required for gym
+        # required for OpenAI code
         self.metadata = {}
         self.reward_range = -np.inf, np.inf
         self.spec = None
 
         fullpath = os.path.join(os.path.dirname(__file__), xml_filepath)
         if not fullpath.startswith("/"):
-            fullpath = os.path.join(os.path.dirname(__file__),
-                                    "assets", fullpath)
+            fullpath = os.path.join(os.path.dirname(__file__), "assets", fullpath)
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
-        self._history_buffer.update(*self._obs())
+        self._history_buffer += [self._obs()] * history_len
+        self.observation_space = self.action_space = None
 
     def server_values(self):
         return self.sim.qpos, self.sim.qvel
@@ -57,16 +55,42 @@ class BaseEnv(utils.EzPickle, Server):
         return self.sim.render_offscreen(
             *self._image_dimensions, camera_name)
 
-    def obs(self):
-        return self._vectorize_obs(self._history_buffer.get())
+    def mlp_input(self, goal, history):
+        assert len(history) > 0
+        obs_history = [np.concatenate(x, axis=0) for x in history]
+        return np.concatenate(list(goal) + obs_history, axis=0)
 
-    def goal(self):
-        return self._vectorize_goal(*self._goal)
+    def destructure_mlp_input(self, mlp_input):
+        assert isinstance(self.observation_space, gym.Space)
+        assert self.observation_space.contains(mlp_input)
+        goal_shapes = [np.size(x) for x in self._goal()]
+        goal_size = sum(goal_shapes)
 
-    def obs_and_goal(self):
-        return np.concatenate([self.obs(), self.goal()], axis=0)
+        # split mlp_input into goal and obs pieces
+        goal_vector, obs_history = mlp_input[:goal_size], mlp_input[goal_size:]
+
+        history_len = len(self._history_buffer)
+        assert np.size(goal_vector) == goal_size
+        assert (np.size(obs_history)) % history_len == 0
+
+        # break goal vector into individual goals
+        goals = np.split(goal_vector, np.cumsum(goal_shapes), axis=0)[:-1]
+
+        # break history into individual observations in history
+        history = np.split(obs_history, history_len, axis=0)
+
+        obs_shapes = [np.size(x) for x in self._obs()]
+        obs = []
+
+        # break each observation in history into observation pieces
+        for o in history:
+            assert np.size(o) == sum(obs_shapes)
+            obs.append(np.split(o, np.cumsum(obs_shapes), axis=0)[:-1])
+
+        return goals, obs
 
     def step(self, action):
+        assert np.shape(action) == np.shape(self.sim.ctrl)
         self._step_num += 1
         step = 0
         reward = 0
@@ -77,17 +101,19 @@ class BaseEnv(utils.EzPickle, Server):
             reward += new_reward
             step += 1
 
-        self._history_buffer.update(*self._obs())
-        return self.obs_and_goal(), reward, done, {}
+        self._history_buffer.append(self._obs())
+        mlp_input = self.mlp_input(self._goal(), self._history_buffer)
+        return mlp_input, reward, done, {}
 
     def _step_inner(self, action):
+        assert np.shape(action) == np.shape(self.sim.ctrl)
         self.sim.ctrl[:] = action
         for _ in range(self._frames_per_step):
             self.sim.step()
 
         hit_max_steps = self._step_num >= self._max_steps
         done = False
-        if self._terminal():
+        if self._compute_terminal(self._goal(), self._obs()):
             # print('terminal')
             done = True
         elif hit_max_steps:
@@ -109,43 +135,10 @@ class BaseEnv(utils.EzPickle, Server):
         self.sim.qpos[:] = qpos
         self.sim.qvel[:] = qvel
         self.sim.forward()
+        return self.mlp_input(self._goal(), self._history_buffer)
 
-        self._history_buffer.reset()
-        self._history_buffer.update(*self._obs())
-        return self.obs_and_goal()
-
-    def _vectorize_obs(self, obs_history):
-        """
-        :param obs_history: values corresponding to output of self._obs_history
-        :return: tuple of (values for cnn, values for mlp, goal)
-        """
-        mlp_history = [x for x in obs_history if len(x.shape) <= 1]
-        mlp_array = np.concatenate(mlp_history, axis=-1).flatten()
-        if self._use_camera:
-            cnn_history = [x for x in obs_history if len(x.shape) > 1]
-            cnn_array = np.concatenate(cnn_history, axis=-1)
-            return mlp_array, cnn_array
-        else:
-            return mlp_array
-
-    def _destructure_obs(self, mlp_input=None, cnn_input=None):
-        shapes = self._history_buffer.shapes
-        if cnn_input is not None:
-            raise NotImplemented
-        if mlp_input is not None:
-            assert isinstance(mlp_input, np.ndarray), mlp_input
-            mlp_shapes = [1 if len(shape) == 0 else shape[0]
-                          for shape in shapes
-                          if len(shape) <= 1]
-            mlp_shapes_over_history = np.repeat(mlp_shapes, self._history_len)
-            assert mlp_input.size == sum(mlp_shapes_over_history), \
-                'mlp_input should not include `goal`.'
-            indices = np.cumsum(mlp_shapes_over_history)
-            raw_elements = np.split(mlp_input, indices)[:-1]
-            by_type = np.split(np.array(raw_elements), len(mlp_shapes))
-            observations = list(zip(*by_type))
-            return observations[-1]
-        raise RuntimeError("either data or images must not be None")
+    def _current_reward(self):
+        return self._compute_reward(self._goal(), self._obs())
 
     @staticmethod
     def seed(seed):
@@ -160,20 +153,7 @@ class BaseEnv(utils.EzPickle, Server):
     def normalize(self, pos):
         raise RuntimeError("This doesn't work")
 
-    def compute_reward(self, goal, args):
-        raise NotImplemented
-
-    def _vectorize_goal(self, *goal):
-        raise NotImplemented
-
-    def _destructure_goal(self, goal):
-        raise NotImplemented
-
     def reset_qpos(self):
-        raise NotImplemented
-
-    def _current_reward(self):
-        """Probably should call `compute_reward`"""
         raise NotImplemented
 
     def _set_new_goal(self):
@@ -182,11 +162,40 @@ class BaseEnv(utils.EzPickle, Server):
     def _obs(self):
         raise NotImplemented
 
+    def _goal(self):
+        raise NotImplemented
+
+    def goal_3d(self):
+        raise NotImplemented
+
     def _currently_failed(self):
         raise NotImplemented
 
-    def _terminal(self):
+    def _compute_terminal(self, goal, obs):
         raise NotImplemented
+
+    def _compute_reward(self, goal, obs):
+        raise NotImplemented
+
+    # hindsight stuff
+    def _obs_to_goal(self, obs):
+        raise NotImplemented
+
+    def obs_to_goal(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
+        return self._obs_to_goal(obs_history[-1])
+
+    def change_goal(self, goal, mlp_input):
+        _, obs_history = self.destructure_mlp_input(mlp_input)
+        return self.mlp_input(goal, obs_history)
+
+    def compute_reward(self, goal, mlp_input):
+        _, obs_history = self.destructure_mlp_input(mlp_input)
+        return sum(self._compute_reward(goal, obs) for obs in obs_history)
+
+    def compute_terminal(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
+        return any(self._compute_terminal(goal, obs) for obs in obs_history)
 
 
 def quaternion2euler(w, x, y, z):
