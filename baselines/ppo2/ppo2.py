@@ -63,18 +63,6 @@ class Model(object):
             )[:-1]
 
         self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
-
-        # def save(save_path):
-        #     ps = sess.run(params)
-            # joblib.dump(ps, save_path)
-
-        # def load(load_path):
-        #     loaded_params = joblib.load(load_path)
-        #     restores = []
-        #     for p, loaded_p in zip(params, loaded_params):
-        #         restores.append(p.assign(loaded_p))
-        #     sess.run(restores)
-
         self.train = train
         self.train_model = train_model
         self.act_model = act_model
@@ -193,10 +181,6 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
                                nbatch_train=nbatch_train,
                                nsteps=nsteps, ent_coef=ent_coef, vf_coef=vf_coef,
                                max_grad_norm=max_grad_norm)
-    # if save_interval and logger.get_dir():
-    #     import cloudpickle
-    #     with open(osp.join(logger.get_dir(), 'make_model.pkl'), 'wb') as fh:
-    #         fh.write(cloudpickle.dumps(make_model))
     model = make_model()
     runner = Runner(env=env, model=model, nsteps=nsteps, gamma=gamma, lam=lam, render=render)
 
@@ -262,11 +246,6 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
         if save_interval and (update % save_interval == 0 or update == 1) and save_path:
             saver.save(model.sess, save_path)
             print("Model saved in file:", save_path)
-            # checkdir = osp.join(logger.get_dir(), 'checkpoints')
-            # os.makedirs(checkdir, exist_ok=True)
-            # savepath = osp.join(checkdir, '%.5i' % update)
-            # print('Saving to', savepath)
-            # model.save(savepath)
     env.close()
 
 
