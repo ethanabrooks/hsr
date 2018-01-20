@@ -5,10 +5,11 @@ import sys
 from baselines import bench, logger
 from baselines.ppo2.policies import MlpPolicy
 from environment.arm2pos import Arm2PosEnv
+from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
 
-def train(env_id, num_timesteps, seed, policy, restore):
+def train(env_id, num_timesteps, seed, policy, render, restore_path, save_path):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
     from baselines.common.vec_env.vec_frame_stack import VecFrameStack
@@ -35,6 +36,8 @@ def train(env_id, num_timesteps, seed, policy, restore):
                 env = Arm2PosEnv(continuous=True, max_steps=500, history_len=2)
             elif env_id == 'pick-and-place':
                 env = PickAndPlaceEnv(max_steps=500)
+            elif env_id == 'navigate':
+                env = NavigateEnv(use_camera=False)
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
@@ -52,7 +55,8 @@ def train(env_id, num_timesteps, seed, policy, restore):
                ent_coef=.01, save_interval=30,
                lr=lambda f: f * 2.5e-4,
                cliprange=lambda f: f * 0.1,
-               total_timesteps=int(num_timesteps * 1.1), restore=restore)
+               total_timesteps=int(num_timesteps * 1.1),
+               render=render, restore_path=restore_path, save_path=save_path)
 
 
 def main():
@@ -63,12 +67,14 @@ def main():
     parser.add_argument('--num-timesteps', type=int, default=int(10e6))
     parser.add_argument('--tb-dir', default=None)
     parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
-    parser.add_argument('--restore', action='store_true')
+    parser.add_argument('--render', action='store_true')
+    parser.add_argument('--restore-path', default=None)
+    parser.add_argument('--save-path', default=None)
     args = parser.parse_args()
-    if not args.restore:
-        logger.configure(dir=args.tb_dir, format_strs=args.output)
+    logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
-          policy=args.policy, restore=args.restore)
+          policy=args.policy, render=args.render,
+          restore_path=args.restore_path, save_path=args.save_path)
 
 
 if __name__ == '__main__':
