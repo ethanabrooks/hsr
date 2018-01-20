@@ -41,6 +41,7 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
+            env = bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
             if record:
                 return gym.wrappers.Monitor(env, '/tmp/ppo-video')
             return env
@@ -66,7 +67,7 @@ def main():
     parser.add_argument('--env', help='environment ID', default='BreakoutNoFrameskip-v4')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--policy', help='Policy architecture', choices=['cnn', 'lstm', 'lnlstm'], default='mlp')
-    parser.add_argument('--num-timesteps', type=int, default=int(10e6))
+    parser.add_argument('--num-timesteps', type=int, default=int(10e7))
     parser.add_argument('--tb-dir', default=None)
     parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
     parser.add_argument('--record', action='store_true')
