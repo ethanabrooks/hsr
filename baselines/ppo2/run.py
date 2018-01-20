@@ -41,6 +41,7 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
+            env = bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
             if record:
                 return gym.wrappers.Monitor(env, '/tmp/ppo-video')
             return env
