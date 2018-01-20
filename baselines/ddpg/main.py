@@ -28,7 +28,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Create envs.
     if env_id == 'navigate':
-        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
+        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=False, max_steps=500)
     elif env_id == 'toy':
         # env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
         #                                               obstacle_mode=continuous_gridworld.NO_OBJECTS)
