@@ -9,7 +9,7 @@ from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
 
-def train(env_id, num_timesteps, seed, policy, render, restore_path, save_path):
+def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
     from baselines.common.vec_env.vec_frame_stack import VecFrameStack
@@ -41,7 +41,10 @@ def train(env_id, num_timesteps, seed, policy, render, restore_path, save_path):
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
-            return bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
+            env = bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
+            if record:
+                return gym.wrappers.Monitor(env, '/tmp/ppo-video')
+            return env
 
         return env_fn
 
@@ -56,7 +59,7 @@ def train(env_id, num_timesteps, seed, policy, render, restore_path, save_path):
                lr=lambda f: f * 2.5e-4,
                cliprange=lambda f: f * 0.1,
                total_timesteps=int(num_timesteps * 1.1),
-               render=render, restore_path=restore_path, save_path=save_path)
+               restore_path=restore_path, save_path=save_path)
 
 
 def main():
@@ -64,16 +67,16 @@ def main():
     parser.add_argument('--env', help='environment ID', default='BreakoutNoFrameskip-v4')
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--policy', help='Policy architecture', choices=['cnn', 'lstm', 'lnlstm'], default='mlp')
-    parser.add_argument('--num-timesteps', type=int, default=int(10e6))
+    parser.add_argument('--num-timesteps', type=int, default=int(10e7))
     parser.add_argument('--tb-dir', default=None)
     parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
-    parser.add_argument('--render', action='store_true')
+    parser.add_argument('--record', action='store_true')
     parser.add_argument('--restore-path', default=None)
     parser.add_argument('--save-path', default=None)
     args = parser.parse_args()
     logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
-          policy=args.policy, render=args.render,
+          policy=args.policy, record=args.record,
           restore_path=args.restore_path, save_path=args.save_path)
 
 
