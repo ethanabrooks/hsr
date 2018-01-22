@@ -14,6 +14,7 @@ from baselines.ddpg.noise import *
 #from environment.arm2pos import Arm2PosEnv
 #from environment.pick_and_place import PickAndPlaceEnv
 from environment.arm2pos import Arm2PosEnv
+from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 import gym
@@ -30,8 +31,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Create envs.
     if env_id == 'navigate':
-        #env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
-        pass
+        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
     elif env_id == 'toy':
         #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
         from toy_environment import room_obstacle_list
