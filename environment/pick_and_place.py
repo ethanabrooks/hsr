@@ -39,7 +39,7 @@ class PickAndPlaceEnv(BaseEnv):
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
     def reset_qpos(self):
-        # self.init_qpos[3:7] = np.random.random(4)
+        self.init_qpos[3:7] = np.random.random(4)
         return self.init_qpos
 
     def _set_new_goal(self):
