@@ -13,7 +13,7 @@ from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
 from environment.arm2pos import Arm2PosEnv
 from environment.pick_and_place import PickAndPlaceEnv
-from toy_environment import continuous_gridworld, continuous_gridworld2
+from toy_environment import continuous_gridworld, continuous_gridworld2, continuous_gridworld2_quadrants
 import gym
 import tensorflow as tf
 from environment.navigate import NavigateEnv
@@ -33,6 +33,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         # env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
         #                                               obstacle_mode=continuous_gridworld.NO_OBJECTS)
         env = continuous_gridworld2.ContinuousGridworld2()
+    elif env_id == 'toy_quadrants':
+        env = continuous_gridworld2_quadrants.ContinuousGridworld2()
     elif env_id == 'arm2pos':
         env = Arm2PosEnv(continuous=True, max_steps=500)
     elif env_id == 'pick-and-place':
