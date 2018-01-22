@@ -15,19 +15,52 @@ from mpi4py import MPI
 
 
 def replay_with_goal(traj, goal, env):
+    # start the hindsight trajectory in the last episode that occured in the trajectory.
     for (obs, action, r, new_obs, done) in traj:
-        obs_ = env.change_goal(goal, obs)
-        assert np.shape(obs_) == np.shape(obs)
-        action_ = action
-        r_ = env.compute_reward(goal, new_obs)
-        new_obs_ = env.change_goal(goal, new_obs)
-        done_ = env.compute_terminal(new_obs)
-        yield obs_, action_, r_, new_obs_, done_
+        obs_hindsight = env.change_goal(goal, obs)
+        action_hindsight = action
+        r_hindsight = env.compute_reward(goal, new_obs)
+        new_obs_hindsight = env.change_goal(goal, new_obs)
+        done_hindsight = env.compute_terminal(new_obs_hindsight)
+        yield obs_hindsight, action_hindsight, r_hindsight, new_obs_hindsight, done_hindsight
+
+def replay_final(traj, env):
+    episodes = []
+    current_episode = []
+    for (obs, action, r, new_obs, done) in traj:
+        current_episode.append((obs, action, r, new_obs, done))
+        if done:
+            episodes.append(current_episode)
+            current_episode = []
+    for episode in episodes:
+        obs_final, action_final, r_final, new_obs_final, done_final = episode[-1]
+        goal_final = env.obs_to_goal(new_obs_final)
+        for (obs, action, r, new_obs, done) in replay_with_goal(episode, goal_final, env):
+            yield (obs, action, r, new_obs, done)
+
+
+def replay_future(traj, env, k=4):
+    episodes = []
+    current_episode = []
+    for (obs, action, r, new_obs, done) in traj:
+        current_episode.append((obs, action, r, new_obs, done))
+        if done:
+            episodes.append(current_episode)
+            current_episode = []
+    for i in range(k):
+        for episode in episodes:
+            random_idx = np.random.randint(0, len(episode))
+            obs_random, action_random, r_random, new_obs_random, done_random = episode[random_idx]
+            goal_random = env.obs_to_goal(new_obs_random)
+            for (obs, action, r, new_obs, done) in replay_with_goal(episode[:random_idx+1], goal_random, env):
+                yield (obs, action, r, new_obs, done)
+
+
 
 def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, param_noise, actor, critic,
     normalize_returns, normalize_observations, critic_l2_reg, actor_lr, critic_lr, action_noise,
     popart, gamma, clip_norm, nb_train_steps, nb_rollout_steps, nb_eval_steps, batch_size, memory,
-    tau=0.01, eval_env=None, param_noise_adaption_interval=50, save_path=None, restore_path=None):
+    tau=0.01, eval_env=None, param_noise_adaption_interval=50, save_path=None, restore_path=None, hindsight_mode=None):
     rank = MPI.COMM_WORLD.Get_rank()
 
     assert (np.abs(env.action_space.low) == env.action_space.high).all()  # we assume symmetric actions.
@@ -118,12 +151,21 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
 
                         agent.reset()
                         obs = env.reset()
+
                 # store regular transitions into replay memory
                 for (obs, action, r, new_obs, done) in transitions:
                     agent.store_transition(obs, action, r, new_obs, done)
 
+                if hindsight_mode in ['final', 'future']:
+                    for (obs, action, r, new_obs, done) in replay_final(transitions, env.env):
+                        agent.store_transition(obs, action, r, new_obs, done)
+
+                if hindsight_mode in ['future']:
+                    for (obs, action, r, new_obs, done) in replay_future(transitions, env.env):
+                        agent.store_transition(obs, action, r, new_obs, done)
+
                 # store hindsight transitions.
-                for i in range(3):
+                '''for i in range(3):
                     # sample a random point in the trajectory
                     idx = np.random.randint(0, len(transitions))
                     obs, action, r, new_obs, done = transitions[idx]
@@ -136,7 +178,7 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
                 # store a "final" transition.
                 goal = env.env.obs_to_goal(new_obs)
                 for (obs, action, r, new_obs, done) in replay_with_goal(transitions, goal, env.env):
-                    agent.store_transition(obs, action, r, new_obs, done)
+                    agent.store_transition(obs, action, r, new_obs, done)'''
 
                 # Train.
 

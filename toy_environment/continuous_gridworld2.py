@@ -37,7 +37,6 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
     def _step(self, action):
         action = self.preprocess_action(action)
-
         num_subchecks = 4
         for i in range(1, num_subchecks):
             intersects = self.check_intersects(self.agent_position, action, mult=i / float(num_subchecks))
@@ -47,10 +46,15 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
         self.time_step += 1
         obs = self.obs()
-        terminal = self.at_goal(self.goal, obs)
-        if terminal:
-            print('AT GOAL')
+        terminal = self.compute_terminal(self.goal, obs)
         reward = self.compute_reward(self.goal, obs)
+        #cv2.imshow('game', self.render_agent())
+        #cv2.waitKey(1)
+        #if self.at_goal(self.goal, obs):
+        #    self.goal = self.get_non_intersecting_position(self.goal_position_generator)
+            #self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
+        if reward == 1:
+            print('AT GOAL')
         if self.time_step >= self.max_time_steps:
             terminal = True
         return obs, reward, terminal, {}
@@ -89,13 +93,16 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         return dist <= self.dist_cutoff
 
 
-    def compute_new_obs(self, goal, obs):
+    def change_goal(self, goal, obs):
         without_goal = obs[:-2]
         return np.concatenate([without_goal, goal], axis=0)
 
 
     def compute_reward(self, goal, obs):
         return 1.0 if self.at_goal(goal, obs) else -0.01
+
+    def compute_terminal(self, goal, obs):
+        return self.at_goal(goal, obs)
 
 
     def obs_to_goal(self, obs):
