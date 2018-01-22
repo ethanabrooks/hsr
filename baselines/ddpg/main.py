@@ -13,6 +13,8 @@ from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
 #from environment.arm2pos import Arm2PosEnv
 #from environment.pick_and_place import PickAndPlaceEnv
+from environment.arm2pos import Arm2PosEnv
+from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 import gym
 import tensorflow as tf
@@ -35,11 +37,9 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         from toy_environment import room_obstacle_list
         env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
     elif env_id == 'arm2pos':
-        #env = Arm2PosEnv(continuous=True, max_steps=500)
-        pass
+        env = Arm2PosEnv(continuous=True, max_steps=500)
     elif env_id == 'pick-and-place':
-        #env = PickAndPlaceEnv(max_steps=500)
-        pass
+        env = PickAndPlaceEnv(max_steps=500)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
@@ -96,8 +96,11 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         start_time = time.time()
     del kwargs['tb_dir']
     del kwargs['save_path']
+    hindsight_mode = kwargs['hindsight_mode']
+    del kwargs['hindsight_mode']
     training.train(env=env, eval_env=eval_env, param_noise=param_noise,
-                   action_noise=action_noise, actor=actor, critic=critic, memory=memory, **kwargs)
+                   action_noise=action_noise, actor=actor, critic=critic, memory=memory,
+                   hindsight_mode=hindsight_mode, **kwargs)
     env.close()
     if eval_env is not None:
         eval_env.close()
@@ -130,10 +133,10 @@ def parse_args():
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--noise-type', type=str, default='normal_0.05')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
-    parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
     parser.add_argument('--restore-path', type=str, default=None)
     parser.add_argument('--save-path', type=str, default=None)
+    parser.add_argument('--hindsight-mode', type=str, default=None)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
