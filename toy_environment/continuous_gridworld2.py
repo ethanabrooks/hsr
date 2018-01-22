@@ -14,9 +14,9 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.image_size = image_size
         self.obstacles = obstacle_list_generator(image_size)
 
-        self.agent_position = self.get_non_intersecting_position()
-        self.goal = self.get_non_intersecting_position()
-
+        quadrant = np.random.randint(0, 4)
+        self.agent_position = self.get_non_intersecting_position(quadrant)
+        self.goal = self.get_non_intersecting_position(quadrant)
 
         self.visualize = visualize
         if visualize:
@@ -56,8 +56,9 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
 
     def _reset(self):
-        self.agent_position = self.get_non_intersecting_position()
-        self.goal = self.get_non_intersecting_position()
+        quadrant = np.random.randint(0, 4)
+        self.agent_position = self.get_non_intersecting_position(quadrant)
+        self.goal = self.get_non_intersecting_position(quadrant)
         self.time_step = 0
         return self.obs()
 
@@ -121,11 +122,30 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
     ### Collision Handling
 
-    def get_non_intersecting_position(self):
+    def get_non_intersecting_position(self, quadrant):
+        quadrant_bounds_x = [-1, 1]
+        quadrant_bounds_y = [-1, 1]
+
+        if quadrant == 0:
+            quadrant_bounds_x = [-1.0, 0.0]
+            quadrant_bounds_y = [0.0, 1.0]
+        elif quadrant == 1:
+            quadrant_bounds_x = [0.0, 1.0]
+            quadrant_bounds_y = [0.0, 1.0]
+        elif quadrant == 2:
+            quadrant_bounds_x = [-1.0, 0.0]
+            quadrant_bounds_y = [-1.0, 0.0]
+        else: # quadrant = 3
+            quadrant_bounds_x = [0.0, 1.0]
+            quadrant_bounds_y = [-1.0, 0.0]
+
         intersects = True
         while intersects:
             intersects = False
-            position = np.random.uniform(-1, 1, size=2)
+            position_x = np.random.uniform(quadrant_bounds_x[0], quadrant_bounds_x[1])
+            position_y = np.random.uniform(quadrant_bounds_y[0], quadrant_bounds_y[1])
+            position = np.array([position_x, position_y])
+
             tl = self.image_size * (position + 1) / 2. - 0.5 * (5 / np.sqrt(2))
             agent_rect = pygame.Rect(tl[0], tl[1], 5 / np.sqrt(2), 5 / np.sqrt(2))
             for obstacle in self.obstacles:
