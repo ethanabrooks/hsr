@@ -96,8 +96,11 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         start_time = time.time()
     del kwargs['tb_dir']
     del kwargs['save_path']
+    hindsight_mode = kwargs['hindsight_mode']
+    del kwargs['hindsight_mode']
     training.train(env=env, eval_env=eval_env, param_noise=param_noise,
-                   action_noise=action_noise, actor=actor, critic=critic, memory=memory, **kwargs)
+                   action_noise=action_noise, actor=actor, critic=critic, memory=memory,
+                   hindsight_mode=hindsight_mode, **kwargs)
     env.close()
     if eval_env is not None:
         eval_env.close()
@@ -134,6 +137,7 @@ def parse_args():
     parser.add_argument('--num-timesteps', type=int, default=None)
     parser.add_argument('--restore-path', type=str, default=None)
     parser.add_argument('--save-path', type=str, default=None)
+    parser.add_argument('--hindsight-mode', type=str, default=None)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
