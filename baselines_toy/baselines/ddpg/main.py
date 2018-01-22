@@ -11,6 +11,7 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
+from toy_environment import continuous_gridworld, continuous_gridworld2
 
 import gym
 import tensorflow as tf
@@ -23,7 +24,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         logger.set_level(logger.DISABLED)
 
     # Create envs.
-    env = gym.make(env_id)
+    env = continuous_gridworld2.ContinuousGridworld2()
+    # env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
     gym.logger.setLevel(logging.WARN)
 
