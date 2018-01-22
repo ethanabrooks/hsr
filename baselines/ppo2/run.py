@@ -33,7 +33,7 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
     def make_env(rank):
         def env_fn():
             if env_id == 'arm2pos':
-                env = Arm2PosEnv(continuous=True, max_steps=500, history_len=2)
+                env = Arm2PosEnv(continuous=True, max_steps=500)
             elif env_id == 'pick-and-place':
                 env = PickAndPlaceEnv(max_steps=500)
             elif env_id == 'navigate':
