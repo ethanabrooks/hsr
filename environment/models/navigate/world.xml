@@ -93,7 +93,7 @@
     </asset>
     <worldbody>
         <include file="hsr.mjcf"/>
-        <include file="room.mjcf"/>
+        <include file="empty_room.mjcf"/>
     </worldbody>
     <actuator>
         <motor gear="1000.0" name="slide_x_motor" joint="slide_x" forcelimited="true" forcerange="-.001 .001"/>
