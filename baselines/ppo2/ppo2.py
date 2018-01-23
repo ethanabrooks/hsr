@@ -62,7 +62,7 @@ class Model(object):
                 td_map
             )[:-1]
 
-        self.loss_names = ['actor_loss', 'critic_loss', 'policy_entropy', 'approxkl', 'clipfrac']
+        self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
         self.train = train
         self.train_model = train_model
         self.act_model = act_model
