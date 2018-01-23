@@ -38,8 +38,8 @@ class Arm2PosEnv(BaseEnv):
         return self.init_qpos
 
     def _set_new_goal(self):
-        high = np.array([0.11725151,  0.07799973,  0.50806907])
-        low = np.array([-0.27217179,  0.07799973,  0.50806907])
+        low = np.array([-0.27217179, -0.17194216,  0.50806907])
+        high = np.array([0.11727834, 0.32794162, 0.50806907])
         goal = np.random.uniform(low, high)
         assert np.all(low <= goal) and np.all(goal <= high)
         self.__goal = goal

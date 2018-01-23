@@ -2,7 +2,7 @@
     <body name="base_link" pos="-.46 0 0">
         <site name="touchsensor_site" size="0.25 .5" pos="0 0 .5" type="cylinder" rgba="1 0 0 0"/>
         <joint axis="1 0 0" damping="1000" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
-        <!--<joint axis="0 1 0" damping="1000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>-->
+        <joint axis="0 1 0" damping="1000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
         <!--<joint axis="0 0 1" damping="1000" name="turn" pos="0 0 0" type="hinge"/>-->
         <inertial pos="-0.025978 -0.005498 0.17633" quat="0.995796 0.0411155 -0.0685908 0.0446655" mass="50"
                   diaginertia="0.378627 0.344913 0.145159"/>
