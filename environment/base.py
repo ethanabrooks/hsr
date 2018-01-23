@@ -191,8 +191,8 @@ class BaseEnv(utils.EzPickle, Server):
         _, obs_history = self.destructure_mlp_input(mlp_input)
         return self.mlp_input(goal, obs_history)
 
-    def compute_reward(self, goal, mlp_input):
-        _, obs_history = self.destructure_mlp_input(mlp_input)
+    def compute_reward(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
         return sum(self._compute_reward(goal, obs) for obs in obs_history)
 
     def compute_terminal(self, mlp_input):

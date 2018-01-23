@@ -18,8 +18,8 @@ def replay_with_goal(traj, goal, env):
     for (obs, action, r, new_obs, done) in traj:
         obs_hindsight = env.change_goal(goal, obs)
         action_hindsight = action
-        r_hindsight = env.compute_reward(goal, new_obs)
         new_obs_hindsight = env.change_goal(goal, new_obs)
+        r_hindsight = env.compute_reward(new_obs_hindsight)
         done_hindsight = env.compute_terminal(new_obs_hindsight)
         yield obs_hindsight, action_hindsight, r_hindsight, new_obs_hindsight, done_hindsight
 
