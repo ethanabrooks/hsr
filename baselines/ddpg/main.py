@@ -59,7 +59,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     nb_actions = env.action_space.shape[-1]
     for current_noise_type in noise_type.split(','):
-        dcurrent_noise_type = current_noise_type.strip()
+        current_noise_type = current_noise_type.strip()
         if current_noise_type == 'none':
             pass
         elif 'adaptive-param' in current_noise_type:
