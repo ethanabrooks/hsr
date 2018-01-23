@@ -133,7 +133,6 @@ def parse_args():
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--noise-type', type=str, default='normal_0.05')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
-    parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
     parser.add_argument('--restore-path', type=str, default=None)
     parser.add_argument('--save-path', type=str, default=None)
