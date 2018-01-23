@@ -106,8 +106,7 @@ class NavigateEnv(BaseEnv):
     def _compute_terminal(self, goal, obs):
         goal, = goal
         pos = obs[0]
-        # return at_goal(pos, goal, self._geofence)
-        return False  # TODO: this is because of the alleged DDPG bug
+        return at_goal(pos, goal, self._geofence)
 
     def _compute_reward(self, goal, obs):
         pos = obs[0]
