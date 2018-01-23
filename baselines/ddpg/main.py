@@ -37,7 +37,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         from toy_environment import room_obstacle_list
         env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
     elif env_id == 'arm2pos':
-        env = Arm2PosEnv(continuous=True, max_steps=500)
+        env = Arm2PosEnv(continuous=True, max_steps=500, neg_reward=False)
     elif env_id == 'pick-and-place':
         env = PickAndPlaceEnv(max_steps=500)
     else:

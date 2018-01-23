@@ -3,7 +3,6 @@ import time
 from collections import deque
 import pickle
 
-from baselines.common import explained_variance
 from baselines.ddpg.ddpg import DDPG
 from baselines.ddpg.util import mpi_mean, mpi_std, mpi_max, mpi_sum
 import baselines.common.tf_util as U
@@ -19,8 +18,8 @@ def replay_with_goal(traj, goal, env):
     for (obs, action, r, new_obs, done) in traj:
         obs_hindsight = env.change_goal(goal, obs)
         action_hindsight = action
+        r_hindsight = env.compute_reward(goal, new_obs)
         new_obs_hindsight = env.change_goal(goal, new_obs)
-        r_hindsight = env.compute_reward(new_obs_hindsight)
         done_hindsight = env.compute_terminal(new_obs_hindsight)
         yield obs_hindsight, action_hindsight, r_hindsight, new_obs_hindsight, done_hindsight
 
@@ -231,10 +230,9 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
             # combined_stats['actions_mean'] = mpi_mean(epoch_actions)
             combined_stats['actions_std'] = mpi_std(epoch_actions)
             combined_stats['Q_mean'] = mpi_mean(epoch_qs)
-
             # Train statistics.
-            combined_stats['actor_loss'] = mpi_mean(epoch_actor_losses)
-            combined_stats['critic_loss'] = mpi_mean(epoch_critic_losses)
+            combined_stats['policy_loss'] = mpi_mean(epoch_actor_losses)
+            combined_stats['value_loss'] = mpi_mean(epoch_critic_losses)
             combined_stats['param_noise_distance'] = mpi_mean(epoch_adaptive_distances)
 
             # Evaluation statistics.
