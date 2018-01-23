@@ -99,7 +99,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
 
     def compute_reward(self, goal, obs):
-        return 1.0 if self.at_goal(goal, obs) else 0#-0.01
+        return 1.0 if self.at_goal(goal, obs) else -0.01
 
     def compute_terminal(self, goal, obs):
         return self.at_goal(goal, obs)
