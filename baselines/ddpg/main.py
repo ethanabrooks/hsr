@@ -8,7 +8,7 @@ from baselines.common.misc_util import (
     boolean_flag,
 )
 import baselines.ddpg.training as training
-from baselines.ddpg.models import Actor, Critic
+from baselines.ddpg.models import Actor, Critic, ActorGoalTrunk, CriticGoalTrunk
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
 #from environment.arm2pos import Arm2PosEnv
@@ -77,8 +77,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Configure components.
     memory = Memory(limit=int(1e6), action_shape=env.action_space.shape, observation_shape=env.observation_space.shape)
-    critic = Critic(layer_norm=layer_norm)
-    actor = Actor(nb_actions, layer_norm=layer_norm)
+    critic = CriticGoalTrunk(layer_norm=layer_norm)
+    actor = ActorGoalTrunk(nb_actions, layer_norm=layer_norm)
 
 
 
