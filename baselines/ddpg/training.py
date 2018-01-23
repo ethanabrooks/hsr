@@ -230,6 +230,7 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
             # combined_stats['actions_mean'] = mpi_mean(epoch_actions)
             combined_stats['actions_std'] = mpi_std(epoch_actions)
             combined_stats['Q_mean'] = mpi_mean(epoch_qs)
+
             # Train statistics.
             combined_stats['policy_loss'] = mpi_mean(epoch_actor_losses)
             combined_stats['value_loss'] = mpi_mean(epoch_critic_losses)
