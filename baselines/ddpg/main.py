@@ -31,13 +31,13 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Create envs.
     if env_id == 'navigate':
-        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
+        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=False, max_steps=500)
     elif env_id == 'toy':
         #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
         from toy_environment import room_obstacle_list
         env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
     elif env_id == 'arm2pos':
-        env = Arm2PosEnv(continuous=True, max_steps=500)
+        env = Arm2PosEnv(continuous=True, max_steps=500, neg_reward=False)
     elif env_id == 'pick-and-place':
         env = PickAndPlaceEnv(max_steps=500)
     else:
