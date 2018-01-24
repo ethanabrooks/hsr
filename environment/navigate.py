@@ -13,7 +13,7 @@ class NavigateEnv(BaseEnv):
         BaseEnv.__init__(self,
                          geofence=geofence,
                          max_steps=max_steps,
-                         xml_filepath=join('models', 'arm2pos', 'world.xml'),
+                         xml_filepath=join('models', 'navigate', 'world.xml'),
                          history_len=history_len,
                          use_camera=False,  # TODO
                          neg_reward=neg_reward,
