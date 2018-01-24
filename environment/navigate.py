@@ -38,8 +38,8 @@ class NavigateEnv(BaseEnv):
         return self.init_qpos
 
     def _set_new_goal(self):
-        low = np.array([-0.27217179, -0.17194216,  0.50806907])
-        high = np.array([0.11727834, 0.32794162, 0.50806907])
+        low = np.array([-1.62502012, -1.62177551, 0.878])
+        high = np.array([1.64253711, 1.59272938,  0.878])
         goal = np.random.uniform(low, high)
         assert np.all(low <= goal) and np.all(goal <= high)
         self.__goal = goal
