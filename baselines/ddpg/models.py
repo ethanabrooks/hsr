@@ -46,6 +46,44 @@ class Actor(Model):
         return x
 
 
+class ActorGoalTrunk(Model):
+
+    def __init__(self, nb_actions, name='actor', layer_norm=True):
+        super(ActorGoalTrunk, self).__init__(name=name)
+        self.nb_actions = nb_actions
+        self.layer_norm = layer_norm
+
+    def __call__(self, obs, reuse=False):
+        with tf.variable_scope(self.name) as scope:
+            if reuse:
+                scope.reuse_variables()
+            x_obs, x_goal = obs[:, :2], obs[:, 2:]
+
+            x_goal = tf.layers.dense(x_goal, 64)
+            if self.layer_norm:
+                x_goal = tc.layers.layer_norm(x_goal, center=True, scale=True)
+
+            x_goal = tf.nn.relu(x_goal)
+
+
+            x = x_obs
+            x = tf.layers.dense(x, 64)
+            if self.layer_norm:
+                x = tc.layers.layer_norm(x, center=True, scale=True)
+            x = tf.nn.relu(x)
+            x = tf.concat([x, x_goal], axis=1)
+
+            x = tf.layers.dense(x, 64)
+            if self.layer_norm:
+                x = tc.layers.layer_norm(x, center=True, scale=True)
+            x = tf.nn.relu(x)
+
+
+            x = tf.layers.dense(x, self.nb_actions,
+                                kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
+            x = tf.nn.tanh(x)
+        return x
+
 class Critic(Model):
     def __init__(self, name='critic', layer_norm=True):
         super(Critic, self).__init__(name=name)
@@ -63,6 +101,48 @@ class Critic(Model):
             x = tf.nn.relu(x)
 
             x = tf.concat([x, action], axis=-1)
+            x = tf.layers.dense(x, 64)
+            if self.layer_norm:
+                x = tc.layers.layer_norm(x, center=True, scale=True)
+            x = tf.nn.relu(x)
+
+            x = tf.layers.dense(x, 1, kernel_initializer=tf.random_uniform_initializer(minval=-3e-3, maxval=3e-3))
+        return x
+
+    @property
+    def output_vars(self):
+        output_vars = [var for var in self.trainable_vars if 'output' in var.name]
+        return output_vars
+
+
+class CriticGoalTrunk(Model):
+    def __init__(self, name='critic', layer_norm=True):
+        super(CriticGoalTrunk, self).__init__(name=name)
+        self.layer_norm = layer_norm
+
+    def __call__(self, obs, action, reuse=False):
+        with tf.variable_scope(self.name) as scope:
+            if reuse:
+                scope.reuse_variables()
+
+            x_obs, x_goal = obs[:, :2], obs[:, 2:]
+
+            x_goal = tf.layers.dense(x_goal, 64)
+            if self.layer_norm:
+                x_goal = tc.layers.layer_norm(x_goal, center=True, scale=True)
+
+            x_goal = tf.nn.relu(x_goal)
+
+
+            x = x_obs
+            x = tf.layers.dense(x, 64)
+            if self.layer_norm:
+                x = tc.layers.layer_norm(x, center=True, scale=True)
+            x = tf.nn.relu(x)
+
+
+
+            x = tf.concat([x, x_goal, action], axis=-1)
             x = tf.layers.dense(x, 64)
             if self.layer_norm:
                 x = tc.layers.layer_norm(x, center=True, scale=True)
