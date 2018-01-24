@@ -41,7 +41,7 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
             elif env_id == 'pick-and-place':
                 env = PickAndPlaceEnv(max_steps=500)
             elif env_id == 'navigate':
-                env = NavigateEnv(continuous=True, max_steps=1000)
+                env = Arm2PosEnv(continuous=True, max_steps=500)
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
