@@ -39,7 +39,9 @@ class PickAndPlaceEnv(BaseEnv):
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
     def reset_qpos(self):
-        self.init_qpos[3:7] = np.random.random(4)
+        block_joint = self.sim.jnt_qposadr('block1joint')
+        self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(4) * 2 * np.pi
+        self.init_qpos[self.sim.jnt_qposadr('wrist_roll_joint')] = np.random.random() * 2 * np.pi
         return self.init_qpos
 
     def _set_new_goal(self):
