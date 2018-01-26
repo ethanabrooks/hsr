@@ -6,11 +6,11 @@ from environment.navigate import NavigateEnv
 #from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 
-def train(env_id, num_timesteps, seed):
+def train(env_id, num_timesteps, seed, use_cnn):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.vec_normalize import VecNormalize
     from baselines.ppo2 import ppo2
-    from baselines.ppo2.policies import MlpPolicy
+    from baselines.ppo2.policies import MlpPolicy, CnnPolicy
     import gym
     import tensorflow as tf
     from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
@@ -24,7 +24,7 @@ def train(env_id, num_timesteps, seed):
             #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
             #                                           obstacle_mode=continuous_gridworld.NO_OBJECTS)
             from toy_environment import room_obstacle_list
-            env = continuous_gridworld2.ContinuousGridworld2(obstacle_list_generator=room_obstacle_list.obstacle_list)
+            env = continuous_gridworld2.ContinuousGridworld2(obstacle_list_generator=room_obstacle_list.obstacle_list, use_cnn=use_cnn)
         elif env_id == 'navigate':
             env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
         elif env_id == 'arm2pos':
@@ -38,11 +38,16 @@ def train(env_id, num_timesteps, seed):
     env = VecNormalize(env)
 
     set_global_seeds(seed)
-    policy = MlpPolicy
+    if not use_cnn:
+        policy = MlpPolicy
+    else:
+        policy = CnnPolicy
+
     ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=32,
         lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
         ent_coef=0.0,
         lr=3e-4,
+        save_path=None, restore_path=None,
         cliprange=0.2,
         total_timesteps=num_timesteps)
 
@@ -53,12 +58,13 @@ def main():
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--num-timesteps', type=int, default=int(1e7))
     parser.add_argument('--tb-dir', default=None)
+    parser.add_argument('--use-cnn', type=bool, default=False)
     args = parser.parse_args()
     if args.tb_dir is not None:
         logger.configure(dir=args.tb_dir, format_strs=['stdout', 'tensorboard'])
     else:
         logger.configure()
-    train(args.env, num_timesteps=args.num_timesteps, seed=args.seed)
+    train(args.env, num_timesteps=args.num_timesteps, seed=args.seed, use_cnn=args.use_cnn)
 
 
 

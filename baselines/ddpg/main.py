@@ -9,6 +9,7 @@ from baselines.common.misc_util import (
 )
 import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic, ActorGoalTrunk, CriticGoalTrunk
+from baselines.ddpg.models_cnn import ActorCNN, CriticCNN
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
 #from environment.arm2pos import Arm2PosEnv
@@ -26,6 +27,10 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     if rank != 0:
         logger.set_level(logger.DISABLED)
 
+    use_cnn = kwargs['use_cnn']
+    del kwargs['use_cnn']
+
+
     # Create envs.
     if env_id == 'navigate':
         #env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
@@ -33,7 +38,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     elif env_id == 'toy':
         #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
         from toy_environment import room_obstacle_list
-        env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
+        env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2, use_cnn=use_cnn)
     elif env_id == 'arm2pos':
         #env = Arm2PosEnv(continuous=True, max_steps=500)
         pass
@@ -77,9 +82,15 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Configure components.
     memory = Memory(limit=int(1e6), action_shape=env.action_space.shape, observation_shape=env.observation_space.shape)
-    critic = CriticGoalTrunk(layer_norm=layer_norm)
-    actor = ActorGoalTrunk(nb_actions, layer_norm=layer_norm)
+    #critic = CriticGoalTrunk(layer_norm=layer_norm)
+    #actor = ActorGoalTrunk(nb_actions, layer_norm=layer_norm)
+    if not use_cnn:
+        critic = Critic(layer_norm=layer_norm)
+        actor = Actor(nb_actions, layer_norm=layer_norm)
 
+    else:
+        critic = CriticCNN(layer_norm=layer_norm)
+        actor = ActorCNN(nb_actions, layer_norm=layer_norm)
 
 
     # Seed everything to make things reproducible.
@@ -137,6 +148,7 @@ def parse_args():
     parser.add_argument('--restore-path', type=str, default=None)
     parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--hindsight-mode', type=str, default=None)
+    parser.add_argument('--use-cnn', type=bool, default=False)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them

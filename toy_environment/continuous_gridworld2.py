@@ -9,16 +9,24 @@ from toy_environment import room_obstacle_list, four_rooms_obstacle_list
 
 class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
-    def __init__(self, obstacle_list_generator, visualize=False, image_size=64, max_action_step=0.2, max_time_steps=1000):
+    def __init__(self, obstacle_list_generator, use_cnn=False, visualize=False, image_size=64, max_action_step=0.2, max_time_steps=1000):
         utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
-        self.observation_space = spaces.Box(-1, 1, shape=[4])
+        self.use_cnn = use_cnn
+        if self.use_cnn:
+            self.observation_space = spaces.Box(-1, 1, shape=[image_size, image_size, 4])
+        else:
+            self.observation_space = spaces.Box(-1, 1, shape=[4])
+
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
         self.obstacles = obstacle_list_generator(image_size)
 
+
+        self.use_cnn = use_cnn
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         self.goal = self.get_non_intersecting_position(self.goal_position_generator)
         self.visualize = visualize
+
         if visualize:
             self.screen = pygame.display.set_mode((image_size, image_size),)
         else:
@@ -46,8 +54,8 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
         self.time_step += 1
         obs = self.obs()
-        terminal = self.compute_terminal(self.goal, obs)
-        reward = self.compute_reward(self.goal, obs)
+        terminal = self.compute_terminal(self.goal, obs, xy=self.agent_position)
+        reward = self.compute_reward(self.goal, obs, xy=self.agent_position)
         #cv2.imshow('game', self.render_agent())
         #cv2.waitKey(1)
         #if self.at_goal(self.goal, obs):
@@ -67,8 +75,14 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         return self.obs()
 
 
+
     def obs(self):
-        return np.concatenate([self.agent_position, self.goal], axis=0)
+        if self.use_cnn:
+            screen = 2*(self.render_agent() / 255. - 0.5)
+            goal = self.render_goal(self.goal.copy())
+            return np.concatenate([screen, goal], axis=2)
+        else:
+            return np.concatenate([self.agent_position, self.goal], axis=0)
 
 
     def sample_position(self):
@@ -87,26 +101,41 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
     #### Hindsight Stuff
 
-    def at_goal(self, goal, obs):
-        without_goal = obs[:-2]
+    def at_goal(self, goal, obs, xy=None):
+        if not self.use_cnn:
+            without_goal = obs[:-2]
+        else:
+            if xy is None:
+                without_goal = self.extract_position_from_image(obs)
+            else:
+                without_goal = xy
         dist = np.sqrt(np.sum(np.square(without_goal - goal)))
         return dist <= self.dist_cutoff
 
 
     def change_goal(self, goal, obs):
-        without_goal = obs[:-2]
-        return np.concatenate([without_goal, goal], axis=0)
+        if not self.use_cnn:
+            without_goal = obs[:-2]
+            return np.concatenate([without_goal, goal], axis=0)
+        else:
+            without_goal = obs[:, :, :3]
+            goal = self.render_goal(goal)
+            return np.concatenate([without_goal, goal], axis=2)
 
 
-    def compute_reward(self, goal, obs):
-        return 1.0 if self.at_goal(goal, obs) else -0.01
+    def compute_reward(self, goal, obs, xy=None):
+        return 1.0 if self.at_goal(goal, obs, xy=xy) else -0.01
 
-    def compute_terminal(self, goal, obs):
-        return self.at_goal(goal, obs)
+    def compute_terminal(self, goal, obs, xy=None):
+        return self.at_goal(goal, obs, xy=xy)
 
 
     def obs_to_goal(self, obs):
-        return obs[:2]
+        if not self.use_cnn:
+            return obs[:2]
+        else:
+            return self.extract_position_from_image(obs)
+
 
 
     ### Rendering
@@ -120,17 +149,46 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         x_goal, y_goal = (self.goal[0] + 1) / 2, (self.goal[1] + 1)/2
         x_goal_int = int(x_goal * self.image_size)
         y_goal_int = int(y_goal * self.image_size)
-        pygame.draw.circle(self.screen, (0, 0, 0), (x_int, y_int), 3)
-        pygame.draw.circle(self.screen, (255, 0, 0), (x_goal_int, y_goal_int), 3)
+        pygame.draw.circle(self.screen, (255, 0, 0), (x_int, y_int), 3)
+        #pygame.draw.circle(self.screen, (255, 0, 0), (x_goal_int, y_goal_int), 3)
 
         for obs in self.obstacles:
-            obs.draw(self.screen, (0,0,0))
+            obs.draw(self.screen, (0,255,0))
         if self.visualize:
             pygame.display.update()
             pygame.event.get()
         imgdata = pygame.surfarray.array3d(self.screen)
-        imgdata.swapaxes(0,1)
+        #imgdata.swapaxes(0,1)
         return imgdata
+
+    def render_goal(self, goal):
+        x_goal, y_goal = (goal[0]) / 2, (goal[1] + 1) / 2
+        x_goal_int = int(x_goal * self.image_size)
+        y_goal_int = int(y_goal * self.image_size)
+        pygame.draw.circle(self.screen, (0., 0., 0.), (x_goal_int, y_goal_int), 3)
+        imgdata = pygame.surfarray.array3d(self.screen)
+        return 2*(imgdata[:, :, [0]] / 255. - 0.5)
+        #assert self.image_size % 2 == 0
+        #return np.tile(np.reshape(goal, [2, 1, 1]), [self.image_size // 2, self.image_size, 1])
+
+    def extract_position_from_image(self, image):
+        raise Exception('Function has a bug. Dont use it.')
+        space = np.linspace(-1, 1, num=self.image_size)
+        X, Y = np.meshgrid(space, space)
+        X = np.reshape(X, [self.image_size, self.image_size, 1])
+        Y = np.reshape(Y, [self.image_size, self.image_size, 1])
+        XY = np.concatenate([X, Y], axis=2)
+        image = (image[:, :, [0]] + 1.0) / 2.
+        prob = image / np.sum(image)
+        mean_xy = np.mean((XY * prob), axis=(0,1))
+        return mean_xy
+
+
+
+
+
+
+
 
     ### Collision Handling
 
