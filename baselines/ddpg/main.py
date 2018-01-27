@@ -46,7 +46,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         #env = PickAndPlaceEnv(max_steps=500)
         pass
     elif env_id == 'four-rooms':
-	env = continuous_gridworld2.FourRoomExperiment(visualize=False)
+        env = continuous_gridworld2.FourRoomExperiment(visualize=False)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
