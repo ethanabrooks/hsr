@@ -153,7 +153,7 @@ class RelationshipManager(object):
             if num_objects != 2:
                 raise Exception('Assymmetry is only supported for relations with 2 objects.')
             flipped_test = lambda o1, o2: test(o2, o1)
-            self.register_relationship(name+'_flipped', flipped_test, 2, assymmetric=False)
+            self.register_relationship(name+'__assymm', flipped_test, 2, assymmetric=False)
 
     def register_object(self, name, position_accessor):
         if name in self.objects:
@@ -161,7 +161,7 @@ class RelationshipManager(object):
         self.objects[name] = position_accessor
 
     def compute_relations(self):
-        output = {relation_name: [] for relation_name in self.relationships}
+        output = {relation_name: [] for relation_name in self.relationships if not relation_name.endswith('__assymm')}
         realized_objects = {name: accessor() for name, accessor in self.objects.items()}
         for num_objects, relationship_dict in self.relationship_tree.items():
             # get pairs of objects and names
@@ -170,7 +170,10 @@ class RelationshipManager(object):
                 for relation_name, relation in relationship_dict.items():
                     relation_value = relation(*object_positions)
                     if relation_value:
-                        output[relation_name].append(tuple(object_names))
+                        if relation_name.endswith('__assymm'):
+                            output[relation_name.split('__assymm')[0]].append(tuple(object_names)[::-1])
+                        else:
+                            output[relation_name].append(tuple(object_names))
         return output
 
 
@@ -197,8 +200,9 @@ if __name__ == '__main__':
         return dist < 0.01
 
 
-    object1 = lambda: np.array([0.0, 0.0])
-    object2 = lambda: np.array([0.0, 10.0])
+    object2 = lambda: np.array([0.0, 0.0])
+    object1 = lambda: np.array([-1.0, -1.0])
+
 
     manager = RelationshipManager()
     manager.register_relationship('NEAR', near, 2)
@@ -208,7 +212,6 @@ if __name__ == '__main__':
 
     manager.register_object('OBJECT1', object1)
     manager.register_object('OBJECT2', object2)
-    manager.register_object('OBJECT3', object3)
 
     pp.pprint(manager.compute_relations())
 
