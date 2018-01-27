@@ -35,6 +35,7 @@ class PickAndPlaceEnv(BaseEnv):
         obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
         assert obs_size != 0
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
+        print('sim nu!', self.sim.nu)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
