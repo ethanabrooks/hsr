@@ -40,13 +40,13 @@ def run(port):
         while True:
             env.render()
 
-            action = np.ones(shape,)
+            action = np.ones(5)
             action = action * np.random.rand(1)
             action += delta
             if np.any(action > 1) or np.any(action < -1):
                 delta *= -1
 
-            action[1:] = 0
+            action[2:] = 0
             action *= 10
 
             tick = time.time()

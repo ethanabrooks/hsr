@@ -116,12 +116,8 @@ def run(port, restore_critic_path=None):
                     i = k - 1
                     print(mocap_action_space_labels[i])
 
-            # action[1:4] = 0
             if not pause:
-                # print(action)
-                # new_action[2] += 0.001
                 (obs, goal), r, done, _ = env.step(action)
-                # print(obs)
                 labels = dict()
                 qpos, _ = env._destructure_obs(obs)
                 if restore_critic_path:
