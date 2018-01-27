@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import argparse
 from baselines import bench, logger
-#from environment.arm2pos import Arm2PosEnv
+from environment.arm2pos import Arm2PosEnv
 from environment.navigate_old import NavigateEnv
-#from environment.pick_and_place import PickAndPlaceEnv
+from environment.pick_and_place import PickAndPlaceEnv
+from environment.arm2touch import Arm2TouchEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 
 def train(env_id, num_timesteps, seed):
@@ -28,8 +29,9 @@ def train(env_id, num_timesteps, seed):
         elif env_id == 'navigate':
             env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
         elif env_id == 'arm2pos':
-            #env = Arm2PosEnv(continuous=False, max_steps=500)
-            pass
+            env = Arm2PosEnv(continuous=False, max_steps=500)
+        elif env_id == 'arm2touch':
+            env = Arm2TouchEnv(continuous=True, max_steps=500, neg_reward=True)
         else:
             env = gym.make(env_id)
         env = bench.Monitor(env, logger.get_dir())
@@ -43,6 +45,7 @@ def train(env_id, num_timesteps, seed):
         lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
         ent_coef=0.0,
         lr=3e-4,
+        save_path=None, restore_path=None,
         cliprange=0.2,
         total_timesteps=num_timesteps)
 

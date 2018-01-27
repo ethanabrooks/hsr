@@ -2,6 +2,8 @@ from os.path import join
 
 import numpy as np
 from gym import spaces
+from itertools import combinations
+
 
 from environment.base import BaseEnv
 
@@ -128,3 +130,69 @@ class Arm2TouchEnv(BaseEnv):
         else:
             action = np.clip(action * self._action_multiplier, -1, 1)
             return BaseEnv.step(self, action)
+
+
+class RelationshipManager(object):
+
+    def __init__(self):
+        self.relationships = dict()
+        self.objects = dict()
+        self.relationship_tree = dict()
+
+    def register_relationship(self, name, test, num_objects):
+        if name in self.relationships:
+            raise Exception('Relationship already exists with name %s' % name)
+        self.relationships[name] = (test, num_objects)
+        # add objects into relationship tree for easier computation
+        if num_objects not in self.relationship_tree:
+            self.relationship_tree[num_objects] = {}
+        relationship_dict = self.relationship_tree[num_objects]
+        relationship_dict[name] = test
+
+    def register_object(self, name, position_accessor):
+        if name in self.objects:
+            raise Exception('Object already exists with name %s' % name)
+        self.objects[name] = position_accessor
+
+    def compute_relations(self):
+        output = {relation_name: [] for relation_name in self.relationships}
+        realized_objects = {name: accessor() for name, accessor in self.objects.items()}
+        for num_objects, relationship_dict in self.relationship_tree.items():
+            # get pairs of objects and names
+            for object_names in combinations(self.objects, r=num_objects):
+                object_positions = [realized_objects[name] for name in object_names]
+                for relation_name, relation in relationship_dict.items():
+                    relation_value = relation(*object_positions)
+                    if relation_value:
+                        output[relation_name].append(tuple(object_names))
+        return output
+
+
+
+if __name__ == '__main__':
+    import pprint
+    pp = pprint.PrettyPrinter()
+    near = lambda o1, o2: np.sqrt(np.sum(np.square(o1 - o2))) < 0.1
+    far = lambda o1, o2: np.sqrt(np.sum(np.square(o1 - o2))) > 1.0
+
+    object1 = lambda: np.array([0.0, 0.0])
+    object2 = lambda: np.array([0.0, 10.0])
+    object3 = lambda: np.array([0.01, 0.01])
+
+    manager = RelationshipManager()
+    manager.register_relationship('NEAR', near, 2)
+    manager.register_relationship('FAR', far, 2)
+
+    manager.register_object('OBJECT1', object1)
+    manager.register_object('OBJECT2', object2)
+    manager.register_object('OBJECT3', object3)
+
+    '''
+    expecting FAR(o1, o2), FAR(o2, o1), 
+    '''
+
+    pp.pprint(manager.compute_relations())
+
+
+
+
