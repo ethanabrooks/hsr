@@ -240,7 +240,7 @@ class FourRoomExperiment(ContinuousGridworld2):
 
 
 if __name__ == '__main__':
-    #env = FourRoomExperiment(visualize=True)
+    env = FourRoomExperiment(visualize=False)
     env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
     obs = env.reset()
     print('pos:', obs[:2], 'goal:', obs[2:])
