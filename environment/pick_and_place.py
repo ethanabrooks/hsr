@@ -35,14 +35,13 @@ class PickAndPlaceEnv(BaseEnv):
         obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
         assert obs_size != 0
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
-        print('sim nu!', self.sim.nu)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
     def reset_qpos(self):
         block_joint = self.sim.jnt_qposadr('block1joint')
         self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(4) * 2 * np.pi
-        self.init_qpos[self.sim.jnt_qposadr('wrist_roll_joint')] = np.random.random() * 2 * np.pi
+        # self.init_qpos[self.sim.jnt_qposadr('wrist_roll_joint')] = np.random.random() * 2 * np.pi
         return self.init_qpos
 
     def _set_new_goal(self):
