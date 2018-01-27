@@ -139,7 +139,7 @@ class RelationshipManager(object):
         self.objects = dict()
         self.relationship_tree = dict()
 
-    def register_relationship(self, name, test, num_objects):
+    def register_relationship(self, name, test, num_objects, assymmetric=False):
         if name in self.relationships:
             raise Exception('Relationship already exists with name %s' % name)
         self.relationships[name] = (test, num_objects)
@@ -148,6 +148,12 @@ class RelationshipManager(object):
             self.relationship_tree[num_objects] = {}
         relationship_dict = self.relationship_tree[num_objects]
         relationship_dict[name] = test
+
+        if assymmetric:
+            if num_objects != 2:
+                raise Exception('Assymmetry is only supported for relations with 2 objects.')
+            flipped_test = lambda o1, o2: test(o2, o1)
+            self.register_relationship(name+'_flipped', flipped_test, 2, assymmetric=False)
 
     def register_object(self, name, position_accessor):
         if name in self.objects:
@@ -169,27 +175,40 @@ class RelationshipManager(object):
 
 
 
+
+
 if __name__ == '__main__':
     import pprint
     pp = pprint.PrettyPrinter()
+
     near = lambda o1, o2: np.sqrt(np.sum(np.square(o1 - o2))) < 0.1
     far = lambda o1, o2: np.sqrt(np.sum(np.square(o1 - o2))) > 1.0
+    behind = lambda o1, o2: np.all(np.less(o1, o2))
+
+    def between(o1, o2, o3):
+        # o1 is between o2 and o3 if it is sufficiently close to the line between o2 and o3
+        x0, y0 = o1[0], o1[1]
+        x1, y1 = o2[0], o2[1]
+        x2, y2 = o3[0], o3[1]
+        a = y2 - y1
+        b = x1 - x2
+        c = (x2 - x1)*y1 - (y2 - y1)*x1
+        dist = np.abs(a*x0 + b*y0 + c) / np.sqrt(a**2 + b**2)
+        return dist < 0.01
+
 
     object1 = lambda: np.array([0.0, 0.0])
     object2 = lambda: np.array([0.0, 10.0])
-    object3 = lambda: np.array([0.01, 0.01])
 
     manager = RelationshipManager()
     manager.register_relationship('NEAR', near, 2)
     manager.register_relationship('FAR', far, 2)
+    manager.register_relationship('BETWEEN', between, 3)
+    manager.register_relationship('BEHIND', behind, 2, assymmetric=True)
 
     manager.register_object('OBJECT1', object1)
     manager.register_object('OBJECT2', object2)
     manager.register_object('OBJECT3', object3)
-
-    '''
-    expecting FAR(o1, o2), FAR(o2, o1), 
-    '''
 
     pp.pprint(manager.compute_relations())
 
