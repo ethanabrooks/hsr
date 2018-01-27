@@ -236,8 +236,7 @@ class FourRoomExperiment(ContinuousGridworld2):
     def agent_position_generator(self):
         pos = np.array(self.position_mapping[np.random.randint(0, 4)])
         if self.noisy_position:
-            pos = np.add(pos, np.random.uniform(low=0.0, high=0.15, size=2))
-
+            pos = np.add(pos, np.random.uniform(low=-0.05, high=0.05, size=2))
         return pos 
  
     def goal_position_generator(self):
@@ -246,7 +245,7 @@ class FourRoomExperiment(ContinuousGridworld2):
 
 if __name__ == '__main__':
     env = FourRoomExperiment(visualize=False)
-    env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
+    # env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
     obs = env.reset()
     print('pos:', obs[:2], 'goal:', obs[2:])
     while True:
