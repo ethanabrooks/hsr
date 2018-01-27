@@ -133,19 +133,19 @@ class PickAndPlaceMocapEnv(BaseEnv):
         action = [action[0], action[0]]
 
         # action[1] = desired rotation
-        quat = self.euler2quat(angle)
+        quat = [np.cos(angle/2), np.sin(angle/2)*0, np.sin(angle/2)*0, np.sin(angle/2)*1] #self.euler2quat(angle)
         # print(action[1], quat)
 
         # print(action, mocap_pos)
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
             self.sim.mocap_pos[0:3] = mocap_pos
-            print('updating', debug)
+            # print('updating', debug)
 
-        if float(angle) != 0.0 and (not np.all(quat == self._prev_quat)):
-            self.sim.mocap_quat[0:4] = quat
-            self._prev_quat = quat
-            print('Mocap', self.sim.mocap_pos)
-            print('updating quat', float(angle) != 0.0, (not np.all(quat == self._prev_quat)))
+        # if float(angle) != 0.0 and (not np.all(quat == self._prev_quat)):
+        #     self.sim.mocap_quat[0:4] = quat
+        #     self._prev_quat = quat
+        #     print('Mocap', self.sim.mocap_pos)
+        #     print('updating quat', float(angle) != 0.0, (not np.all(quat == self._prev_quat)))
 
         return super().step(action)

@@ -37,19 +37,20 @@ def run(port):
         i = 0
         # image = np.zeros(image_dimensions)
         # im = plt.imshow(image)
+        action = np.ones(5)
+        action = action * np.random.rand(1)
+        action += delta
+        if np.any(action > 1) or np.any(action < -1):
+            delta *= -1
+
         while True:
             env.render()
 
-            action = np.ones(5)
-            action = action * np.random.rand(1)
-            action += delta
-            if np.any(action > 1) or np.any(action < -1):
-                delta *= -1
-
-            action[2:] = 0
-            action *= 10
+            action -= .10
+            action[0:4] = 0
 
             tick = time.time()
+            print(action)
             obs, r, done, _ = env.step(action)
 
             # NOTE: this is how to matplotlib render inner cameras. Do not delete.
