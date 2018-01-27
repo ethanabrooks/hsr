@@ -230,12 +230,13 @@ class FourRoomExperiment(ContinuousGridworld2):
     def __init__(self, visualize=False, noisy_position=True, image_size=64):
         from toy_environment import four_rooms_obstacle_list
         self.position_mapping = {0: [-0.75, -0.75], 1: [-0.75, 0.75], 2: [0.75, 0.75], 3: [0.75, -0.75]}
+        self.noisy_position = noisy_position
         super().__init__(four_rooms_obstacle_list.obstacle_list, visualize=visualize, image_size=image_size)
-
+	
     def agent_position_generator(self):
-	pos = np.array(self.position_mapping[np.random.randint(0, 4)]
-	if noisy_position:
-	    pos = np.add(pos, np.random.uniform(low=0.0, high=0.15, size=2))
+        pos = np.array(self.position_mapping[np.random.randint(0, 4)])
+        if self.noisy_position:
+            pos = np.add(pos, np.random.uniform(low=0.0, high=0.15, size=2))
 
         return pos 
  
