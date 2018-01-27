@@ -5,7 +5,6 @@ import numpy as np
 import sys
 import cv2
 
-
 class RectangleObstacle(object):
 
     def __init__(self, image_size, color, top_left, bottom_right):

@@ -11,12 +11,15 @@ import baselines.ddpg.training as training
 from baselines.ddpg.models import Actor, Critic
 from baselines.ddpg.memory import Memory
 from baselines.ddpg.noise import *
+#from environment.arm2pos import Arm2PosEnv
+#from environment.pick_and_place import PickAndPlaceEnv
 from environment.arm2pos import Arm2PosEnv
+from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 import gym
 import tensorflow as tf
-from environment.navigate import NavigateEnv
+#from environment.navigate import NavigateEnv
 from mpi4py import MPI
 
 
@@ -28,13 +31,13 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     # Create envs.
     if env_id == 'navigate':
-        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
+        env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=False, max_steps=500)
     elif env_id == 'toy':
-        # env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
-        #                                               obstacle_mode=continuous_gridworld.NO_OBJECTS)
-        env = continuous_gridworld2.ContinuousGridworld2()
+        #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
+        from toy_environment import room_obstacle_list
+        env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2)
     elif env_id == 'arm2pos':
-        env = Arm2PosEnv(continuous=True, max_steps=500)
+        env = Arm2PosEnv(continuous=True, max_steps=500, neg_reward=False)
     elif env_id == 'pick-and-place':
         env = PickAndPlaceEnv(max_steps=500)
     else:
@@ -77,6 +80,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     critic = Critic(layer_norm=layer_norm)
     actor = Actor(nb_actions, layer_norm=layer_norm)
 
+
+
     # Seed everything to make things reproducible.
     seed = seed + 1000000 * rank
     logger.info('rank {}: seed={}, logdir={}'.format(rank, seed, logger.get_dir()))
@@ -91,8 +96,11 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         start_time = time.time()
     del kwargs['tb_dir']
     del kwargs['save_path']
+    hindsight_mode = kwargs['hindsight_mode']
+    del kwargs['hindsight_mode']
     training.train(env=env, eval_env=eval_env, param_noise=param_noise,
-                   action_noise=action_noise, actor=actor, critic=critic, memory=memory, **kwargs)
+                   action_noise=action_noise, actor=actor, critic=critic, memory=memory,
+                   hindsight_mode=hindsight_mode, **kwargs)
     env.close()
     if eval_env is not None:
         eval_env.close()
@@ -125,8 +133,10 @@ def parse_args():
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--noise-type', type=str, default='normal_0.05')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
-    parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
+    parser.add_argument('--restore-path', type=str, default=None)
+    parser.add_argument('--save-path', type=str, default=None)
+    parser.add_argument('--hindsight-mode', type=str, default=None)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them

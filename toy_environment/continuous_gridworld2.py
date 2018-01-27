@@ -4,60 +4,65 @@ from gym import utils, spaces
 from toy_environment.rectangle_object import RectangleObstacle
 import pygame
 import cv2
+from collections import deque
 from toy_environment import room_obstacle_list, four_rooms_obstacle_list
 
 class ContinuousGridworld2(gym.Env, utils.EzPickle):
-    def __init__(self, obstacle_list_generator, visualize=False, image_size=64):
+
+    def __init__(self, obstacle_list_generator, visualize=False, image_size=64, max_action_step=0.2, max_time_steps=1000):
         utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.observation_space = spaces.Box(-1, 1, shape=[4])
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
         self.obstacles = obstacle_list_generator(image_size)
 
-        self.agent_position = self.get_non_intersecting_position()
-        self.goal = self.get_non_intersecting_position()
-
-
+        self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
+        self.goal = self.get_non_intersecting_position(self.goal_position_generator)
         self.visualize = visualize
         if visualize:
             self.screen = pygame.display.set_mode((image_size, image_size),)
         else:
             self.screen = pygame.Surface((image_size, image_size))
 
-        self.max_action_step = 0.2
-        self.dist_cutoff = 0.1
-        self.max_time_steps = 1000
+        self.max_action_step = max_action_step
+        self.dist_cutoff = 0.2
+        self.max_time_steps = max_time_steps
         self.time_step = 0
 
+    def agent_position_generator(self):
+        return np.random.uniform(-1, 1, size=2)
+
+    def goal_position_generator(self):
+        return np.random.uniform(-1, 1, size=2)
 
     def _step(self, action):
         action = self.preprocess_action(action)
-
         num_subchecks = 4
-        subaction = 0.0
-        for i in range(num_subchecks):
+        for i in range(1, num_subchecks):
             intersects = self.check_intersects(self.agent_position, action, mult=i / float(num_subchecks))
             if intersects:
+                action = action * (i-1) / float(num_subchecks)
                 break
-            else:
-                subaction = action * (i / float(num_subchecks))
-
-
-        self.agent_position = np.clip(self.agent_position + subaction, -1, 1)
+        self.agent_position = np.clip(self.agent_position + action, -1, 1)
         self.time_step += 1
         obs = self.obs()
-        terminal = self.at_goal(self.goal, obs)
-        if terminal:
-            print('AT GOAL')
+        terminal = self.compute_terminal(self.goal, obs)
         reward = self.compute_reward(self.goal, obs)
+        #cv2.imshow('game', self.render_agent())
+        #cv2.waitKey(1)
+        #if self.at_goal(self.goal, obs):
+        #    self.goal = self.get_non_intersecting_position(self.goal_position_generator)
+            #self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
+        if reward == 1:
+            print('AT GOAL')
         if self.time_step >= self.max_time_steps:
             terminal = True
         return obs, reward, terminal, {}
 
 
     def _reset(self):
-        self.agent_position = self.get_non_intersecting_position()
-        self.goal = self.get_non_intersecting_position()
+        self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
+        self.goal = self.get_non_intersecting_position(self.goal_position_generator)
         self.time_step = 0
         return self.obs()
 
@@ -88,13 +93,16 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         return dist <= self.dist_cutoff
 
 
-    def compute_new_obs(self, goal, obs):
+    def change_goal(self, goal, obs):
         without_goal = obs[:-2]
         return np.concatenate([without_goal, goal], axis=0)
 
 
     def compute_reward(self, goal, obs):
         return 1.0 if self.at_goal(goal, obs) else -0.01
+
+    def compute_terminal(self, goal, obs):
+        return self.at_goal(goal, obs)
 
 
     def obs_to_goal(self, obs):
@@ -109,7 +117,12 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.screen.fill((255,255,255))
         x_int = int(x*self.image_size)
         y_int = int(y*self.image_size)
+        x_goal, y_goal = (self.goal[0] + 1) / 2, (self.goal[1] + 1)/2
+        x_goal_int = int(x_goal * self.image_size)
+        y_goal_int = int(y_goal * self.image_size)
         pygame.draw.circle(self.screen, (0, 0, 0), (x_int, y_int), 3)
+        pygame.draw.circle(self.screen, (255, 0, 0), (x_goal_int, y_goal_int), 3)
+
         for obs in self.obstacles:
             obs.draw(self.screen, (0,0,0))
         if self.visualize:
@@ -121,11 +134,13 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
     ### Collision Handling
 
-    def get_non_intersecting_position(self):
+    def get_non_intersecting_position(self, generator):
+        #if generator is None:
+        #    generator = lambda: np.random.uniform(-1, 1, size=2)
         intersects = True
         while intersects:
             intersects = False
-            position = np.random.uniform(-1, 1, size=2)
+            position = generator()
             tl = self.image_size * (position + 1) / 2. - 0.5 * (5 / np.sqrt(2))
             agent_rect = pygame.Rect(tl[0], tl[1], 5 / np.sqrt(2), 5 / np.sqrt(2))
             for obstacle in self.obstacles:
@@ -133,13 +148,13 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
                 intersects |= collision
         return position
 
+
     def check_intersects(self, agent_position, scaled_action, mult=1.0):
         position = np.clip(agent_position + mult*scaled_action, -1, 1)
         intersects = False
 
         tl = (self.image_size*(position + 1)) / 2. - 0.5 * 0.01
         agent_rect = pygame.Rect(tl[0], tl[1], 0.01, 0.01)
-        print(tl[0], tl[1], 0.01, 0.01)
         for obstacle in self.obstacles:
             collision = obstacle.collides(agent_rect)
             #print(obstacle.rect.topleft, obstacle.rect.width, obstacle.rect.height)
@@ -150,19 +165,32 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
                 obstacle.color = (0, 0, 0)
             if intersects:
                 break
-        print(intersects)
         return intersects
+
+class FourRoomExperiment(ContinuousGridworld2):
+
+    def __init__(self, visualize=False, image_size=64):
+        from toy_environment import four_rooms_obstacle_list
+        self.position_mapping = {0: [-0.75, -0.75], 1: [-0.75, 0.75], 2: [0.75, 0.75], 3: [0.75, -0.75]}
+        super().__init__(four_rooms_obstacle_list.obstacle_list, visualize=visualize, image_size=image_size)
+
+    def agent_position_generator(self):
+        return np.array(self.position_mapping[np.random.randint(0, 4)])
+
+    def goal_position_generator(self):
+        return np.random.uniform(self.agent_position - 0.25, self.agent_position + .25)
 
 
 if __name__ == '__main__':
-    env = ContinuousGridworld2(four_rooms_obstacle_list.obstacle_list)
+    #env = FourRoomExperiment(visualize=True)
+    env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
     obs = env.reset()
     print('pos:', obs[:2], 'goal:', obs[2:])
     while True:
-        action = {'w': [1.0, 0],
-                  's': [-1.0, 0],
-                  'a': [0, 1.0],
-                  'd': [0, -1.0]}.get(input('action:'), [0.0, 0.0])
+        action = {'s': [1.0, 0],
+                  'w': [-1.0, 0],
+                  'd': [0, 1.0],
+                  'a': [0, -1.0]}.get(input('action:'), [0.0, 0.0])
         #action = np.random.uniform(-1, 1, size=2)
         obs, reward, terminal, info = env.step(action)
         image = env.render_agent()

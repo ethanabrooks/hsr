@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+
 class RectangleObstacle(object):
 
     def __init__(self, image_size, top_left, bottom_right):
