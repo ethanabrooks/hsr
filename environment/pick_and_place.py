@@ -41,21 +41,21 @@ class PickAndPlaceEnv(BaseEnv):
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
-        self._n_block_orientations = n_orientations = 8
-        self._block_orientations = np.random.uniform(0, 2 * np.pi,
-                                                     size=(n_orientations, 4))
-        self._rewards = np.zeros(n_orientations)
-        self._usage = np.zeros(n_orientations)
-        self._current_orienation = None
+        # self._n_block_orientations = n_orientations = 8
+        # self._block_orientations = np.random.uniform(0, 2 * np.pi,
+                                                     # size=(n_orientations, 4))
+        # self._rewards = np.zeros(n_orientations)
+        # self._usage = np.zeros(n_orientations)
+        # self._current_orienation = None
 
     def reset_qpos(self):
         block_joint = self.sim.jnt_qposadr('block1joint')
-        # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
-        #     4) * 2 * np.pi
-        mean_rewards = self._rewards / np.maximum(self._usage, 1)
-        self._current_orienation = i = np.argmin(mean_rewards)
-        self._usage[i] += 1
-        self.init_qpos[block_joint + 3:block_joint + 7] = self._block_orientations[i]
+        self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
+            4) * 2 * np.pi
+        # mean_rewards = self._rewards / np.maximum(self._usage, 1)
+        # self._current_orienation = i = np.argmin(mean_rewards)
+        # self._usage[i] += 1
+        # self.init_qpos[block_joint + 3:block_joint + 7] = self._block_orientations[i]
         self.init_qpos[self.sim.jnt_qposadr(
             'wrist_roll_joint')] = np.random.random() * 2 * np.pi
         return self.init_qpos
@@ -130,5 +130,5 @@ class PickAndPlaceEnv(BaseEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         o, r, d, x = super().step(action)
-        self._rewards[self._current_orienation] += r
+        # self._rewards[self._current_orienation] += r
         return o, r, d, x
