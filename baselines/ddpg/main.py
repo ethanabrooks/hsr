@@ -29,7 +29,9 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     use_cnn = kwargs['use_cnn']
     del kwargs['use_cnn']
-
+    # for toy env
+    noisy_pos = kwargs['use_noisy_pos']
+    del kwargs['use_noisy_pos']
 
     # Create envs.
     if env_id == 'navigate':
@@ -46,7 +48,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         #env = PickAndPlaceEnv(max_steps=500)
         pass
     elif env_id == 'four-rooms':
-        env = continuous_gridworld2.FourRoomExperiment(visualize=False)
+        env = continuous_gridworld2.FourRoomExperiment(visualize=False, noisy_position=noisy_pos)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
@@ -151,6 +153,7 @@ def parse_args():
     parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--hindsight-mode', type=str, default=None)
     parser.add_argument('--use-cnn', type=bool, default=False)
+    parser.add_argument('--use-noisy-pos', type=bool, detault=False)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
