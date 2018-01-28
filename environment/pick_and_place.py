@@ -13,7 +13,8 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1, action_multiplier=1):
+    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1,
+                 action_multiplier=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
@@ -31,17 +32,32 @@ class PickAndPlaceEnv(BaseEnv):
 
         self._action_multiplier = action_multiplier
         left_finger_name = 'hand_l_distal_link'
-        self._finger_names = [left_finger_name, left_finger_name.replace('_l_', '_r_')]
-        obs_size = history_len * sum(map(np.size, self._obs())) + sum(map(np.size, self._goal()))
+        self._finger_names = [left_finger_name,
+                              left_finger_name.replace('_l_', '_r_')]
+        obs_size = history_len * sum(map(np.size, self._obs())) + sum(
+            map(np.size, self._goal()))
         assert obs_size != 0
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
 
+        self._n_block_orientations = n_orientations = 8
+        self._block_orientations = np.random.uniform(0, 2 * np.pi,
+                                                     size=(n_orientations, 4))
+        self._rewards = np.zeros(n_orientations)
+        self._usage = np.zeros(n_orientations)
+        self._current_orienation = None
+
     def reset_qpos(self):
         block_joint = self.sim.jnt_qposadr('block1joint')
-        self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(4) * 2 * np.pi
-        self.init_qpos[self.sim.jnt_qposadr('wrist_roll_joint')] = np.random.random() * 2 * np.pi
+        # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
+        #     4) * 2 * np.pi
+        mean_rewards = self._rewards / np.maximum(self._usage, 1)
+        self._current_orienation = i = np.argmin(mean_rewards)
+        self._usage[i] += 1
+        self.init_qpos[block_joint + 3:block_joint + 7] = self._block_orientations[i]
+        self.init_qpos[self.sim.jnt_qposadr(
+            'wrist_roll_joint')] = np.random.random() * 2 * np.pi
         return self.init_qpos
 
     def _set_new_goal(self):
@@ -67,12 +83,14 @@ class PickAndPlaceEnv(BaseEnv):
     def _compute_terminal(self, goal, obs):
         goal, should_lift = goal
         qpos, block_lifted = obs
-        return at_goal(self._gripper_pos(qpos), goal, self._geofence) and should_lift == block_lifted
+        return at_goal(self._gripper_pos(qpos), goal,
+                       self._geofence) and should_lift == block_lifted
 
     def _compute_reward(self, goal, obs):
         goal_pos, should_lift = goal
         qpos, block_lifted = obs
-        if at_goal(self._gripper_pos(qpos), goal_pos, self._geofence) and block_lifted == should_lift:
+        if at_goal(self._gripper_pos(qpos), goal_pos,
+                   self._geofence) and block_lifted == should_lift:
             return 1
         elif self._neg_reward:
             return -.0001
@@ -105,8 +123,12 @@ class PickAndPlaceEnv(BaseEnv):
             return [self.sim.name2id(ObjType.ACTUATOR, name) for name in names]
 
         # insert mirrored values at the appropriate indexes
-        mirrored_indexes, mirroring_indexes = map(get_indexes, [mirrored, mirroring])
+        mirrored_indexes, mirroring_indexes = map(get_indexes,
+                                                  [mirrored, mirroring])
         # necessary because np.insert can't append multiple values to end:
-        mirroring_indexes = np.minimum(mirroring_indexes, self.action_space.shape)
+        mirroring_indexes = np.minimum(mirroring_indexes,
+                                       self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
-        return super().step(action)
+        o, r, d, x = super().step(action)
+        self._rewards[self._current_orienation] += r
+        return o, r, d, x
