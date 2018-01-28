@@ -42,15 +42,25 @@ def run(port):
         action += delta
         if np.any(action > 1) or np.any(action < -1):
             delta *= -1
-
+        action[0:4] = 0
         while True:
             env.render()
 
-            action -= .10
-            action[0:4] = 0
+            # action[4] -= .01
+            action[0] += 1
+            
+            i += 1
+
+            action[3] = 1.46
+            if i > 200:
+                action[3] = -1.46
+            if i > 300:
+                action[3] = 1.05
+            if i > 400:
+                action[3] = -.12
 
             tick = time.time()
-            print(action)
+            print(action, i)
             obs, r, done, _ = env.step(action)
 
             # NOTE: this is how to matplotlib render inner cameras. Do not delete.
