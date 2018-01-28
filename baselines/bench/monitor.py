@@ -60,7 +60,11 @@ class Monitor(Wrapper):
             self.needs_reset = True
             eprew = sum(self.rewards)
             eplen = len(self.rewards)
-            epinfo = {"r": round(eprew, 6), "l": eplen, "t": round(time.time() - self.tstart, 6)}
+            epinfo = {"r": round(eprew, 6),
+                      "l": eplen,
+                      "t": round(time.time() - self.tstart, 6),
+                      "s": int(eplen < self.env.max_steps)
+                      }
             epinfo.update(self.current_reset_info)
             if self.logger:
                 self.logger.writerow(epinfo)
