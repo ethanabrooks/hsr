@@ -22,6 +22,8 @@ def run(port, value_tensor=None, sess=None):
     #env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.01)
     np.set_printoptions(precision=2, linewidth=800)
     env.reset()
+    print('Goal:', env._goal())
+
 
     shape, = env.action_space.shape
 
@@ -57,6 +59,7 @@ def run(port, value_tensor=None, sess=None):
 
         if done:
             env.reset()
+            print('Goal:', env._goal())
             print('\nresetting', total_reward)
             total_reward = 0
 

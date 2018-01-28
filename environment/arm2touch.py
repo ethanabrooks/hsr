@@ -2,7 +2,7 @@ from os.path import join
 
 import numpy as np
 from gym import spaces
-from itertools import combinations
+from itertools import combinations, product
 
 
 from environment.base import BaseEnv
@@ -36,6 +36,24 @@ class Arm2TouchEnv(BaseEnv):
         else:
             self.action_space = spaces.Discrete(self.sim.nu * 2 + 1)
 
+        self.relation_manager = RelationManager()
+        self.context_qpos = np.copy(self.sim.qpos)
+
+        block1 = lambda: self.get_block_position(self.context_qpos, 'block1joint')
+        block2 = lambda: self.get_block_position(self.context_qpos, 'block2joint')
+        gripper = lambda: self._gripper_pos(self.context_qpos)
+
+        touching = lambda o1, o2: self.are_positions_touching(o1, o2)
+        near = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.15)
+
+
+        self.relation_manager.register_object('block1', block1)
+        self.relation_manager.register_object('block2', block2)
+        self.relation_manager.register_object('gripper', gripper)
+        self.relation_manager.register_relationship('touching', touching, 2)
+        self.relation_manager.register_relationship('near', near, 2)
+
+
 
     def generate_valid_block_position(self):
         low_range = np.array([-0.15, -0.25, 0.49])
@@ -53,8 +71,7 @@ class Arm2TouchEnv(BaseEnv):
         qpos[idx:idx+3] = position
         return qpos
 
-    def are_positions_touching(self, pos1, pos2):
-        touching_threshold = 0.05
+    def are_positions_touching(self, pos1, pos2, touching_threshold=0.05):
         weighting = np.array([1, 1, 0.1])
         dist = np.sqrt(np.sum(weighting*np.square(pos1 - pos2)))
         return dist < touching_threshold
@@ -62,8 +79,8 @@ class Arm2TouchEnv(BaseEnv):
 
     def reset_qpos(self):
         qpos = self.init_qpos
-        qpos = self.set_block_position(self.sim.qpos, 'block1joint', self.generate_valid_block_position())
-        qpos = self.set_block_position(self.sim.qpos, 'block2joint', self.generate_valid_block_position())
+        qpos = self.set_block_position(qpos, 'block1joint', self.generate_valid_block_position())
+        qpos = self.set_block_position(qpos, 'block2joint', self.generate_valid_block_position())
         return qpos
 
     def _set_new_goal(self):
@@ -71,9 +88,6 @@ class Arm2TouchEnv(BaseEnv):
         onehot = np.zeros([2],dtype=np.float32)
         onehot[goal_block] = 1
         self.__goal = onehot
-
-
-
 
     def _obs(self):
         return [self.sim.qpos]
@@ -87,15 +101,26 @@ class Arm2TouchEnv(BaseEnv):
     def _currently_failed(self):
         return False
 
-    def at_goal(self, qpos, goal):
-        block1 = self.get_block_position(qpos, 'block1joint')
-        block2 = self.get_block_position(qpos, 'block2joint')
-        gripper = self._gripper_pos(qpos)
+    def at_goal_touch_block(self, qpos, goal):
+        self.context_qpos = qpos
         goal_block = np.argmax(goal) + 1
+        relations = self.relation_manager.compute_relations()
         if goal_block == 1:
-            return self.are_positions_touching(block1, gripper)
+            return ('block1', 'gripper') in relations['touching']
         else:
-            return self.are_positions_touching(block2, gripper)
+            return ('block2', 'gripper') in relations['touching']
+
+    def at_goal_push_together(self, qpos, goal):
+        self.context_qpos = qpos
+        relations = self.relation_manager.compute_relations()
+        return ('block1', 'block2') in relations['near']
+
+
+
+    def at_goal(self, qpos, goal):
+        #return self.at_goal_touch_block(qpos, goal)
+        return self.at_goal_push_together(qpos, goal)
+
 
     def _compute_terminal(self, goal, obs):
         goal, = goal
@@ -132,7 +157,7 @@ class Arm2TouchEnv(BaseEnv):
             return BaseEnv.step(self, action)
 
 
-class RelationshipManager(object):
+class RelationManager(object):
 
     def __init__(self):
         self.relationships = dict()
@@ -165,7 +190,7 @@ class RelationshipManager(object):
         realized_objects = {name: accessor() for name, accessor in self.objects.items()}
         for num_objects, relationship_dict in self.relationship_tree.items():
             # get pairs of objects and names
-            for object_names in combinations(self.objects, r=num_objects):
+            for object_names in product(self.objects, repeat=num_objects):
                 object_positions = [realized_objects[name] for name in object_names]
                 for relation_name, relation in relationship_dict.items():
                     relation_value = relation(*object_positions)
@@ -204,7 +229,7 @@ if __name__ == '__main__':
     object1 = lambda: np.array([-1.0, -1.0])
 
 
-    manager = RelationshipManager()
+    manager = RelationManager()
     manager.register_relationship('NEAR', near, 2)
     manager.register_relationship('FAR', far, 2)
     manager.register_relationship('BETWEEN', between, 3)
