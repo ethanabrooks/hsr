@@ -5,8 +5,8 @@
                   diaginertia="0.378627 0.344913 0.145159"/>
         <geom type="mesh" group="1" mesh="base_light"/>
         <geom type="mesh" group="1" mesh="body_light"/>
-        <geom type="mesh" group="1" mesh="torso_base" rgba="1 0 0 1"/>
-        <geom type="mesh" mesh="base" rgba="1 0 0 1"/>
+        <geom type="mesh" group="1" mesh="torso_base" />
+        <geom type="mesh" mesh="base"/>
         <!-- <joint axis="1 0 0" damping="100000" name="slide_x" pos    ="0 0 0" type="slide" limited="true" range="-.25 .25"/> -->
         <joint axis="0 1 0" damping="100000" stiffness="10000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
         <!-- <joint axis="0 0 1" damping="100000" name="turn" pos="0 0 0" type="hinge"/> -->

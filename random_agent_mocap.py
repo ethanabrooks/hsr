@@ -47,18 +47,24 @@ def run(port):
             if i != 0:
                 env.render()
 
-            action[4] -= .01
-            action[0] += 1
+            action[4] = -.5
+            action[1] = 120
             
             i += 1
 
             action[3] = 1.46
             if i > 200:
                 action[3] = -1.46
+                action[1] = -120
+                action[4] = -.25
             if i > 300:
                 action[3] = 1.05
+                action[1] = 120
+                action[4] = -.5
             if i > 400:
                 action[3] = -.12
+                action[1] = -120
+                action[4] = -.5
 
             tick = time.time()
             print(action, i)

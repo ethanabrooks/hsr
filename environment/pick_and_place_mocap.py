@@ -129,7 +129,7 @@ class PickAndPlaceMocapEnv(BaseEnv):
         # mirroring l / r gripper
 
         # action = [wrist_roll, l_finger, r_finger]
-        action = [0, action[0], action[0]]
+        action = [action[1], action[0], action[0]]
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
