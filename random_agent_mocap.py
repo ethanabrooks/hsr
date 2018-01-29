@@ -44,9 +44,10 @@ def run(port):
             delta *= -1
         action[0:4] = 0
         while True:
-            env.render()
+            if i != 0:
+                env.render()
 
-            # action[4] -= .01
+            action[4] -= .01
             action[0] += 1
             
             i += 1

@@ -118,35 +118,21 @@ class PickAndPlaceMocapEnv(BaseEnv):
        
         return np.array([qw, qx, qy, qz])
 
-    def set_current_quat(self):
-        return self._prev_quat
 
     def step(self, action):
         # Last three items are desired gripper pos
         angle = action[1]
         mocap_pos = action[2:]
-        self._prev_quat = self.sim.mocap_quat[0:4]
        
         # first two inputs are control:
         # action[0] = desired distance betwen grippers
         # mirroring l / r gripper
-        action = [action[0] * -10, action[0], action[0]]
 
-        # action[1] = desired rotation
-        quat = [np.cos(angle/2), np.sin(angle/2)*0, np.sin(angle/2)*0, np.sin(angle/2)*1] #self.euler2quat(angle)
-        # print(action[1], quat)
-
-        print(action, mocap_pos)
+        # action = [wrist_roll, l_finger, r_finger]
+        action = [0, action[0], action[0]]
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
             self.sim.mocap_pos[0:3] = mocap_pos
-            # print('updating', debug)
 
-        # if float(angle) != 0.0 and (not np.all(quat == self._prev_quat)):
-        #     self.sim.mocap_quat[0:4] = quat
-        #     self._prev_quat = quat
-            # print('Mocap', self.sim.mocap_pos)
-            # print('updating quat', angle, float(angle) != 0.0, (not np.all(quat == self._prev_quat)))
-        print(self.sim.mocap_pos)
         return super().step(action)
