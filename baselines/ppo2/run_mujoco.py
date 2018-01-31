@@ -7,7 +7,7 @@ from environment.pick_and_place import PickAndPlaceEnv
 from environment.arm2touch import Arm2TouchEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 
-def train(env_id, num_timesteps, seed):
+def train(env_id, num_timesteps, seed, save_path, restore_path):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.vec_normalize import VecNormalize
     from baselines.ppo2 import ppo2
@@ -19,6 +19,8 @@ def train(env_id, num_timesteps, seed):
     config = tf.ConfigProto(allow_soft_placement=True,
                             intra_op_parallelism_threads=ncpu,
                             inter_op_parallelism_threads=ncpu)
+    config.gpu_options.allow_growth = True
+
     tf.Session(config=config).__enter__()
     def make_env():
         if env_id == 'toy':
@@ -45,7 +47,7 @@ def train(env_id, num_timesteps, seed):
         lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
         ent_coef=0.0,
         lr=3e-4,
-        save_path=None, restore_path=None,
+        save_path=save_path, restore_path=restore_path,
         cliprange=0.2,
         total_timesteps=num_timesteps)
 
@@ -56,12 +58,15 @@ def main():
     parser.add_argument('--seed', help='RNG seed', type=int, default=0)
     parser.add_argument('--num-timesteps', type=int, default=int(1e7))
     parser.add_argument('--tb-dir', default=None)
+    parser.add_argument('--save-path', default=None)
+    parser.add_argument('--restore-path', default=None)
     args = parser.parse_args()
     if args.tb_dir is not None:
         logger.configure(dir=args.tb_dir, format_strs=['stdout', 'tensorboard'])
     else:
         logger.configure()
-    train(args.env, num_timesteps=args.num_timesteps, seed=args.seed)
+    train(args.env, num_timesteps=args.num_timesteps, seed=args.seed, save_path=args.save_path,
+          restore_path=args.restore_path)
 
 
 

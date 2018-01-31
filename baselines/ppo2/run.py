@@ -8,6 +8,7 @@ from environment.arm2pos import Arm2PosEnv
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment.continuous_gridworld2 import ContinuousGridworld2
+from environment.arm2touch import Arm2TouchEnv
 from toy_environment import room_obstacle_list
 
 
@@ -40,6 +41,8 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
                 env = Arm2PosEnv(continuous=True, max_steps=500)
             elif env_id == 'pick-and-place':
                 env = PickAndPlaceEnv(max_steps=500)
+            elif env_id == 'arm2touch':
+                env = Arm2TouchEnv(continuous=True, max_steps=500, neg_reward=True)
             elif env_id == 'navigate':
                 env = NavigateEnv(continuous=True, max_steps=500, geofence=.5)
             else:
@@ -47,7 +50,7 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
             env.seed(seed + rank)
             if record:
                 logger.warn('`record` is enabled. Program will not log summary/tensorboard values.')
-                return gym.wrappers.Monitor(env, '/tmp/ppo-video')
+                return gym.wrappers.Monitor(env, '/home/crgrimm/hsr')
             else:
                 return bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
 
@@ -58,13 +61,20 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
     set_global_seeds(seed)
     env = VecFrameStack(env, 4)
     policy = {'cnn': CnnPolicy, 'lstm': LstmPolicy, 'lnlstm': LnLstmPolicy, 'mlp': MlpPolicy}[policy]
-    ppo2.learn(policy=policy, env=env, nsteps=128, nminibatches=4,
-               lam=0.95, gamma=0.99, noptepochs=4, log_interval=1,
-               ent_coef=.01, save_interval=30,
-               lr=lambda f: f * 2.5e-4,
-               cliprange=lambda f: f * 0.1,
-               total_timesteps=int(num_timesteps * 1.1),
-               restore_path=restore_path, save_path=save_path)
+    #ppo2.learn(policy=policy, env=env, nsteps=128, nminibatches=4,
+    #           lam=0.95, gamma=0.99, noptepochs=4, log_interval=1,
+    #           ent_coef=0.01, save_interval=30,
+    #           lr=lambda f: f * 2.5e-4,
+    #           cliprange=lambda f: f * 0.1,
+    #           total_timesteps=int(num_timesteps * 1.1),
+    #           restore_path=restore_path, save_path=save_path)
+    ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=32,
+               lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
+               ent_coef=0.0,
+               lr=3e-4, save_interval=10,
+               save_path=save_path, restore_path=restore_path,
+               cliprange=0.2,
+               total_timesteps=num_timesteps)
 
 
 def main():

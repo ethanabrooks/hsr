@@ -39,13 +39,15 @@ class Arm2TouchEnv(BaseEnv):
         self.relation_manager = RelationManager()
         self.context_qpos = np.copy(self.sim.qpos)
 
-        block1 = lambda: self.get_block_position(self.context_qpos, 'block1joint')
-        block2 = lambda: self.get_block_position(self.context_qpos, 'block2joint')
+        block1 = lambda: self.get_block1_position(self.context_qpos)
+        block2 = lambda: self.get_block2_position(self.context_qpos)
         gripper = lambda: self._gripper_pos(self.context_qpos)
 
-        touching = lambda o1, o2: self.are_positions_touching(o1, o2)
-        near = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.15)
+        touching = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.05)
+        near = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.20)
 
+        self.block1_idx = self.sim.jnt_qposadr('block1joint')
+        self.block2_idx = self.sim.jnt_qposadr('block2joint')
 
         self.relation_manager.register_object('block1', block1)
         self.relation_manager.register_object('block2', block2)
@@ -60,10 +62,13 @@ class Arm2TouchEnv(BaseEnv):
         high_range = np.array([0.15, 0.25, 0.49])
         return np.random.uniform(low=low_range, high=high_range)
 
-    def get_block_position(self, qpos, name):
-        idx = self.sim.jnt_qposadr(name)
-        position = qpos[idx:idx+3]
-        return np.copy(position)
+    def get_block1_position(self, qpos):
+        position = qpos[self.block1_idx:self.block1_idx+3]
+        return position
+
+    def get_block2_position(self, qpos):
+        position = qpos[self.block2_idx:self.block2_idx+3]
+        return position
 
     def set_block_position(self, qpos, name, position):
         idx = self.sim.jnt_qposadr(name)
@@ -118,8 +123,9 @@ class Arm2TouchEnv(BaseEnv):
 
 
     def at_goal(self, qpos, goal):
-        #return self.at_goal_touch_block(qpos, goal)
-        return self.at_goal_push_together(qpos, goal)
+        #return False
+        return self.at_goal_touch_block(qpos, goal)
+        #return self.at_goal_push_together(qpos, goal)
 
 
     def _compute_terminal(self, goal, obs):
@@ -184,6 +190,10 @@ class RelationManager(object):
         if name in self.objects:
             raise Exception('Object already exists with name %s' % name)
         self.objects[name] = position_accessor
+
+    #def realize_objects(self):
+    #    self.realized_objects = {name: accessor() for name, accessor in self.objects.items()}
+
 
     def compute_relations(self):
         output = {relation_name: [] for relation_name in self.relationships if not relation_name.endswith('__assymm')}
