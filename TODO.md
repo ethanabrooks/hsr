@@ -4,3 +4,4 @@
 * implement hindsight on PPO
 * debug early rewards
 * make observation space conditional on joint positions
+* why aren't we using GPU?
