@@ -98,7 +98,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         eval_env.close()
     if rank == 0:
         logger.info('total runtime: {}s'.format(time.time() - start_time))
-
+         
 
 def parse_args():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)

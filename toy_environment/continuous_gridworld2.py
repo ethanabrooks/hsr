@@ -5,6 +5,7 @@ from toy_environment.rectangle_object import RectangleObstacle
 import pygame
 import cv2
 from toy_environment import room_obstacle_list, four_rooms_obstacle_list
+import matplotlib.pyplot as plt
 
 class ContinuousGridworld2(gym.Env, utils.EzPickle):
     def __init__(self, obstacle_list_generator, visualize=False, image_size=64):
@@ -17,6 +18,11 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.agent_position = self.get_non_intersecting_position()
         self.goal = self.get_non_intersecting_position()
 
+        height = ((self.observation_space.high - self.observation_space.low) / .01)[0]
+        height = int(height)
+
+        self.achieved_goals = np.zeros((height, height), dtype=int)
+        self.missed_goals = np.zeros((height, height), dtype=int)
 
         self.visualize = visualize
         if visualize:
@@ -47,11 +53,23 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.time_step += 1
         obs = self.obs()
         terminal = self.at_goal(self.goal, obs)
+
         if terminal:
+            x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01)
+            y_goal = int((round(self.goal[1], 2) + self.observation_space.high[0]) / .01)
+            self.achieved_goals[x_goal][y_goal] += 1
+            self.generate_heatmap(filename='achieved')
             print('AT GOAL')
+
         reward = self.compute_reward(self.goal, obs)
         if self.time_step >= self.max_time_steps:
+            x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01)
+            y_goal = int((round(self.goal[1], 2) + self.observation_space.high[0]) / .01)
+            self.missed_goals[x_goal][y_goal] += 1
+            self.generate_heatmap(filename='missed')
+
             terminal = True
+
         return obs, reward, terminal, {}
 
 
@@ -78,7 +96,6 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             action = action / radius
         action = action * self.max_action_step
         return action
-
 
     #### Hindsight Stuff
 
@@ -118,6 +135,11 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         imgdata = pygame.surfarray.array3d(self.screen)
         imgdata.swapaxes(0,1)
         return imgdata
+
+    def generate_heatmap(self, filename):
+        plt.imshow(self.achieved_goals, cmap='hot', interpolation='nearest')
+        plt.imsave('{}.png'.format(filename), 
+            self.achieved_goals if filename is 'achieved' else self.missed_goals)
 
     ### Collision Handling
 
