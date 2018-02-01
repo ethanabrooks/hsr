@@ -54,11 +54,16 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         obs = self.obs()
         terminal = self.at_goal(self.goal, obs)
 
+        # Heatmaps
+        if self.time_step % 1000 == 0:
+            self.generate_heatmap(filename='achieved')
+            self.generate_heatmap(filename='missed')
+
         if terminal:
             x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01)
             y_goal = int((round(self.goal[1], 2) + self.observation_space.high[0]) / .01)
             self.achieved_goals[x_goal][y_goal] += 1
-            self.generate_heatmap(filename='achieved')
+
             print('AT GOAL')
 
         reward = self.compute_reward(self.goal, obs)
@@ -66,7 +71,6 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01)
             y_goal = int((round(self.goal[1], 2) + self.observation_space.high[0]) / .01)
             self.missed_goals[x_goal][y_goal] += 1
-            self.generate_heatmap(filename='missed')
 
             terminal = True
 
