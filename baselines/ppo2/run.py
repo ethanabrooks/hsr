@@ -11,7 +11,7 @@ from toy_environment.continuous_gridworld2 import ContinuousGridworld2
 from toy_environment import room_obstacle_list
 
 
-def train(env_id, num_timesteps, seed, policy, record, restore_path, 
+def train(env_id, num_timesteps, seed, policy, record, restore_path,
           save_path, nenvs):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
@@ -58,13 +58,13 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path,
     set_global_seeds(seed)
     env = VecFrameStack(env, 4)
     policy = {'cnn': CnnPolicy, 'lstm': LstmPolicy, 'lnlstm': LnLstmPolicy, 'mlp': MlpPolicy}[policy]
-    ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=32,
-               lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
-               ent_coef=0.0,
-               lr=3e-4, save_interval=10,
-               save_path=save_path, restore_path=restore_path,
-               cliprange=0.2,
-               total_timesteps=num_timesteps)
+    ppo2.learn(policy=policy, env=env, nsteps=128, nminibatches=4,
+               lam=0.95, gamma=0.99, noptepochs=4, log_interval=1,
+               ent_coef=0.0, save_interval=10,
+               lr=lambda f: f * 2.5e-4,
+               cliprange=lambda f: f * 0.1,
+               total_timesteps=int(num_timesteps * 1.1),
+               restore_path=restore_path, save_path=save_path)
 
 
 def main():
@@ -83,7 +83,7 @@ def main():
     logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
           policy=args.policy, record=args.record,
-          restore_path=args.restore_path, 
+          restore_path=args.restore_path,
           save_path=args.save_path, nenvs=args.num_envs)
 
 
