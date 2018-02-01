@@ -124,8 +124,8 @@ class Arm2TouchEnv(BaseEnv):
 
     def at_goal(self, qpos, goal):
         #return False
-        return self.at_goal_touch_block(qpos, goal)
-        #return self.at_goal_push_together(qpos, goal)
+        #return self.at_goal_touch_block(qpos, goal)
+        return self.at_goal_push_together(qpos, goal)
 
 
     def _compute_terminal(self, goal, obs):
