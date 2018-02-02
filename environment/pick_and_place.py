@@ -89,6 +89,7 @@ class PickAndPlaceEnv(BaseEnv):
 
     def step(self, action):
         action = np.clip(action * self._action_multiplier, -1, 1)
+        print(self.sim.sensordata)
 
         mirrored = [
             'hand_l_proximal_motor',

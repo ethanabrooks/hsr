@@ -237,7 +237,7 @@
                                                 <body name="hand_r_finger_tip_frame" pos="0.01675 -0.0193 0.0379"
                                                       quat="0.707107 0.707107 0 0">
                                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                                    <site name="touchsensor_r_site" size="0.03" pos="0 -.01 0" rgba="0 1 0 .5"/>
+                                                    <site name="touchsensor_r_site" size="1.0" pos="0 -.01 0" rgba="0 1 0 .5"/>
                                                 </body>
                                             </body>
                                         </body>

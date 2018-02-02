@@ -17,8 +17,8 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
     #                   use_camera=False, action_multiplier=.1)
 
-    env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    # env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.0001)
+    # env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
+    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.0001)
     env.reset()
 
     shape, = env.action_space.shape

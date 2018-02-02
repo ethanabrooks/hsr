@@ -190,10 +190,10 @@
                                                 <geom type="mesh" contype="0" conaffinity="0" group="1"
                                                       rgba="0.33 0.33 0.33 1" mesh="l_distal"/>
                                                 <geom type="mesh" rgba="0.33 0.33 0.33 1" mesh="l_distal"/>
+                                                <site name="touchsensor_l_site" size="0.03" pos="0.015 0.01 0.025" rgba="0 1 0 .5"/>
                                                 <body name="hand_l_finger_tip_frame" pos="0.01675 0.0193 0.0379"
                                                       quat="0.707107 -0.707107 0 0">
                                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                                    <site name="touchsensor_l_site" size="0.03" pos="0 .01 0" rgba="0 1 0 .5"/>
                                                 </body>
                                                 <body name="hand_l_finger_vacuum_frame" pos="0.00475 -0.011539 0.03322"
                                                       quat="0.92388 0.382683 0 0">
@@ -227,10 +227,11 @@
                                                 <geom type="mesh" contype="0" conaffinity="0" group="1"
                                                       rgba="0.33 0.33 0.33 1" mesh="r_distal"/>
                                                 <geom type="mesh" rgba="0.33 0.33 0.33 1" mesh="r_distal"/>
+                                                <site name="touchsensor_r_site" size="0.03" pos="0.015 -0.01 0.025" rgba="0 1 0 .5"/>
+
                                                 <body name="hand_r_finger_tip_frame" pos="0.01675 -0.0193 0.0379"
                                                       quat="0.707107 0.707107 0 0">
                                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                                    <site name="touchsensor_r_site" size="0.03" pos="0 -.01 0" rgba="0 1 0 .5"/>
                                                 </body>
                                             </body>
                                         </body>
