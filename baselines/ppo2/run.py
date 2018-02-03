@@ -11,7 +11,7 @@ from toy_environment.continuous_gridworld2 import ContinuousGridworld2
 from toy_environment import room_obstacle_list
 
 
-def train(env_id, num_timesteps, seed, policy, record, restore_path,
+def train(env_id, num_timesteps, seed, policy, record_path, restore_path,
           save_path, nenvs):
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
@@ -46,9 +46,9 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path,
             else:
                 env = gym.make(env_id)
             env.seed(seed + rank)
-            if record:
+            if record_path:
                 logger.warn('`record` is enabled. Program will not log summary/tensorboard values.')
-                return gym.wrappers.Monitor(env, '/tmp/ppo-video')
+                return gym.wrappers.Monitor(env, record_path)
             else:
                 return bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
 
@@ -76,13 +76,13 @@ def main():
     parser.add_argument('--num-envs', type=int, default=8)
     parser.add_argument('--tb-dir', default=None)
     parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
-    parser.add_argument('--record', action='store_true')
+    parser.add_argument('--record-path', default=None)
     parser.add_argument('--restore-path', default=None)
     parser.add_argument('--save-path', default=None)
     args = parser.parse_args()
     logger.configure(dir=args.tb_dir, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
-          policy=args.policy, record=args.record,
+          policy=args.policy, record_path=args.record_path,
           restore_path=args.restore_path,
           save_path=args.save_path, nenvs=args.num_envs)
 
