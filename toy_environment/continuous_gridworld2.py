@@ -141,9 +141,14 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         return imgdata
 
     def generate_heatmap(self, filename):
-        plt.imshow(self.achieved_goals, cmap='hot', interpolation='nearest')
-        plt.imsave('{}.png'.format(filename), 
-            self.achieved_goals if filename is 'achieved' else self.missed_goals)
+        target = None
+        if filename is 'achieved':
+            target = self.achieved_goals
+        else:
+            target = self.missed_goals
+
+        plt.imshow(target, cmap='hot', interpolation='nearest')
+        plt.imsave('{}.png'.format(filename), target)
 
     ### Collision Handling
 
