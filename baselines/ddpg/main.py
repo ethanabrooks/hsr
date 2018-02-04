@@ -153,7 +153,7 @@ def parse_args():
     parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--hindsight-mode', type=str, default=None)
     parser.add_argument('--use-cnn', type=bool, default=False)
-    parser.add_argument('--use-noisy-pos', type=bool, detault=False)
+    parser.add_argument('--use-noisy-pos', type=bool, default=False)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
