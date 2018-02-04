@@ -18,8 +18,8 @@ saved_pos = None
 def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous=True, max_steps=1000, geofence=.5)
     #env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    #env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.01)
+    # env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
+    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.01)
     np.set_printoptions(precision=2, linewidth=800)
     env.reset()
 
