@@ -117,9 +117,6 @@ class PickAndPlaceMocapEnv(BaseEnv):
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
-            print('Next:')
-            print(mocap_pos_relative, self.sim.mocap_pos)
             self.sim.mocap_pos[0:3] = self.sim.mocap_pos[0:3] + mocap_pos_relative
-            print(self.sim.mocap_pos)
 
         return super().step(action)

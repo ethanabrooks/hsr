@@ -50,23 +50,23 @@ def run(port):
             
             action[0] = 45
             action[1] = 0.65
-            action[4] = -.5
+            action[3] = -0.001
+            action[4] = -0.001
             
             i += 1
+            
 
-            action[3] = 1.46
-
-            if i > 100:
+            if i > 100: 
                 action[0] = 0
                 action[1] = -0.45
-                action[2] = 0.01
+                action[2] = 0.001
                 action[3] = 0
                 action[4] = 0
             if i > 200:
                 action[0] = 60
                 action[1] = -.78
-                action[3] = 0
-                action[4] = -.5
+                action[3] = 0.001
+                action[4] = -0.05
 
             tick = time.time()
             # print(action, i)
