@@ -13,8 +13,7 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1,
-                 action_multiplier=1):
+    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
@@ -30,7 +29,6 @@ class PickAndPlaceEnv(BaseEnv):
             steps_per_action=10,
             image_dimensions=None)
 
-        self._action_multiplier = action_multiplier
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name,
                               left_finger_name.replace('_l_', '_r_')]
@@ -40,6 +38,7 @@ class PickAndPlaceEnv(BaseEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
+        self._rotation_actuators = ["wrist_roll_motor"]
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
@@ -111,7 +110,11 @@ class PickAndPlaceEnv(BaseEnv):
         return (finger1 + finger2) / 2.
 
     def step(self, action):
-        action = np.clip(action * self._action_multiplier, -1, 1)
+        action = np.clip(action, -1, 1)
+        for name in self._rotation_actuators:
+            i = self.sim.name2id(ObjType.ACTUATOR, name)
+            action[i] *= np.pi / 2
+
         # print1(self.sim.sensordata)
 
         mirrored = [

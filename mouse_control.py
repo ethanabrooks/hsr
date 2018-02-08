@@ -19,7 +19,7 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous=True, max_steps=1000, geofence=.5)
     #env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
     # env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.05)
+    env = PickAndPlaceEnv(max_steps=9999999)
     np.set_printoptions(precision=3, linewidth=800)
     env.reset()
 
@@ -55,7 +55,8 @@ def run(port, value_tensor=None, sess=None):
                 # print(env.sim.id2name(ObjType.ACTUATOR, i))
 
         # action[1] = .5
-        obs, r, done, _ = env.step(action)
+        # action *= .05
+        obs, r, done, _ = env.step(action * .05)
         total_reward += r
         run_tests(env, obs)
 

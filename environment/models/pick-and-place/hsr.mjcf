@@ -139,7 +139,7 @@
                     <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="arm_roll_light"/>
                     <geom type="mesh" mesh="arm_roll"/>
                     <body name="wrist_flex_link" pos="0 0 0"
-                          quat="0.4 0 .4 0">
+                          quat="0.4 0 .6 0">
                         <inertial pos="0.000131 -0.003929 0.00217" quat="0.672298 0.740248 0.0055614 0.00418043"
                                   mass="0.681225" diaginertia="7.43604e-05 6.49274e-05 3.81796e-05"/>
                         <!--<joint name="wrist_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-1.92 1.22" />-->
