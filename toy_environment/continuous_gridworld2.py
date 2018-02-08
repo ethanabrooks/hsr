@@ -29,7 +29,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
         height = ((self.observation_space.high - self.observation_space.low) / .01)[0]
         height = int(height)
-
+        self.height = height
         self.achieved_goals = np.zeros((height, height), dtype=int)
         self.missed_goals = np.zeros((height, height), dtype=int)
 
@@ -75,16 +75,21 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             #self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
 
         if reward == 1:
-            x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01)
-            y_goal = int((round(self.goal[1], 2) + self.observation_space.high[0]) / .01)
+            x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01) - 1
+            y_goal = int((round(self.goal[1], 2) + self.observation_space.high[1]) / .01) - 1
+            x_goal = int(np.clip(x_goal, 0, self.height - 1))
+            y_goal = int(np.clip(y_goal, 0, self.height - 1))
             self.achieved_goals[x_goal][y_goal] += 1
-
+	
             print('AT GOAL')
 
         if self.time_step >= self.max_time_steps:
             if reward != 1:
-                x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01)
-                y_goal = int((round(self.goal[1], 2) + self.observation_space.high[0]) / .01)
+                x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / .01) - 1
+                y_goal = int((round(self.goal[1], 2) + self.observation_space.high[1]) / .01) - 1
+                x_goal = int(np.clip(x_goal, 0, self.height - 1))
+                y_goal = int(np.clip(y_goal, 0, self.height - 1))
+
                 self.missed_goals[x_goal][y_goal] += 1
             
             terminal = True
@@ -215,8 +220,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         else:
             target = self.missed_goals
 
-        plt.imshow(target, cmap='hot', interpolation='nearest')
-        plt.imsave('{}.png'.format(filename), target)
+        plt.imsave('{}_noisy-{}-normal_03.png'.format(filename, self.noisy_position), target)
 
 
 
