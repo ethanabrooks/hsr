@@ -110,7 +110,6 @@ class BaseEnv(utils.EzPickle, Server):
     def _step_inner(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
         self.sim.ctrl[:] = action
-        print1(self.sim.ctrl)
         for _ in range(self._frames_per_step):
             self.sim.step()
 

@@ -13,7 +13,7 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1):
+    def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
@@ -66,12 +66,13 @@ class PickAndPlaceEnv(BaseEnv):
         pass
 
     def _obs(self):
-        return self.sim.qpos, [self._block_lifted()]
+        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+
+    def _fingers_touching(self):
+        return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        x, y, z = self.sim.get_body_xpos(self._goal_block_name)
-        block_lifted = z - self._resting_block_height > self._min_lift_height
-        return block_lifted
+        return np.allclose(self.sim.sensordata[0], 0, atol=1e-2)
 
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
@@ -83,10 +84,10 @@ class PickAndPlaceEnv(BaseEnv):
         return False
 
     def _compute_terminal(self, goal, obs):
-        goal, should_lift = goal
-        qpos, block_lifted = obs
-        return at_goal(self._gripper_pos(qpos), goal,
-                       self._geofence) and should_lift == block_lifted
+        goal, (should_lift,) = goal
+        qpos, (fingers_touching, block_lifted) = obs
+        _at_goal = at_goal(self._gripper_pos(qpos), goal, self._geofence)
+        return _at_goal and should_lift == (block_lifted and fingers_touching)
 
     def _compute_reward(self, goal, obs):
         goal_pos, should_lift = goal
@@ -115,7 +116,7 @@ class PickAndPlaceEnv(BaseEnv):
             i = self.sim.name2id(ObjType.ACTUATOR, name)
             action[i] *= np.pi / 2
 
-        # print1(self.sim.sensordata)
+        # print(self.sim.sensordata)
 
         mirrored = [
             'hand_l_proximal_motor',
@@ -142,3 +143,4 @@ class PickAndPlaceEnv(BaseEnv):
         # else:
             # self._rewards[self._current_orienation] += r
         return o, r, d, x
+

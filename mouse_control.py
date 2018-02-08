@@ -34,11 +34,11 @@ def run(port, value_tensor=None, sess=None):
         lastkey = env.sim.get_last_key_press()
         if moving:
             action[i] += env.sim.get_mouse_dy()
-        else:
+        # else:
             # for name in ['wrist_roll_motor']:
             # for name in ['slide_x_motor', 'slide_y_motor']:
             # k = env.sim.name2id(ObjType.ACTUATOR, name)
-            action[:] = 0
+            # action[:] = 0
 
         if lastkey is 'R':
             env.reset()
@@ -60,10 +60,10 @@ def run(port, value_tensor=None, sess=None):
         total_reward += r
         run_tests(env, obs)
 
-        # if done:
-        #     env.reset()
-        #     print('\nresetting', total_reward)
-        #     total_reward = 0
+        if done:
+            env.reset()
+            print('\nresetting', total_reward)
+            total_reward = 0
 
         env.render(labels={'x': env.goal_3d()})
 
