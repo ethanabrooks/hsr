@@ -51,8 +51,8 @@ class PickAndPlaceEnv(BaseEnv):
         block_joint = self.sim.jnt_qposadr('block1joint')
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi
-        # self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
-        # self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+        self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
+        self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)
@@ -116,8 +116,6 @@ class PickAndPlaceEnv(BaseEnv):
             i = self.sim.name2id(ObjType.ACTUATOR, name)
             action[i] *= np.pi / 2
 
-        # print(self.sim.sensordata)
-
         mirrored = [
             'hand_l_proximal_motor',
             # 'hand_l_distal_motor'
@@ -137,10 +135,5 @@ class PickAndPlaceEnv(BaseEnv):
         mirroring_indexes = np.minimum(mirroring_indexes,
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
-        o, r, d, x = super().step(action)
-        # if self._rewards[self._current_orienation] == -np.inf:
-            # self._rewards[self._current_orienation] = r
-        # else:
-            # self._rewards[self._current_orienation] += r
-        return o, r, d, x
+        return super().step(action)
 
