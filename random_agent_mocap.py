@@ -59,8 +59,9 @@ def run(port):
             if i > 100:
                 action[0] = 0
                 action[1] = -0.45
+                action[2] = 0.01
                 action[3] = 0
-                action[4] = -.5
+                action[4] = 0
             if i > 200:
                 action[0] = 60
                 action[1] = -.78
