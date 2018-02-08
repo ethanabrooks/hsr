@@ -38,7 +38,7 @@ class PickAndPlaceEnv(BaseEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
-        self._rotation_actuators = ["wrist_roll_motor"]
+        self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
@@ -51,8 +51,8 @@ class PickAndPlaceEnv(BaseEnv):
         block_joint = self.sim.jnt_qposadr('block1joint')
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi
-        self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
-        self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+        # self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
+        # self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)

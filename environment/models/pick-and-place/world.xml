@@ -110,15 +110,18 @@
     <actuator>
         <!--<motor gear="1000.0" name="slide_x_motor" joint="slide_x"/>-->
         <!--<motor gear="1000.0" name="slide_y_motor" joint="slide_y"/>-->
-        <motor gear="1000.0" name="arm_flex_motor" joint="arm_flex_joint" forcelimited="true" forcerange="-.2 .2"/>
+        <!--<motor gear="1000.0" name="arm_flex_motor" joint="arm_flex_joint" forcelimited="true" forcerange="-.2 .2"/>-->
+        <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint" ctrllimited="false" ctrlrange="-230 230"/>
         <!--<position gear="1" joint="arm_flex_joint"/>-->
         <!--<motor gear="1000.0" name="arm_lift_motor" joint="arm_lift_joint"/>-->
         <!--<motor gear="1000.0" name="arm_roll_motor" joint="arm_roll_joint"/>-->
         <!--<motor gear="1000.0" name="wrist_flex_motor" joint="wrist_flex_joint"/>-->
         <!--<motor gear="1000.0" name="wrist_roll_motor" joint="wrist_roll_joint" forcelimited="true" forcerange="-.03 .03"/>/>-->
-        <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_roll_joint" ctrllimited="true" ctrlrange="-230 230"/>
-        <position gear="1" kp="1000" name="hand_l_proximal_motor" joint="hand_l_proximal_joint" forcelimited="true" forcerange="-.8 .8"/>
-        <position gear="1" kp="1000" name="hand_r_proximal_motor" joint="hand_r_proximal_joint" forcelimited="true" forcerange="-.8 .8"/>
+        <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_roll_joint" ctrllimited="false" ctrlrange="-230 230"/>
+        <position gear="1" kp="1000" name="hand_l_proximal_motor" joint="hand_l_proximal_joint" ctrllimited="false"
+                  forcelimited="true" forcerange="-8 8"/>
+        <position gear="1" kp="1000" name="hand_r_proximal_motor" joint="hand_r_proximal_joint" ctrllimited="false"
+                  forcelimited="true" forcerange="-8 8"/>
 
         <!--<motor gear="1000.0" name="hand_l_distal_motor" joint="hand_l_distal_joint"/>-->
         <!--<motor gear="1000.0" name="hand_r_distal_motor" joint="hand_r_distal_joint"/>-->

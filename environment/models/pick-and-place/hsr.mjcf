@@ -129,7 +129,7 @@
                 <inertial pos="0.000632 0.006404 0.118529" quat="0.999966 -0.00826681 1.5355e-06 -1.33584e-06"
                           mass="1.33929" diaginertia="2.51222 2.51222 2.51222"/>
                 <!--<joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-55 0" damping="100"/>-->
-                <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-63 0"  springref="0" stiffness="30" damping="100"/>
+                <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-64 0"  springref="0" stiffness="30" damping="100"/>
                 <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="arm_flex_light"/>
                 <geom type="mesh" mesh="arm_flex"/>
                 <body name="arm_roll_link" pos="0.005 0 0.345">
@@ -171,7 +171,7 @@
                                 </body>
                                 <body name="hand_l_proximal_link" pos="-0.01675 -0.0245 -0.0175">
                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                    <joint name="hand_l_proximal_joint" pos="0 0 0" axis="1 0 0" limited="true" range="10 20" damping="100"/>
+                                    <joint name="hand_l_proximal_joint" pos="0 0 0" axis="1 0 0" limited="true" range="0 20" damping="100"/>
                                     <body name="hand_l_spring_proximal_link" pos="0 0 0">
                                         <inertial pos="0.021418 0.00248 0.022688"
                                                   quat="0.701927 0.0145759 0.051882 0.710208" mass="0.043589"
@@ -184,7 +184,7 @@
                                             <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
                                             <!--<joint name="hand_l_mimic_distal_joint" pos="0 0 0" axis="1 0 0" limited="true" range="-0.698 0" />-->
                                             <body name="hand_l_distal_link" pos="0 0 0">
-                                                <site name="touchsensor_l_site" size="0.03" pos="0.015 0.01 0.025" rgba="0 1 0 .5"/>
+                                                <site name="touchsensor_l_site" size="0.03" pos="0.015 0.01 0.025" rgba="0 1 0 .1 "/>
                                                 <inertial pos="0.011116 0.005679 0.017532"
                                                           quat="0.643017 0.664219 -0.320716 0.206114" mass="0.027731"
                                                           diaginertia="3.13749e-06 3.13749e-06 3.13749e-06"/>
@@ -208,7 +208,7 @@
                                 </body>
                                 <body name="hand_r_proximal_link" pos="-0.01675 0.0245 -0.0175">
                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                    <joint name="hand_r_proximal_joint" pos="0 0 0" axis="-1 0 0" limited="true" range="10 20" damping="100"/>
+                                    <joint name="hand_r_proximal_joint" pos="0 0 0" axis="-1 0 0" limited="true" range="0 20" damping="100"/>
                                     <body name="hand_r_spring_proximal_link" pos="0 0 0">
                                         <inertial pos="0.013203 0.002096 0.023311"
                                                   quat="0.696227 -0.0447896 0.0033388 0.716415" mass="0.043956"
@@ -228,7 +228,7 @@
                                                 <geom type="mesh" contype="0" conaffinity="0" group="1"
                                                       rgba="0.33 0.33 0.33 1" mesh="r_distal"/>
                                                 <geom type="mesh" rgba="0.33 0.33 0.33 1" mesh="r_distal"/>
-                                                <site name="touchsensor_r_site" size="0.03" pos="0.015 -0.01 0.025" rgba="0 1 0 .5"/>
+                                                <site name="touchsensor_r_site" size="0.03" pos="0.015 -0.01 0.025" rgba="0 1 0 .1"/>
 
                                                 <body name="hand_r_finger_tip_frame" pos="0.01675 -0.0193 0.0379"
                                                       quat="0.707107 0.707107 0 0">
