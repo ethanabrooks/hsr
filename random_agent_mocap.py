@@ -49,31 +49,28 @@ def run(port):
 
             
             action[0] = 45
-            action[1] = 120
+            action[1] = 0.65
             action[4] = -.5
             
             i += 1
 
             action[3] = 1.46
+
             if i > 100:
-                action[0] = 120
-                action[1] = -120
-                action[3] = -1.46
-                action[4] = -.25
-            if i > 200:
                 action[0] = 0
-                action[1] = 120
-                action[3] = 1.05
+                action[1] = -0.45
+                action[3] = 0
                 action[4] = -.5
-            if i > 300:
+            if i > 200:
                 action[0] = 60
-                action[1] = -120
-                action[3] = -.12
+                action[1] = -.78
+                action[3] = 0
                 action[4] = -.5
 
             tick = time.time()
-            print(action, i)
+            # print(action, i)
             obs, r, done, _ = env.step(action)
+            # print(obs)
 
             # NOTE: this is how to matplotlib render inner cameras. Do not delete.
             # action += 1e-2

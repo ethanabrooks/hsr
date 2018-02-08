@@ -31,7 +31,7 @@ def run(port, restore_critic_path=None):
         'mocap_z',
     ]
 
-    obs, goal = env.reset()
+    env.reset()
     if port:
         env.start_server(port)
     shape, = env.action_space.shape
@@ -117,7 +117,7 @@ def run(port, restore_critic_path=None):
                     print(mocap_action_space_labels[i])
 
             if not pause:
-                (obs, goal), r, done, _ = env.step(action)
+                obs, r, done, _ = env.step(action)
                 labels = dict()
                 qpos, _ = env._destructure_obs(obs)
                 if restore_critic_path:

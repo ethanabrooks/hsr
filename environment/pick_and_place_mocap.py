@@ -99,40 +99,27 @@ class PickAndPlaceMocapEnv(BaseEnv):
                             for name in self._finger_names]
         return (finger1 + finger2) / 2.
 
-    def euler2quat(self, angle):
-        """ Computes the quaternion when the z-rotation is given in degrees"""
-        roll = pitch = 0.001
-        yaw = angle
-
-        cy = np.cos(yaw * 0.5);
-        sy = np.sin(yaw * 0.5);
-        cr = np.cos(roll * 0.5);
-        sr = np.sin(roll * 0.5);
-        cp = np.cos(pitch * 0.5);
-        sp = np.sin(pitch * 0.5);
-
-        qw = cy * cr * cp + sy * sr * sp;
-        qx = cy * sr * cp - sy * cr * sp;
-        qy = cy * cr * sp + sy * sr * cp;
-        qz = sy * cr * cp - cy * sr * sp;
-       
-        return np.array([qw, qx, qy, qz])
-
 
     def step(self, action):
         # Last three items are desired gripper pos
         angle = action[1]
+        angle = np.clip(angle, -1, +1) * 120
+
         mocap_pos = action[2:]
-       
+        mocap_pos_relative = mocap_pos / np.linalg.norm(mocap_pos) * 0.01        
+        
         # first two inputs are control:
         # action[0] = desired distance betwen grippers
         # mirroring l / r gripper
 
         # action = [wrist_roll, l_finger, r_finger]
-        action = [action[1], action[0], action[0]]
+        action = [angle, action[0], action[0]]
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
-            self.sim.mocap_pos[0:3] = mocap_pos
+            print('Next:')
+            print(mocap_pos_relative, self.sim.mocap_pos)
+            self.sim.mocap_pos[0:3] = self.sim.mocap_pos[0:3] + mocap_pos_relative
+            print(self.sim.mocap_pos)
 
         return super().step(action)
