@@ -27,7 +27,7 @@ class Monitor(Wrapper):
             self.f = open(filename, "wt")
             self.f.write('#%s\n'%json.dumps({"t_start": self.tstart, "gym_version": gym.__version__,
                 "env_id": env.spec.id if env.spec else 'Unknown'}))
-            self.logger = csv.DictWriter(self.f, fieldnames=('r', 'l', 't')+reset_keywords)
+            self.logger = csv.DictWriter(self.f, fieldnames=('r', 'l', 't', 's')+reset_keywords)
             self.logger.writeheader()
 
         self.reset_keywords = reset_keywords
@@ -60,7 +60,11 @@ class Monitor(Wrapper):
             self.needs_reset = True
             eprew = sum(self.rewards)
             eplen = len(self.rewards)
-            epinfo = {"r": round(eprew, 6), "l": eplen, "t": round(time.time() - self.tstart, 6)}
+            epinfo = {"r": round(eprew, 6),
+                      "l": eplen,
+                      "t": round(time.time() - self.tstart, 6),
+                      "s": int(eplen < self.env.max_steps)
+                      }
             epinfo.update(self.current_reset_info)
             if self.logger:
                 self.logger.writerow(epinfo)

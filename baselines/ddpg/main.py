@@ -14,7 +14,7 @@ from baselines.ddpg.noise import *
 #from environment.arm2pos import Arm2PosEnv
 #from environment.pick_and_place import PickAndPlaceEnv
 from environment.arm2pos import Arm2PosEnv
-from environment.navigate import NavigateEnv
+from environment.navigate_old import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment import continuous_gridworld, continuous_gridworld2
 import gym
