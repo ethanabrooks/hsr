@@ -19,8 +19,8 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous=True, max_steps=1000, geofence=.5)
     #env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
     # env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.01)
-    np.set_printoptions(precision=2, linewidth=800)
+    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.05)
+    np.set_printoptions(precision=3, linewidth=800)
     env.reset()
 
     shape, = env.action_space.shape
@@ -52,16 +52,17 @@ def run(port, value_tensor=None, sess=None):
             if lastkey == str(k):
                 i = k - 1
                 print('')
-                print(env.sim.id2name(ObjType.ACTUATOR, i))
+                # print(env.sim.id2name(ObjType.ACTUATOR, i))
 
+        # action[1] = .5
         obs, r, done, _ = env.step(action)
         total_reward += r
         run_tests(env, obs)
 
-        if done:
-            env.reset()
-            print('\nresetting', total_reward)
-            total_reward = 0
+        # if done:
+        #     env.reset()
+        #     print('\nresetting', total_reward)
+        #     total_reward = 0
 
         env.render(labels={'x': env.goal_3d()})
 
