@@ -7,6 +7,8 @@ import numpy as np
 from mujoco import ObjType
 
 from environment.arm2pos import Arm2PosEnv
+from environment.arm2touch import Arm2TouchEnv
+from environment.base import print1
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
 
@@ -14,11 +16,11 @@ saved_pos = None
 
 
 def run(port, value_tensor=None, sess=None):
-    # env = NavigateEnv(continuous_actions=True, steps_per_action=100, geofence=.3,
-    #                   use_camera=False, action_multiplier=.1)
-
-    env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    # env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.0001)
+    # env = NavigateEnv(continuous=True, max_steps=1000, geofence=.5)
+    #env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
+    # env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
+    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.01)
+    np.set_printoptions(precision=2, linewidth=800)
     env.reset()
 
     shape, = env.action_space.shape
@@ -37,6 +39,9 @@ def run(port, value_tensor=None, sess=None):
             # for name in ['slide_x_motor', 'slide_y_motor']:
             # k = env.sim.name2id(ObjType.ACTUATOR, name)
             action[:] = 0
+
+        if lastkey is 'R':
+            env.reset()
         if lastkey is ' ':
             moving = not moving
             print('\rmoving:', moving)

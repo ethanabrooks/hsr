@@ -48,8 +48,8 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs)
         reward = self.compute_reward(self.goal, obs)
-        #cv2.imshow('game', self.render_agent())
-        #cv2.waitKey(1)
+        cv2.imshow('game', self.render_agent())
+        cv2.waitKey(1)
         #if self.at_goal(self.goal, obs):
         #    self.goal = self.get_non_intersecting_position(self.goal_position_generator)
             #self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
