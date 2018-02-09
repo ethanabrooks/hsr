@@ -70,7 +70,7 @@ class PickAndPlaceEnv(BaseEnv):
 
     def _block_lifted(self):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2) \
-               and np.allclose(self.sim.sensordata[0], 0, atol=1e-2)
+               and np.allclose(self.sim.sensordata[:1], [0], atol=1e-2)
 
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
@@ -84,8 +84,9 @@ class PickAndPlaceEnv(BaseEnv):
     def _achieved_goal(self, goal, obs):
         goal, (should_lift,) = goal
         qpos, (block_lifted,) = obs
+        if block_lifted:
+            print('block lifted')
         _at_goal = at_goal(self._gripper_pos(qpos), goal, self._geofence)
-        print(should_lift, block_lifted)
         return _at_goal and should_lift == block_lifted
 
     def _compute_terminal(self, goal, obs):
