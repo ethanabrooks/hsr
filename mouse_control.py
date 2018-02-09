@@ -26,6 +26,7 @@ def run(port, value_tensor=None, sess=None):
     shape, = env.action_space.shape
 
     i = 0
+    j = 0
     action = np.zeros(shape)
     moving = False
     total_reward = 0
@@ -52,11 +53,16 @@ def run(port, value_tensor=None, sess=None):
             if lastkey == str(k):
                 i = k - 1
                 print('')
-                # print(env.sim.id2name(ObjType.ACTUATOR, i))
+                print(env.sim.id2name(ObjType.ACTUATOR, i))
 
         # action[1] = .5
         # action *= .05
-        obs, r, done, _ = env.step(action * .05)
+        # if j % 10 == 0:
+        #     print('random')
+        #     action = np.random.random(shape)
+        #     j = 0
+        j += 1
+        obs, r, done, _ = env.step(action)
         total_reward += r
         run_tests(env, obs)
 
