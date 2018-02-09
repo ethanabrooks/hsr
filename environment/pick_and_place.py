@@ -89,19 +89,42 @@ class PickAndPlaceEnv(BaseEnv):
     def _achieved_goal(self, goal, obs):
         goal_pos, (should_lift,) = goal
         qpos, (fingers_touching, block_lifted) = obs
-        block_lifted = block_lifted and fingers_touching
+        block_lifted_with_fingers = block_lifted and fingers_touching
         _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
         if block_lifted:
             print('block lifted')
-        result = _at_goal and should_lift == block_lifted
-        assert result == self._achieved_goal2(goal, (qpos, [self._block_lifted2()]))
+        result = _at_goal and should_lift == block_lifted_with_fingers
+        result2 = self._achieved_goal2(goal, (qpos, [self._block_lifted2()]))
+        if result != result2:
+            print('goal', goal)
+            print('goal_pos', goal_pos)
+            print('should_lift', should_lift)
+            print('qpos', qpos)
+            print('fingers_touching', fingers_touching)
+            print('block_lifted', block_lifted)
+            print('block_lifted_with_fingers', block_lifted_with_fingers)
+            print('_at_goal', _at_goal)
+            print('_achieved_goal', result)
+            print('------------------------------')
+            result3 = self._achieved_goal2(goal, (qpos, [self._block_lifted2()]), _print=True)
+            assert result2 == result3
+            print('self._achieved_goal2', result3)
+            print('------------------------------')
+
         return result
 
-    def _achieved_goal2(self, goal, obs):
-        goal, (should_lift,) = goal
+    def _achieved_goal2(self, goal, obs, _print=False):
+        goal_pos, (should_lift,) = goal
         qpos, (block_lifted,) = obs
-        _at_goal = at_goal(self._gripper_pos(qpos), goal, self._geofence)
+        _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
         result = _at_goal and should_lift == block_lifted
+        if _print:
+            print('goal', goal)
+            print('goal_pos', goal_pos)
+            print('should_lift', should_lift)
+            print('qpos', qpos)
+            print('block_lifted', block_lifted)
+            print('_at_goal', _at_goal)
         return result
 
     def _compute_terminal(self, goal, obs):
