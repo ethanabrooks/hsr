@@ -29,6 +29,7 @@ def run(port, value_tensor=None, sess=None):
     j = 0
     action = np.zeros(shape)
     moving = False
+    pause = False
     total_reward = 0
 
     while True:
@@ -57,20 +58,15 @@ def run(port, value_tensor=None, sess=None):
 
         # action[1] = .5
         # action *= .05
-        # if j % 10 == 0:
-        #     print('random')
-        #     action = np.random.random(shape)
-        #     j = 0
-        j += 1
-        obs, r, done, _ = env.step(action)
-        total_reward += r
-        run_tests(env, obs)
+        if not pause:
+            obs, r, done, _ = env.step(action * .05)
+            total_reward += r
+            run_tests(env, obs)
 
         if done:
-            env.reset()
+            pause = True
             print('\nresetting', total_reward)
             total_reward = 0
-
         env.render(labels={'x': env.goal_3d()})
 
 
