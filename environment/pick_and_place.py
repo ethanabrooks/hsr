@@ -85,6 +85,7 @@ class PickAndPlaceEnv(BaseEnv):
         goal, (should_lift,) = goal
         qpos, (block_lifted,) = obs
         _at_goal = at_goal(self._gripper_pos(qpos), goal, self._geofence)
+        print(should_lift, block_lifted)
         return _at_goal and should_lift == block_lifted
 
     def _compute_terminal(self, goal, obs):
