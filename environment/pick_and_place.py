@@ -83,7 +83,7 @@ class PickAndPlaceEnv(BaseEnv):
 
     def _achieved_goal(self, goal, obs):
         goal, (should_lift,) = goal
-        qpos, block_lifted = obs
+        qpos, (block_lifted,) = obs
         _at_goal = at_goal(self._gripper_pos(qpos), goal, self._geofence)
         return _at_goal and should_lift == block_lifted
 

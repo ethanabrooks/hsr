@@ -64,8 +64,9 @@ def run(port, value_tensor=None, sess=None):
             run_tests(env, obs)
 
         if done:
+            if not pause:
+                print('\nresetting', total_reward)
             pause = True
-            print('\nresetting', total_reward)
             total_reward = 0
         env.render(labels={'x': env.goal_3d()})
 
