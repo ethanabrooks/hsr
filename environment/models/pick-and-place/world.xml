@@ -74,7 +74,8 @@
         <geom type="plane" size=".1905 .2667 .005" class="box"/>
 
         <body name="pan" pos="0 0 .4">
-            <site name="touchsensor_pan_site" type="box" size=".1905 .2667 .005" pos="0 0 0" rgba="1 0 0 .5"/>
+            <site name="touchsensor_pan_site" type="box" size=".1905 .2667 .0127" pos="0 0 0.005" rgba="1 0 0 .5"/>
+            <geom type="box" size=".1905 .2667 .015" class="box" rgba="0 1 0 .5"/>
             <geom type="box" size=".1905 .2667 .005" class="box"/>
             <geom type="box" size=".001  .2667 .0127" pos=".1905 0  .01"  class="box"/>
             <geom type="box" size=".001  .2667 .0127" pos="-.1905 0 .01" class="box"/>
@@ -96,8 +97,8 @@
         <!--</body>-->
 
         <body name="block1" pos="0 0 .49">
-          <geom type="box" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
-           <freejoint name='block1joint'/>
+          <geom type="box" mass="1" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="6" solimp="0.99 0.99 0.01" solref="0.01 1"/>
+          <freejoint name='block1joint'/>
         </body>
 
         <!--<body name="block2" pos="0 0 .44">-->

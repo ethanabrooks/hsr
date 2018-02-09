@@ -72,7 +72,12 @@ class PickAndPlaceEnv(BaseEnv):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[0], 0, atol=1e-2)
+
+        val = np.allclose(self.sim.sensordata[0], 0, atol=1e-2)
+        if val:
+            print('lifted: {}'.format(self.sim.sensordata[0]))
+
+        return val
 
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
