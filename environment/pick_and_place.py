@@ -72,7 +72,7 @@ class PickAndPlaceEnv(BaseEnv):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[0], 0, atol=1e-2)
+        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2)
 
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
@@ -83,17 +83,17 @@ class PickAndPlaceEnv(BaseEnv):
     def _currently_failed(self):
         return False
 
-    def _compute_terminal(self, goal, obs):
+    def _achieved_goal(self, goal, obs):
         goal, (should_lift,) = goal
         qpos, (fingers_touching, block_lifted) = obs
         _at_goal = at_goal(self._gripper_pos(qpos), goal, self._geofence)
         return _at_goal and should_lift == (block_lifted and fingers_touching)
 
+    def _compute_terminal(self, goal, obs):
+        return self._achieved_goal(goal, obs)
+
     def _compute_reward(self, goal, obs):
-        goal_pos, should_lift = goal
-        qpos, block_lifted = obs
-        if at_goal(self._gripper_pos(qpos), goal_pos,
-                   self._geofence) and block_lifted == should_lift:
+        if self._achieved_goal(goal, obs):
             return 1
         elif self._neg_reward:
             return -.0001
