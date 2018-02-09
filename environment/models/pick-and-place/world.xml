@@ -75,7 +75,7 @@
 
         <body name="pan" pos="0 0 .4">
             <site name="touchsensor_pan_site" type="box" size=".1905 .2667 .0127" pos="0 0 0.005" rgba="1 0 0 .5"/>
-            <geom type="box" size=".1905 .2667 .015" class="box" rgba="0 1 0 .5"/>
+            <geom type="box" size=".1905 .2667 .0127" pos="0 0 0.0025" class="box" rgba="0 1 0 .5"/>
             <geom type="box" size=".1905 .2667 .005" class="box"/>
             <geom type="box" size=".001  .2667 .0127" pos=".1905 0  .01"  class="box"/>
             <geom type="box" size=".001  .2667 .0127" pos="-.1905 0 .01" class="box"/>

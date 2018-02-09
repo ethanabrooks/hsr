@@ -64,7 +64,6 @@ def run(port, value_tensor=None, sess=None):
             env.reset()
             print('\nresetting', total_reward)
             total_reward = 0
-
         env.render(labels={'x': env.goal_3d()})
 
 
