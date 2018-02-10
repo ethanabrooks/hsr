@@ -40,7 +40,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     elif env_id == 'toy':
         #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000, obstacle_mode=continuous_gridworld.NO_OBJECTS)
         from toy_environment import room_obstacle_list
-        env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2, use_cnn=use_cnn)
+        env = continuous_gridworld2.ContinuousGridworld2(room_obstacle_list.obstacle_list, noise_type, max_action_step=0.2, use_cnn=use_cnn)
     elif env_id == 'arm2pos':
         #env = Arm2PosEnv(continuous=True, max_steps=500)
         pass
@@ -48,7 +48,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         #env = PickAndPlaceEnv(max_steps=500)
         pass
     elif env_id == 'four-rooms':
-        env = continuous_gridworld2.FourRoomExperiment(visualize=False, noisy_position=noisy_pos)
+        env = continuous_gridworld2.FourRoomExperiment(noise_type, visualize=False, noisy_position=noisy_pos)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
