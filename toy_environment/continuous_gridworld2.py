@@ -275,7 +275,7 @@ class FourRoomExperiment(ContinuousGridworld2):
         return pos 
  
     def goal_position_generator(self):
-        return np.random.uniform(self.agent_position - 0.25, self.agent_position + .25)
+        return np.random.uniform(self.agent_position - 0.55, self.agent_position + 0.55)
 
 
 if __name__ == '__main__':
