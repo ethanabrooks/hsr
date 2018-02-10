@@ -66,7 +66,7 @@ class PickAndPlaceEnv(BaseEnv):
         pass
 
     def _obs(self):
-        return self.sim.qpos, [self._fingers_touching() and self._block_lifted()]
+        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
 
     def _fingers_touching(self):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
@@ -86,31 +86,15 @@ class PickAndPlaceEnv(BaseEnv):
     def _currently_failed(self):
         return False
 
+    def process(self, obs):
+        qpos, (fingers_touching, block_lifted) = obs
+        return qpos, fingers_touching and block_lifted
+
     def _achieved_goal(self, goal, obs):
         goal_pos, (should_lift,) = goal
-        qpos, (block_lifted,) = obs
+        qpos, block_lifted = self.process(obs)
         _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
-        if block_lifted:
-            print('block lifted')
-        result = _at_goal and should_lift == block_lifted
-        result2 = self._achieved_goal2(goal, (qpos, [self._block_lifted2()]))
-        if result != result2:
-            print('goal', goal)
-            print('goal_pos', goal_pos)
-            print('should_lift', should_lift)
-            print('qpos', qpos)
-            print('fingers_touching', fingers_touching)
-            print('block_lifted', block_lifted)
-            print('block_lifted_with_fingers', block_lifted_with_fingers)
-            print('_at_goal', _at_goal)
-            print('_achieved_goal', result)
-            print('------------------------------')
-            result3 = self._achieved_goal2(goal, (qpos, [self._block_lifted2()]), _print=True)
-            assert result2 == result3
-            print('self._achieved_goal2', result3)
-            print('------------------------------')
-
-        return result
+        return _at_goal and should_lift == block_lifted
 
     def _achieved_goal2(self, goal, obs, _print=False):
         goal_pos, (should_lift,) = goal
