@@ -13,8 +13,7 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.05, neg_reward=True, history_len=1,
-                 action_multiplier=1):
+    def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
@@ -30,7 +29,6 @@ class PickAndPlaceEnv(BaseEnv):
             steps_per_action=10,
             image_dimensions=None)
 
-        self._action_multiplier = action_multiplier
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name,
                               left_finger_name.replace('_l_', '_r_')]
@@ -40,6 +38,7 @@ class PickAndPlaceEnv(BaseEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
+        self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
@@ -59,20 +58,21 @@ class PickAndPlaceEnv(BaseEnv):
         # print('rewards:', mean_rewards, 'argmin:', i)
         # self._usage[i] += 1
         # self.init_qpos[block_joint + 3:block_joint + 7] = self._block_orientations[i]
-        self.init_qpos[self.sim.jnt_qposadr(
-            'wrist_roll_joint')] = np.random.random() * 2 * np.pi
+        # self.init_qpos[self.sim.jnt_qposadr(
+        #     'wrist_roll_joint')] = np.random.random() * 2 * np.pi
         return self.init_qpos
 
     def _set_new_goal(self):
         pass
 
     def _obs(self):
-        return self.sim.qpos, [self._block_lifted()]
+        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+
+    def _fingers_touching(self):
+        return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        x, y, z = self.sim.get_body_xpos(self._goal_block_name)
-        block_lifted = z - self._resting_block_height > self._min_lift_height
-        return block_lifted
+        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2)
 
     def _goal(self):
         return self.sim.get_body_xpos(self._goal_block_name), [True]
@@ -83,17 +83,17 @@ class PickAndPlaceEnv(BaseEnv):
     def _currently_failed(self):
         return False
 
+    def _achieved_goal(self, goal, obs):
+        goal_pos, (should_lift,) = goal
+        qpos, (fingers_touching, block_lifted) = obs
+        _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
+        return _at_goal and should_lift == (block_lifted and fingers_touching)
+
     def _compute_terminal(self, goal, obs):
-        goal, should_lift = goal
-        qpos, block_lifted = obs
-        return at_goal(self._gripper_pos(qpos), goal,
-                       self._geofence) and should_lift == block_lifted
+        return self._achieved_goal(goal, obs)
 
     def _compute_reward(self, goal, obs):
-        goal_pos, should_lift = goal
-        qpos, block_lifted = obs
-        if at_goal(self._gripper_pos(qpos), goal_pos,
-                   self._geofence) and block_lifted == should_lift:
+        if self._achieved_goal(goal, obs):
             return 1
         elif self._neg_reward:
             return -.0001
@@ -111,7 +111,10 @@ class PickAndPlaceEnv(BaseEnv):
         return (finger1 + finger2) / 2.
 
     def step(self, action):
-        action = np.clip(action * self._action_multiplier, -1, 1)
+        action = np.clip(action, -1, 1)
+        for name in self._rotation_actuators:
+            i = self.sim.name2id(ObjType.ACTUATOR, name)
+            action[i] *= np.pi / 2
 
         mirrored = [
             'hand_l_proximal_motor',
@@ -132,9 +135,5 @@ class PickAndPlaceEnv(BaseEnv):
         mirroring_indexes = np.minimum(mirroring_indexes,
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
-        o, r, d, x = super().step(action)
-        # if self._rewards[self._current_orienation] == -np.inf:
-            # self._rewards[self._current_orienation] = r
-        # else:
-            # self._rewards[self._current_orienation] += r
-        return o, r, d, x
+        return super().step(action)
+

@@ -74,6 +74,8 @@
         <geom type="plane" size=".1905 .2667 .005" class="box"/>
 
         <body name="pan" pos="0 0 .4">
+            <site name="touchsensor_pan_site" type="box" size=".1905 .2667 .0127" pos="0 0 0.005" rgba="1 0 0 .5"/>
+            <geom type="box" size=".1905 .2667 .0127" pos="0 0 0.0025" class="box" rgba="0 1 0 .5"/>
             <geom type="box" size=".1905 .2667 .005" class="box"/>
             <geom type="box" size=".001  .2667 .0127" pos=".1905 0  .01"  class="box"/>
             <geom type="box" size=".001  .2667 .0127" pos="-.1905 0 .01" class="box"/>
@@ -95,8 +97,8 @@
         <!--</body>-->
 
         <body name="block1" pos="0 0 .49">
-          <geom type="box" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
-           <freejoint name='block1joint'/>
+          <geom type="box" mass="1" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="6" solimp="0.99 0.99 0.01" solref="0.01 1"/>
+          <freejoint name='block1joint'/>
         </body>
 
         <!--<body name="block2" pos="0 0 .44">-->
@@ -109,14 +111,20 @@
     <actuator>
         <!--<motor gear="1000.0" name="slide_x_motor" joint="slide_x"/>-->
         <!--<motor gear="1000.0" name="slide_y_motor" joint="slide_y"/>-->
-        <motor gear="1000.0" name="arm_flex_motor" joint="arm_flex_joint" forcelimited="true" forcerange="-.2 .2"/>
+        <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint"
+                  forcelimited="true" forcerange="-15 35"/>
         <!--<motor gear="1000.0" name="arm_lift_motor" joint="arm_lift_joint"/>-->
         <!--<motor gear="1000.0" name="arm_roll_motor" joint="arm_roll_joint"/>-->
         <!--<motor gear="1000.0" name="wrist_flex_motor" joint="wrist_flex_joint"/>-->
-        <motor gear="1000.0" name="wrist_roll_motor" joint="wrist_roll_joint" forcelimited="true" forcerange="-.08 .08"/>/>
-        <motor gear="1000.0" name="hand_l_proximal_motor" joint="hand_l_proximal_joint" forcelimited="true" forcerange="-.8 .8"/>
+        <!--<motor gear="1000.0" name="wrist_roll_motor" joint="wrist_roll_joint" forcelimited="true" forcerange="-.03 .03"/>/>-->
+        <position gear="1" kp="1000" name="wrist_roll_motor" joint="wrist_roll_joint"
+                  forcelimited="true" forcerange="-20 20"/>
+        <position gear="1" kp="1000" name="hand_l_proximal_motor" joint="hand_l_proximal_joint"
+                  forcelimited="true" forcerange="-20 20"/>
+        <position gear="1" kp="1000" name="hand_r_proximal_motor" joint="hand_r_proximal_joint"
+                  forcelimited="true" forcerange="-20 20"/>
+
         <!--<motor gear="1000.0" name="hand_l_distal_motor" joint="hand_l_distal_joint"/>-->
-        <motor gear="1000.0" name="hand_r_proximal_motor" joint="hand_r_proximal_joint" forcelimited="true" forcerange="-.8 .8"/>
         <!--<motor gear="1000.0" name="hand_r_distal_motor" joint="hand_r_distal_joint"/>-->
     </actuator>
     <contact>
@@ -126,6 +134,7 @@
         <exclude body1="arm_roll_link" body2="wrist_flex_link"/>
         <exclude body1="wrist_flex_link" body2="wrist_roll_link"/>
         <exclude body1="wrist_roll_link" body2="hand_palm_link"/>
+        <exclude body1="arm_flex_link" body2="hand_palm_link"/>
         <exclude body1="hand_palm_link" body2="hand_l_proximal_link"/>
         <exclude body1="hand_l_proximal_link" body2="hand_l_spring_proximal_link"/>
         <exclude body1="hand_l_spring_proximal_link" body2="hand_l_mimic_distal_link"/>
@@ -136,7 +145,7 @@
         <exclude body1="hand_r_mimic_distal_link" body2="hand_r_distal_link"/>
     </contact>
     <sensor>
-        <!--<touch name="touchsensor" site="touchsensor_site"/>-->
+        <touch name="touchsensor_pan" site="touchsensor_pan_site"/>
         <touch name="touchsensor_l" site="touchsensor_l_site"/>
         <touch name="touchsensor_r" site="touchsensor_r_site"/>
     </sensor>

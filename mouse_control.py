@@ -19,26 +19,28 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous=True, max_steps=1000, geofence=.5)
     #env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
     # env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    env = PickAndPlaceEnv(max_steps=9999999, action_multiplier=.01)
-    np.set_printoptions(precision=2, linewidth=800)
+    env = PickAndPlaceEnv(max_steps=9999999)
+    np.set_printoptions(precision=3, linewidth=800)
     env.reset()
 
     shape, = env.action_space.shape
 
     i = 0
+    j = 0
     action = np.zeros(shape)
     moving = False
+    pause = False
     total_reward = 0
 
     while True:
         lastkey = env.sim.get_last_key_press()
         if moving:
             action[i] += env.sim.get_mouse_dy()
-        else:
+        # else:
             # for name in ['wrist_roll_motor']:
             # for name in ['slide_x_motor', 'slide_y_motor']:
             # k = env.sim.name2id(ObjType.ACTUATOR, name)
-            action[:] = 0
+            # action[:] = 0
 
         if lastkey is 'R':
             env.reset()
@@ -54,15 +56,18 @@ def run(port, value_tensor=None, sess=None):
                 print('')
                 print(env.sim.id2name(ObjType.ACTUATOR, i))
 
-        obs, r, done, _ = env.step(action)
-        total_reward += r
-        run_tests(env, obs)
+        # action[1] = .5
+        # action *= .05
+        if not pause:
+            obs, r, done, _ = env.step(action * .05)
+            total_reward += r
+            run_tests(env, obs)
 
         if done:
-            env.reset()
-            print('\nresetting', total_reward)
+            if not pause:
+                print('\nresetting', total_reward)
+            pause = True
             total_reward = 0
-
         env.render(labels={'x': env.goal_3d()})
 
 
