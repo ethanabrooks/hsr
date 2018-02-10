@@ -58,16 +58,15 @@ class PickAndPlaceEnv(BaseEnv):
         # print('rewards:', mean_rewards, 'argmin:', i)
         # self._usage[i] += 1
         # self.init_qpos[block_joint + 3:block_joint + 7] = self._block_orientations[i]
-        self.init_qpos[self.sim.jnt_qposadr(
-            'wrist_roll_joint')] = np.random.random() * 2 * np.pi
+        # self.init_qpos[self.sim.jnt_qposadr(
+        #     'wrist_roll_joint')] = np.random.random() * 2 * np.pi
         return self.init_qpos
 
     def _set_new_goal(self):
         pass
 
     def _obs(self):
-        obs = self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
-        return self.process(obs)
+        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
 
     def _fingers_touching(self):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
@@ -83,10 +82,6 @@ class PickAndPlaceEnv(BaseEnv):
 
     def _currently_failed(self):
         return False
-
-    def process(self, obs):
-        qpos, (fingers_touching, block_lifted) = obs
-        return qpos, [fingers_touching and block_lifted]
 
     def _achieved_goal(self, goal, obs):
         goal_pos, (should_lift,) = goal

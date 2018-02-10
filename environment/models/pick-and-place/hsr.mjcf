@@ -152,7 +152,7 @@
                             <inertial pos="-0.001416 -0.001547 0.081689"
                                       quat="0.988073 0.0424396 -0.0351605 -0.143785"
                                       mass="0.761692" diaginertia="0.000811657 0.000766039 0.000449422"/>
-                            <joint name="wrist_roll_joint" pos="0 0 0" axis="0 0 1" limited="false" damping="100"/>
+                            <joint name="wrist_roll_joint" pos="0 0 0" axis="0 0 1" damping="100"/>
                             <!--range="-90 90"/>-->
                                    <!--range="-1.92 3.67" />-->
                             <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="wrist_roll"/>
