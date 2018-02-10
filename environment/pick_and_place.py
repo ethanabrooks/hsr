@@ -66,7 +66,8 @@ class PickAndPlaceEnv(BaseEnv):
         pass
 
     def _obs(self):
-        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+        obs = self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+        return self.process(obs)
 
     def _fingers_touching(self):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
