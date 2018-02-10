@@ -88,11 +88,11 @@ class PickAndPlaceEnv(BaseEnv):
 
     def process(self, obs):
         qpos, (fingers_touching, block_lifted) = obs
-        return qpos, fingers_touching and block_lifted
+        return qpos, [fingers_touching and block_lifted]
 
     def _achieved_goal(self, goal, obs):
         goal_pos, (should_lift,) = goal
-        qpos, block_lifted = self.process(obs)
+        qpos, (block_lifted,) = self.process(obs)
         _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
         return _at_goal and should_lift == block_lifted
 
