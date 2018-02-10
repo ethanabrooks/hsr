@@ -114,6 +114,7 @@ class PickAndPlaceMocapEnv(BaseEnv):
 
         # action = [wrist_roll, l_finger, r_finger]
         action = [angle, action[0], action[0]]
+        super().step(action)
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):

@@ -42,31 +42,31 @@ def run(port):
         action += delta
         if np.any(action > 1) or np.any(action < -1):
             delta *= -1
-        action[0:4] = 0
+        # action[0:4] = 0
         while True:
             if i != 0:
                 env.render()
 
-            
+            action = np.zeros(5)
             action[0] = 45
-            action[1] = 0.65
-            action[3] = -0.001
+            action[1] = .65
+            # action[3] = -0.001
             action[4] = -0.001
             
             i += 1
             
 
-            if i > 100: 
-                action[0] = 0
-                action[1] = -0.45
-                action[2] = 0.001
-                action[3] = 0
-                action[4] = 0
-            if i > 200:
-                action[0] = 60
-                action[1] = -.78
-                action[3] = 0.001
-                action[4] = -0.05
+            # if i > 100: 
+            #     action[0] = 0
+            #     action[1] = -0.45
+            #     action[2] = 0.001
+            #     action[3] = 0
+            #     action[4] = 0
+            # if i > 200:
+            #     action[0] = 60
+            #     action[1] = -.78
+            #     action[3] = 0.001
+            #     action[4] = -0.05
 
             tick = time.time()
             # print(action, i)
