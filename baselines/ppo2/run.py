@@ -40,7 +40,7 @@ def train(env_id, num_timesteps, seed, policy, record_path, restore_path,
             elif env_id == 'arm2pos':
                 env = Arm2PosEnv(continuous=True, max_steps=500)
             elif env_id == 'pick-and-place':
-                env = PickAndPlaceEnv(max_steps=500)
+                env = PickAndPlaceEnv(max_steps=500, neg_reward=False)
             elif env_id == 'navigate':
                 env = NavigateEnv(continuous=True, max_steps=500, geofence=.5)
             else:
