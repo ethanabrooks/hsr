@@ -66,7 +66,8 @@ class PickAndPlaceEnv(BaseEnv):
         pass
 
     def _obs(self):
-        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+        obs = self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+        return self.process(obs)
 
     def _fingers_touching(self):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
@@ -92,7 +93,7 @@ class PickAndPlaceEnv(BaseEnv):
 
     def _achieved_goal(self, goal, obs):
         goal_pos, (should_lift,) = goal
-        qpos, (block_lifted,) = self.process(obs)
+        qpos, (block_lifted,) = obs
         _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
         return _at_goal and should_lift == block_lifted
 
