@@ -7,6 +7,15 @@ from mujoco import ObjType
 from environment.base import BaseEnv, at_goal, print1
 
 
+def quaternion_multiply(quaternion1, quaternion0):
+    w0, x0, y0, z0 = quaternion0
+    w1, x1, y1, z1 = quaternion1
+    return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
+
+
 def failed(resting_block_height, goal_block_height):
     return False
     # return resting_block_height - goal_block_height > .02  #.029
@@ -42,7 +51,7 @@ class PickAndPlaceEnv(BaseEnv):
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
-                                                     # size=(n_orientations, 4))
+        # size=(n_orientations, 4))
         # self._rewards = np.ones(n_orientations) * -np.inf
         # self._usage = np.zeros(n_orientations)
         # self._current_orienation = None
@@ -51,8 +60,13 @@ class PickAndPlaceEnv(BaseEnv):
         block_joint = self.sim.jnt_qposadr('block1joint')
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi
-        self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
-        self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+        rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
+        rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
+        w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
+        self.init_qpos[block_joint + 3] = w
+        self.init_qpos[block_joint + 4] = x
+        self.init_qpos[block_joint + 5] = y
+        self.init_qpos[block_joint + 6] = z
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)
@@ -140,4 +154,3 @@ class PickAndPlaceEnv(BaseEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
-
