@@ -264,7 +264,7 @@ class FourRoomExperiment(ContinuousGridworld2):
 
     def __init__(self, noise_type=None, visualize=False, noisy_position=True, image_size=64):
         from toy_environment import four_rooms_obstacle_list
-        self.position_mapping = {0: [-0.75, -0.75], 1: [-0.75, 0.75], 2: [0.75, 0.75], 3: [0.75, -0.75]}
+        self.position_mapping = {0: [-0.5, -0.5], 1: [-0.5, 0.5], 2: [0.5, 0.5], 3: [0.5, -0.5]}
         self.noisy_position = noisy_position
         super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size)
 	
@@ -275,7 +275,14 @@ class FourRoomExperiment(ContinuousGridworld2):
         return pos 
  
     def goal_position_generator(self):
-        return np.random.uniform(self.agent_position - 0.55, self.agent_position + 0.55)
+        goal = None
+
+        while True:
+            goal = np.random.uniform(self.agent_position - 0.55, self.agent_position + 0.55)
+            if goal[0] > -1 and goal[0] < 1 and goal[1] > -1 and goal[1] < 1:
+                break
+
+        return goal
 
 
 if __name__ == '__main__':
