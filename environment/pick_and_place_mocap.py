@@ -103,7 +103,7 @@ class PickAndPlaceMocapEnv(BaseEnv):
     def step(self, action):
         # Last three items are desired gripper pos
         angle = action[1]
-        angle = np.clip(angle, -1, +1) * 120
+        angle = np.clip(angle, -1, +1) * 180
 
         mocap_pos = action[2:]
         mocap_pos_relative = mocap_pos / np.linalg.norm(mocap_pos) * 0.01        

@@ -49,8 +49,8 @@ def run(port):
 
             action = np.zeros(5)
             action[0] = 45
-            action[1] = .65
-            action[3] = -0.001
+            action[1] = 100
+            action[3] = -0.0
             action[4] = -0.001
             
             i += 1
