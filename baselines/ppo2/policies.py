@@ -142,13 +142,13 @@ class MlpPolicy(object):
                 h0 = tf.reshape(X, [nbatch, 1])
             else:
                 h0 = X
-            h1 = fc(h0, 'pi_fc1', nh=256, init_scale=np.sqrt(2), act=tf.tanh)
-            h2 = fc(h1, 'pi_fc2', nh=256, init_scale=np.sqrt(2), act=tf.tanh)
-            h3 = fc(h2, 'pi_fc3', nh=256, init_scale=np.sqrt(2), act=tf.tanh)
+            h1 = fc(h0, 'pi_fc1', nh=512, init_scale=np.sqrt(2), act=tf.tanh)
+            h2 = fc(h1, 'pi_fc2', nh=512, init_scale=np.sqrt(2), act=tf.tanh)
+            h3 = fc(h2, 'pi_fc3', nh=512, init_scale=np.sqrt(2), act=tf.tanh)
             pi = fc(h3, 'pi', actdim, act=lambda x: x, init_scale=0.01)
-            h1 = fc(X, 'vf_fc1', nh=256, init_scale=np.sqrt(2), act=tf.tanh)
-            h2 = fc(h1, 'vf_fc2', nh=256, init_scale=np.sqrt(2), act=tf.tanh)
-            h3 = fc(h2, 'vf_fc3', nh=256, init_scale=np.sqrt(2), act=tf.tanh)
+            h1 = fc(X, 'vf_fc1', nh=512, init_scale=np.sqrt(2), act=tf.tanh)
+            h2 = fc(h1, 'vf_fc2', nh=512, init_scale=np.sqrt(2), act=tf.tanh)
+            h3 = fc(h2, 'vf_fc3', nh=512, init_scale=np.sqrt(2), act=tf.tanh)
             vf = fc(h3, 'vf', 1, act=lambda x: x)[:, 0]
             logstd = tf.get_variable(name="logstd", shape=[1, actdim],
                                      initializer=tf.zeros_initializer())
