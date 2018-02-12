@@ -31,12 +31,17 @@ class Actor(Model):
                 scope.reuse_variables()
 
             x = obs
-            x = tf.layers.dense(x, 64)
+            x = tf.layers.dense(x, 256)
             if self.layer_norm:
                 x = tc.layers.layer_norm(x, center=True, scale=True)
             x = tf.nn.relu(x)
             
-            x = tf.layers.dense(x, 64)
+            x = tf.layers.dense(x, 256)
+            if self.layer_norm:
+                x = tc.layers.layer_norm(x, center=True, scale=True)
+            x = tf.nn.relu(x)
+
+            x = tf.layers.dense(x, 256)
             if self.layer_norm:
                 x = tc.layers.layer_norm(x, center=True, scale=True)
             x = tf.nn.relu(x)
@@ -95,13 +100,19 @@ class Critic(Model):
                 scope.reuse_variables()
 
             x = obs
-            x = tf.layers.dense(x, 64)
+            x = tf.layers.dense(x, 256)
             if self.layer_norm:
                 x = tc.layers.layer_norm(x, center=True, scale=True)
             x = tf.nn.relu(x)
 
             x = tf.concat([x, action], axis=-1)
-            x = tf.layers.dense(x, 64)
+            x = tf.layers.dense(x, 256)
+            if self.layer_norm:
+                x = tc.layers.layer_norm(x, center=True, scale=True)
+            x = tf.nn.relu(x)
+
+            x = tf.concat([x, action], axis=-1)
+            x = tf.layers.dense(x, 256)
             if self.layer_norm:
                 x = tc.layers.layer_norm(x, center=True, scale=True)
             x = tf.nn.relu(x)
