@@ -3,7 +3,7 @@ from os.path import join
 import numpy as np
 from gym import spaces
 from itertools import combinations, product
-
+from hyperparam_logger import HYP
 
 from environment.base import BaseEnv
 
@@ -39,36 +39,49 @@ class Arm2TouchEnv(BaseEnv):
         self.relation_manager = RelationManager()
         self.context_qpos = np.copy(self.sim.qpos)
 
-        block1 = lambda: self.get_block1_position(self.context_qpos)
-        block2 = lambda: self.get_block2_position(self.context_qpos)
+        block1 = lambda: self.get_block_position(self.context_qpos, 'block1joint')
+        block2 = lambda: self.get_block_position(self.context_qpos, 'block2joint')
+        block3 = lambda: self.get_block_position(self.context_qpos, 'block3joint')
         gripper = lambda: self._gripper_pos(self.context_qpos)
 
-        touching = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.05)
-        near = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.20)
+        self.touching = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.05)
+        self.near = lambda o1, o2: self.are_positions_touching(o1, o2, touching_threshold=0.20)
 
         self.block1_idx = self.sim.jnt_qposadr('block1joint')
         self.block2_idx = self.sim.jnt_qposadr('block2joint')
+        #self.block_low_range = np.array([-0.15, -0.25, 0.49])
+        #self.block_high_range = np.array([0.15, 0.25, 0.49])
+
+        self.block_low_range = np.array([-0.10, -0.20, 0.49])
+        self.block_high_range = np.array([0.10, 0.20, 0.49])
 
         self.relation_manager.register_object('block1', block1)
         self.relation_manager.register_object('block2', block2)
+        self.relation_manager.register_object('block3', block3)
         self.relation_manager.register_object('gripper', gripper)
-        self.relation_manager.register_relationship('touching', touching, 2)
-        self.relation_manager.register_relationship('near', near, 2)
 
+        self.relation_manager.register_relationship('touching', self.touching, 2)
+        self.relation_manager.register_relationship('near', self.near, 2)
+
+    def generate_block_position_not_relation(self, relation, block_positions=None):
+        if block_positions is None:
+            block_positions = []
+        for i in range(10):
+            candidate_pos = np.random.uniform(low=self.block_low_range, high=self.block_high_range)
+            # if none of the relations are true, return the position
+            if all(not relation(pos, candidate_pos) for pos in block_positions):
+                return candidate_pos
+        return candidate_pos
 
 
     def generate_valid_block_position(self):
-        low_range = np.array([-0.15, -0.25, 0.49])
-        high_range = np.array([0.15, 0.25, 0.49])
-        return np.random.uniform(low=low_range, high=high_range)
+        return np.random.uniform(low=self.block_low_range, high=self.block_high_range)
 
-    def get_block1_position(self, qpos):
-        position = qpos[self.block1_idx:self.block1_idx+3]
+    def get_block_position(self, qpos, block_name):
+        idx = self.sim.jnt_qposadr(block_name)
+        position = qpos[idx:idx+3]
         return position
 
-    def get_block2_position(self, qpos):
-        position = qpos[self.block2_idx:self.block2_idx+3]
-        return position
 
     def set_block_position(self, qpos, name, position):
         idx = self.sim.jnt_qposadr(name)
@@ -84,18 +97,40 @@ class Arm2TouchEnv(BaseEnv):
 
     def reset_qpos(self):
         qpos = self.init_qpos
-        qpos = self.set_block_position(qpos, 'block1joint', self.generate_valid_block_position())
-        qpos = self.set_block_position(qpos, 'block2joint', self.generate_valid_block_position())
+        # generate blocks that are sufficiently far away to not trigger a near relation at start time.
+        block1_pos = self.generate_block_position_not_relation(self.near)
+        block2_pos = self.generate_block_position_not_relation(self.near, block_positions=[block1_pos])
+        block3_pos = self.generate_block_position_not_relation(self.near, block_positions=[block1_pos, block2_pos])
+
+        qpos = self.set_block_position(qpos, 'block1joint', block1_pos)
+        qpos = self.set_block_position(qpos, 'block2joint', block2_pos)
+        qpos = self.set_block_position(qpos, 'block3joint',  block3_pos)
+
         return qpos
 
-    def _set_new_goal(self):
+
+    def _set_new_goal_pushing(self):
+        goal_relation = np.random.randint(0, 3)
+        onehot = np.zeros([3], dtype=np.float32)
+        onehot[goal_relation] = 1
+        self.__goal = onehot
+
+
+    def _set_new_goal_touching(self):
         goal_block = np.random.randint(0, 2)
-        onehot = np.zeros([2],dtype=np.float32)
+        onehot = np.zeros([2], dtype=np.float32)
         onehot[goal_block] = 1
         self.__goal = onehot
 
+
+    def _set_new_goal(self):
+        self._set_new_goal_pushing()
+        #self._set_new_goal_touching()
+
+
     def _obs(self):
         return [self.sim.qpos]
+
 
     def _goal(self):
         return [self.__goal]
@@ -118,9 +153,14 @@ class Arm2TouchEnv(BaseEnv):
     def at_goal_push_together(self, qpos, goal):
         self.context_qpos = qpos
         relations = self.relation_manager.compute_relations()
-        return ('block1', 'block2') in relations['near']
-
-
+        goal_relation = np.argmax(goal)
+        #return ('block1', 'block2') in relations['near']
+        if goal_relation == 0:
+            return ('block1', 'block2') in relations['near']
+        elif goal_relation == 1:
+            return ('block1', 'block3') in relations['near']
+        else:
+            return ('block2', 'block3') in relations['near']
 
     def at_goal(self, qpos, goal):
         #return False

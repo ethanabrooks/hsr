@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 from baselines.a2c.utils import conv, fc, conv_to_fc, batch_to_seq, seq_to_batch, lstm, lnlstm
 from baselines.common.distributions import make_pdtype
+from hyperparam_logger import HYP
 
 
 class LnLstmPolicy(object):
@@ -142,11 +143,17 @@ class MlpPolicy(object):
                 h0 = tf.reshape(X, [nbatch, 1])
             else:
                 h0 = X
-            h1 = fc(h0, 'pi_fc1', nh=64, init_scale=np.sqrt(2), act=tf.tanh)
-            h2 = fc(h1, 'pi_fc2', nh=64, init_scale=np.sqrt(2), act=tf.tanh)
+
+            mlp_hidden_size = 64#HYP('mlp_hidden_size', 64)
+
+            h1 = fc(h0, 'pi_fc1', nh=mlp_hidden_size, init_scale=np.sqrt(2), act=tf.tanh)
+            h2 = fc(h1, 'pi_fc2', nh=mlp_hidden_size, init_scale=np.sqrt(2), act=tf.tanh)
+            #h3 = fc(h2, 'pi_fc3', nh=mlp_hidden_size, init_scale=np.sqrt(2), act=tf.tanh)
             pi = fc(h2, 'pi', actdim, act=lambda x: x, init_scale=0.01)
-            h1 = fc(X, 'vf_fc1', nh=64, init_scale=np.sqrt(2), act=tf.tanh)
-            h2 = fc(h1, 'vf_fc2', nh=64, init_scale=np.sqrt(2), act=tf.tanh)
+
+            h1 = fc(X, 'vf_fc1', nh=mlp_hidden_size, init_scale=np.sqrt(2), act=tf.tanh)
+            h2 = fc(h1, 'vf_fc2', nh=mlp_hidden_size, init_scale=np.sqrt(2), act=tf.tanh)
+            #h3 = fc(h2, 'vf_fc3', nh=mlp_hidden_size, init_scale=np.sqrt(2), act=tf.tanh)
             vf = fc(h2, 'vf', 1, act=lambda x: x)[:, 0]
             logstd = tf.get_variable(name="logstd", shape=[1, actdim],
                                      initializer=tf.zeros_initializer())

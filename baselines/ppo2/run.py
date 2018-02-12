@@ -2,6 +2,7 @@
 import argparse
 import sys
 
+
 from baselines import bench, logger
 from baselines.ppo2.policies import MlpPolicy
 from environment.arm2pos import Arm2PosEnv
@@ -10,9 +11,12 @@ from environment.pick_and_place import PickAndPlaceEnv
 from toy_environment.continuous_gridworld2 import ContinuousGridworld2
 from environment.arm2touch import Arm2TouchEnv
 from toy_environment import room_obstacle_list
+from hyperparam_logger import HYP
 
 
-def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
+def train(env_id, num_timesteps, seed, policy, record, restore, save, dir):
+    #HYP.init(dir+'hyperparameters', restore=restore)
+
     from baselines.common import set_global_seeds
     from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
     from baselines.common.vec_env.vec_frame_stack import VecFrameStack
@@ -50,13 +54,14 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
             env.seed(seed + rank)
             if record:
                 logger.warn('`record` is enabled. Program will not log summary/tensorboard values.')
-                return gym.wrappers.Monitor(env, '/home/crgrimm/hsr')
+                return gym.wrappers.Monitor(env, dir+'/videos/')
             else:
                 return bench.Monitor(env, logger.get_dir() and osp.join(logger.get_dir(), str(rank)))
-
         return env_fn
 
-    nenvs = 8
+    # initialize singleton
+
+    nenvs = 8#HYP('nenvs', 8)
     env = SubprocVecEnv([make_env(i) for i in range(nenvs)])
     set_global_seeds(seed)
     env = VecFrameStack(env, 4)
@@ -68,6 +73,16 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
     #           cliprange=lambda f: f * 0.1,
     #           total_timesteps=int(num_timesteps * 1.1),
     #           restore_path=restore_path, save_path=save_path)
+    if save:
+        save_path = dir + '/model.ckpt'
+    else:
+        save_path = None
+
+    if restore:
+        restore_path = dir + '/model.ckpt'
+    else:
+        restore_path = None
+
     ppo2.learn(policy=policy, env=env, nsteps=2048, nminibatches=32,
                lam=0.95, gamma=0.99, noptepochs=10, log_interval=1,
                ent_coef=0.0,
@@ -75,6 +90,7 @@ def train(env_id, num_timesteps, seed, policy, record, restore_path, save_path):
                save_path=save_path, restore_path=restore_path,
                cliprange=0.2,
                total_timesteps=num_timesteps)
+
 
 
 def main():
@@ -86,13 +102,18 @@ def main():
     parser.add_argument('--tb-dir', default=None)
     parser.add_argument('--output', nargs='+', default=['tensorboard', 'stdout'])
     parser.add_argument('--record', action='store_true')
-    parser.add_argument('--restore-path', default=None)
-    parser.add_argument('--save-path', default=None)
+    parser.add_argument('--restore', action='store_true')
+    parser.add_argument('--save', action='store_true')
+    parser.add_argument('--alternative-log', default=None)
+
     args = parser.parse_args()
-    logger.configure(dir=args.tb_dir, format_strs=args.output)
+    if args.alternative_log is None:
+        logger.configure(dir=args.tb_dir, format_strs=args.output)
+    else:
+        logger.configure(dir=args.alternative_log, format_strs=args.output)
     train(args.env, num_timesteps=args.num_timesteps, seed=args.seed,
           policy=args.policy, record=args.record,
-          restore_path=args.restore_path, save_path=args.save_path)
+          restore=args.restore, save=args.save, dir=args.tb_dir)
 
 
 if __name__ == '__main__':

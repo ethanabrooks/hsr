@@ -83,12 +83,16 @@
 
         <body name="block1" pos="0 0 .49">
           <geom type="box" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
-           <freejoint name='block1joint'/>
+            <freejoint name='block1joint'/>
         </body>
 
         <body name="block2" pos="0 0.1 .49">
           <geom type="box" size=".0635 .0317 .0234" rgba=".1 .8 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
            <freejoint name='block2joint'/>
+        </body>
+        <body name="block3" pos="0 0.1 .49">
+          <geom type="box" size=".0635 .0317 .0234" rgba=".1 .1 .8 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
+           <freejoint name='block3joint'/>
         </body>
 
         <!--<body name="cubby" pos="0 .6 .5">-->
