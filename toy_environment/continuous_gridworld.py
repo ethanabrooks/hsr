@@ -1,6 +1,8 @@
 import gym
 import numpy as np
 from gym import utils, spaces
+
+from environment.base import BaseEnv
 from toy_environment.rectangle_object import RectangleObstacle
 import pygame
 import cv2
@@ -8,10 +10,9 @@ from collections import deque
 from toy_environment import room_obstacle_list, four_rooms_obstacle_list
 
 
-class ContinuousGridworld(gym.Env, utils.EzPickle):
+class ContinuousGridworld(BaseEnv, utils.EzPickle):
     def __init__(self, obstacle_list_generator, visualize=False, image_size=64, max_action_step=0.2,
                  max_time_steps=1000):
-        utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.observation_space = spaces.Box(-1, 1, shape=[4])
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
@@ -31,7 +32,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         self.time_step = 0
         self.metadata = {'render.modes': 'rgb_array'}
 
-    def render(self, mode='human', close=False):
+    def render(self, mode=None, camera_name=None, labels=None):
         if mode == 'rgb_array':
             return self.render_agent()
         elif mode == 'human':
@@ -83,8 +84,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         radius = np.sqrt(action[0] ** 2 + action[1] ** 2)
         if radius > 1:
             action = action / radius
-        action = action * self.max_action_step
-        return action
+        return action * self.max_action_step
 
     #### Hindsight Stuff
 
