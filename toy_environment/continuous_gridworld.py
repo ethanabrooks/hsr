@@ -32,7 +32,12 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         self.metadata = {'render.modes': 'rgb_array'}
 
     def render(self, mode='human', close=False):
-        return self.render_agent()
+        if mode == 'rgb_array':
+            return self.render_agent()
+        elif mode == 'human':
+            raise NotImplementedError
+        else:
+            raise RuntimeError('mode must be human|rgb_array')
 
     def agent_position_generator(self):
         return np.random.uniform(-1, 1, size=2)
