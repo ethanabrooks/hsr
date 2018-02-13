@@ -1,11 +1,8 @@
-import gym
 import numpy as np
-from gym import utils, spaces
-from toy_environment.rectangle_object import RectangleObstacle
 import pygame
-import cv2
-from collections import deque
-from toy_environment import room_obstacle_list, four_rooms_obstacle_list
+from gym import spaces
+
+from toy_environment import room_obstacle_list
 
 
 class ContinuousGridworld:
@@ -28,7 +25,15 @@ class ContinuousGridworld:
         self.dist_cutoff = 0.2
         self.max_steps = max_time_steps
         self.time_step = 0
+
+        # required for OpenAI code
         self.metadata = {'render.modes': 'rgb_array'}
+        self.reward_range = -np.inf, np.inf
+        self.spec = None
+
+    @staticmethod
+    def seed(seed):
+        np.random.seed(seed)
 
     def render(self, mode='human', close=False):
         if mode == 'rgb_array':
@@ -44,7 +49,7 @@ class ContinuousGridworld:
     def goal_position_generator(self):
         return np.random.uniform(-1, 1, size=2)
 
-    def _step(self, action):
+    def step(self, action):
         action = np.array(action)
         # rescale the action to be between 0 and 1.
         radius = np.sqrt(action[0] ** 2 + action[1] ** 2)
@@ -53,7 +58,7 @@ class ContinuousGridworld:
         action *= self.max_action_step
         num_subchecks = 4
         for i in range(1, num_subchecks):
-            if self.check_intersects(self.agent_position,  #TODO
+            if self.check_intersects(self.agent_position,  # TODO
                                      action,
                                      mult=i / float(num_subchecks)):
                 action *= (i - 1) / float(num_subchecks)
@@ -70,7 +75,7 @@ class ContinuousGridworld:
             terminal = True
         return obs, reward, terminal, {}
 
-    def _reset(self):
+    def reset(self):
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         self.goal = self.get_non_intersecting_position(self.goal_position_generator)
         self.time_step = 0
@@ -82,16 +87,7 @@ class ContinuousGridworld:
     def sample_position(self):
         return np.random.uniform(-1, 1, size=[2])
 
-    def preprocess_action(self, action):
-        action = np.array(action)
-        # rescale the action to be between 0 and 1.
-        radius = np.sqrt(action[0] ** 2 + action[1] ** 2)
-        if radius > 1:
-            action = action / radius
-        action = action * self.max_action_step
-        return action
-
-    #### Hindsight Stuff
+    # Hindsight Stuff
 
     def at_goal(self, goal, obs):
         without_goal = obs[:-2]
@@ -111,7 +107,7 @@ class ContinuousGridworld:
     def obs_to_goal(self, obs):
         return obs[:2]
 
-    ### Rendering
+    # Rendering
 
     def render_agent(self):
         x = (self.agent_position[0] + 1) / 2.
@@ -134,7 +130,7 @@ class ContinuousGridworld:
         imgdata.swapaxes(0, 1)
         return imgdata
 
-    ### Collision Handling
+    # Collision Handling
 
     def get_non_intersecting_position(self, generator):
         # if generator is None:
