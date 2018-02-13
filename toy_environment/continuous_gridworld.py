@@ -1,8 +1,6 @@
 import gym
 import numpy as np
 from gym import utils, spaces
-
-from environment.base import BaseEnv
 from toy_environment.rectangle_object import RectangleObstacle
 import pygame
 import cv2
@@ -10,9 +8,10 @@ from collections import deque
 from toy_environment import room_obstacle_list, four_rooms_obstacle_list
 
 
-class ContinuousGridworld(BaseEnv, utils.EzPickle):
+class ContinuousGridworld(gym.Env, utils.EzPickle):
     def __init__(self, obstacle_list_generator, visualize=False, image_size=64, max_action_step=0.2,
                  max_time_steps=1000):
+        utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.observation_space = spaces.Box(-1, 1, shape=[4])
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
@@ -32,7 +31,7 @@ class ContinuousGridworld(BaseEnv, utils.EzPickle):
         self.time_step = 0
         self.metadata = {'render.modes': 'rgb_array'}
 
-    def render(self, mode=None, camera_name=None, labels=None):
+    def render(self, mode='human', close=False):
         if mode == 'rgb_array':
             return self.render_agent()
         elif mode == 'human':
@@ -47,12 +46,17 @@ class ContinuousGridworld(BaseEnv, utils.EzPickle):
         return np.random.uniform(-1, 1, size=2)
 
     def _step(self, action):
-        action = self.preprocess_action(action)
+        action = np.array(action)
+        # rescale the action to be between 0 and 1.
+        radius = np.sqrt(action[0] ** 2 + action[1] ** 2)
+        if radius > 1:
+            action /= radius
+        action *= self.max_action_step
         num_subchecks = 4
         for i in range(1, num_subchecks):
-            intersects = self.check_intersects(self.agent_position, action, mult=i / float(num_subchecks))
-            if intersects:
-                action = action * (i - 1) / float(num_subchecks)
+            if self.check_intersects(self.agent_position,
+                                     action, mult=i / float(num_subchecks)):
+                action *= (i - 1) / float(num_subchecks)
                 break
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
         self.time_step += 1
@@ -84,7 +88,8 @@ class ContinuousGridworld(BaseEnv, utils.EzPickle):
         radius = np.sqrt(action[0] ** 2 + action[1] ** 2)
         if radius > 1:
             action = action / radius
-        return action * self.max_action_step
+        action = action * self.max_action_step
+        return action
 
     #### Hindsight Stuff
 
