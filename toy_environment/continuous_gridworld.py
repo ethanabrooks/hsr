@@ -155,8 +155,9 @@ class ContinuousGridworld:
             position = generator()
             tl = self.image_size * (position + 1) / 2. - 0.5 * (5 / np.sqrt(2))
             agent_rect = pygame.Rect(tl[0], tl[1], 5 / np.sqrt(2), 5 / np.sqrt(2))
+            point = self.image_size * (position + 1) / 2.
             assert len(position) == 2
-            if not any(obstacle.collides(agent_rect)
+            if not any(obstacle.rect.collidepoint(point)
                        for obstacle in self.obstacles):
                 return position
 
@@ -164,7 +165,7 @@ class ContinuousGridworld:
         position = np.clip(agent_position + mult * scaled_action, -1, 1)
         intersects = False
 
-        tl = (self.image_size * (position + 1)) / 2. - 0.5 * 0.01
+        tl = (self.image_size * (position + 1)) / 2. - 0.01 / .2
         agent_rect = pygame.Rect(tl[0], tl[1], 0.01, 0.01)
         for obstacle in self.obstacles:
             collision = obstacle.collides(agent_rect)
