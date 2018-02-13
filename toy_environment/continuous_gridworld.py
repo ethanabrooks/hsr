@@ -153,8 +153,10 @@ class ContinuousGridworld:
     def get_non_intersecting_position(self, generator):
         while True:
             position = generator()
+            tl = self.image_size * (position + 1) / 2. - 0.5 * (5 / np.sqrt(2))
+            agent_rect = pygame.Rect(tl[0], tl[1], 5 / np.sqrt(2), 5 / np.sqrt(2))
             assert len(position) == 2
-            if not any(obstacle.rect.collidepoint(*position)
+            if not any(obstacle.collides(agent_rect)
                        for obstacle in self.obstacles):
                 return position
 
