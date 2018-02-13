@@ -36,7 +36,8 @@ def train(env_id, num_timesteps, seed, policy, record_path, restore_path,
     def make_env(rank):
         def env_fn():
             if env_id == 'toy':
-                env = ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2, visualize=True)
+                env = ContinuousGridworld2(room_obstacle_list.obstacle_list,
+                        max_action_step=0.2, visualize=False)
             elif env_id == 'arm2pos':
                 env = Arm2PosEnv(continuous=True, max_steps=500)
             elif env_id == 'pick-and-place':

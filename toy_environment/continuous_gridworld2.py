@@ -26,7 +26,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
         self.max_action_step = max_action_step
         self.dist_cutoff = 0.2
-        self.max_time_steps = max_time_steps
+        self.max_steps = max_time_steps
         self.time_step = 0
 
     def agent_position_generator(self):
@@ -48,14 +48,12 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs)
         reward = self.compute_reward(self.goal, obs)
-        cv2.imshow('game', self.render_agent())
-        cv2.waitKey(1)
         #if self.at_goal(self.goal, obs):
         #    self.goal = self.get_non_intersecting_position(self.goal_position_generator)
             #self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         if reward == 1:
             print('AT GOAL')
-        if self.time_step >= self.max_time_steps:
+        if self.time_step >= self.max_steps:
             terminal = True
         return obs, reward, terminal, {}
 
@@ -194,8 +192,6 @@ if __name__ == '__main__':
         #action = np.random.uniform(-1, 1, size=2)
         obs, reward, terminal, info = env.step(action)
         image = env.render_agent()
-        cv2.imshow('game', image)
-        cv2.waitKey(1)
         print('pos:', obs[:2], 'goal:', obs[2:], 'reward:', reward)
         if terminal:
             env.reset()
