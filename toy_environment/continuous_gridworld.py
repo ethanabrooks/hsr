@@ -116,16 +116,20 @@ class ContinuousGridworld:
     # Rendering
 
     def render_agent(self):
-        x = (self.agent_position[0] + 1) / 2.
-        y = (self.agent_position[1] + 1) / 2.
+        assert isinstance(self.agent_position, np.ndarray)
+        assert isinstance(self.goal, np.ndarray)
+
+        rel_pos = (self.agent_position + 1) / 2
         self.screen.fill((255, 255, 255))
-        x_int = int(x * self.image_size)
-        y_int = int(y * self.image_size)
-        x_goal, y_goal = (g + 1) / 2, (self.goal[1] + 1) / 2
-        x_goal_int = int(x_goal * self.image_size)
-        y_goal_int = int(y_goal * self.image_size)
-        pygame.draw.circle(self.screen, (0, 0, 0), (x_int, y_int), 3)
-        pygame.draw.circle(self.screen, (255, 0, 0), (x_goal_int, y_goal_int), 3)
+        abs_pos = rel_pos * self.image_size
+        # x_int = int(x * self.image_size)
+        # y_int = int(y * self.image_size)
+        rel_goal = (self.goal + 1) / 2
+        abs_goal = rel_goal * self.image_size
+        # x_goal_int = int(x_goal * self.image_size)
+        # y_goal_int = int(y_goal * self.image_size)
+        pygame.draw.circle(self.screen, (0, 0, 0), abs_pos.astype(int), 3)
+        pygame.draw.circle(self.screen, (255, 0, 0), abs_goal.astype(int), 3)
 
         for obs in self.obstacles:
             obs.draw(self.screen, (0, 0, 0))
