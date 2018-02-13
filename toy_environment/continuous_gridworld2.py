@@ -29,6 +29,13 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.dist_cutoff = 0.2
         self.max_steps = max_time_steps
         self.time_step = 0
+        self.metadata = {'render.modes': 'rgb_array'}
+
+    def render(self, mode='human', close=False):
+        if mode == 'rgb_array':
+            return self.render_agent()
+        else:
+            raise NotImplementedError
 
     def agent_position_generator(self):
         return np.random.uniform(-1, 1, size=2)
