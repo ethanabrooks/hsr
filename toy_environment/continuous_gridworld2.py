@@ -32,10 +32,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.metadata = {'render.modes': 'rgb_array'}
 
     def render(self, mode='human', close=False):
-        if mode == 'rgb_array':
-            return self.render_agent()
-        else:
-            raise NotImplementedError
+        return self.render_agent()
 
     def agent_position_generator(self):
         return np.random.uniform(-1, 1, size=2)
@@ -59,8 +56,6 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         # if self.at_goal(self.goal, obs):
         #    self.goal = self.get_non_intersecting_position(self.goal_position_generator)
         # self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
-        if reward == 1:
-            print('AT GOAL')
         if self.time_step >= self.max_steps:
             terminal = True
         return obs, reward, terminal, {}
@@ -153,7 +148,6 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         agent_rect = pygame.Rect(tl[0], tl[1], 0.01, 0.01)
         for obstacle in self.obstacles:
             collision = obstacle.collides(agent_rect)
-            # print(obstacle.rect.topleft, obstacle.rect.width, obstacle.rect.height)
             intersects |= collision
             if collision:
                 obstacle.color = (255, 0, 0)
@@ -181,7 +175,6 @@ if __name__ == '__main__':
     # env = FourRoomExperiment(visualize=True)
     env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
     obs = env.reset()
-    print('pos:', obs[:2], 'goal:', obs[2:])
     while True:
         action = {'s': [1.0, 0],
                   'w': [-1.0, 0],
@@ -190,6 +183,5 @@ if __name__ == '__main__':
         # action = np.random.uniform(-1, 1, size=2)
         obs, reward, terminal, info = env.step(action)
         image = env.render_agent()
-        print('pos:', obs[:2], 'goal:', obs[2:], 'reward:', reward)
         if terminal:
             env.reset()
