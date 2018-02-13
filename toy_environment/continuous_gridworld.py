@@ -8,10 +8,9 @@ from collections import deque
 from toy_environment import room_obstacle_list, four_rooms_obstacle_list
 
 
-class ContinuousGridworld(gym.Env, utils.EzPickle):
+class ContinuousGridworld:
     def __init__(self, obstacle_list_generator, visualize=False, image_size=64, max_action_step=0.2,
                  max_time_steps=1000):
-        utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.observation_space = spaces.Box(-1, 1, shape=[4])
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
@@ -54,8 +53,9 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         action *= self.max_action_step
         num_subchecks = 4
         for i in range(1, num_subchecks):
-            if self.check_intersects(self.agent_position,
-                                     action, mult=i / float(num_subchecks)):
+            if self.check_intersects(self.agent_position,  #TODO
+                                     action,
+                                     mult=i / float(num_subchecks)):
                 action *= (i - 1) / float(num_subchecks)
                 break
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
