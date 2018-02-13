@@ -5,8 +5,12 @@ from gym import spaces
 from toy_environment import room_obstacle_list
 
 
+def sample_position():
+    return np.random.uniform(-1, 1, size=[2])
+
+
 class ContinuousGridworld:
-    def __init__(self, obstacle_list_generator, visualize=False, image_size=64, max_action_step=0.2,
+    def __init__(self, obstacle_list_generator, visualize=False, image_size=64, step_size=0.2,
                  max_time_steps=1000):
         self.observation_space = spaces.Box(-1, 1, shape=[4])
         self.action_space = spaces.Box(-1, 1, shape=[2])
@@ -21,7 +25,7 @@ class ContinuousGridworld:
         else:
             self.screen = pygame.Surface((image_size, image_size))
 
-        self.max_action_step = max_action_step
+        self.step_size = step_size
         self.dist_cutoff = 0.2
         self.max_steps = max_time_steps
         self.time_step = 0
@@ -50,12 +54,15 @@ class ContinuousGridworld:
         return np.random.uniform(-1, 1, size=2)
 
     def step(self, action):
-        action = np.array(action)
-        # rescale the action to be between 0 and 1.
-        radius = np.sqrt(action[0] ** 2 + action[1] ** 2)
+        assert isinstance(action, np.ndarray)
+
+        # rescale the action
+        radius = np.linalg.norm(action, ord=2)
         if radius > 1:
             action /= radius
-        action *= self.max_action_step
+        action *= self.step_size
+
+        # TODO: I don't understand this
         num_subchecks = 4
         for i in range(1, num_subchecks):
             if self.check_intersects(self.agent_position,  # TODO
@@ -63,16 +70,18 @@ class ContinuousGridworld:
                                      mult=i / float(num_subchecks)):
                 action *= (i - 1) / float(num_subchecks)
                 break
+
+        # Execute action
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
-        self.time_step += 1
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs)
         reward = self.compute_reward(self.goal, obs)
-        # if self.at_goal(self.goal, obs):
-        #    self.goal = self.get_non_intersecting_position(self.goal_position_generator)
-        # self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
+
+        # check if max steps has been reached
+        self.time_step += 1
         if self.time_step >= self.max_steps:
             terminal = True
+
         return obs, reward, terminal, {}
 
     def reset(self):
@@ -84,14 +93,11 @@ class ContinuousGridworld:
     def obs(self):
         return np.concatenate([self.agent_position, self.goal], axis=0)
 
-    def sample_position(self):
-        return np.random.uniform(-1, 1, size=[2])
-
     # Hindsight Stuff
 
     def at_goal(self, goal, obs):
         without_goal = obs[:-2]
-        dist = np.sqrt(np.sum(np.square(without_goal - goal)))
+        dist = np.linalg.norm(without_goal - goal, ord=2)
         return dist <= self.dist_cutoff
 
     def change_goal(self, goal, obs):
@@ -115,7 +121,7 @@ class ContinuousGridworld:
         self.screen.fill((255, 255, 255))
         x_int = int(x * self.image_size)
         y_int = int(y * self.image_size)
-        x_goal, y_goal = (self.goal[0] + 1) / 2, (self.goal[1] + 1) / 2
+        x_goal, y_goal = (g + 1) / 2, (self.goal[1] + 1) / 2
         x_goal_int = int(x_goal * self.image_size)
         y_goal_int = int(y_goal * self.image_size)
         pygame.draw.circle(self.screen, (0, 0, 0), (x_int, y_int), 3)
@@ -178,10 +184,10 @@ class FourRoomExperiment(ContinuousGridworld):
         return np.random.uniform(self.agent_position - 0.25, self.agent_position + .25)
 
 
-if __name__ == '__main__':
+def main():
     # env = FourRoomExperiment(visualize=True)
     env = ContinuousGridworld(room_obstacle_list.obstacle_list)
-    obs = env.reset()
+    # obs = env.reset()
     while True:
         action = {'s': [1.0, 0],
                   'w': [-1.0, 0],
@@ -189,6 +195,9 @@ if __name__ == '__main__':
                   'a': [0, -1.0]}.get(input('action:'), [0.0, 0.0])
         # action = np.random.uniform(-1, 1, size=2)
         obs, reward, terminal, info = env.step(action)
-        image = env.render_agent()
+        # image = env.render_agent()
         if terminal:
             env.reset()
+
+if __name__ == '__main__':
+    main()
