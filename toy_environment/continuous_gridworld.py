@@ -148,6 +148,7 @@ class ContinuousGridworld(gym.Env, utils.EzPickle):
         agent_rect = pygame.Rect(tl[0], tl[1], 0.01, 0.01)
         for obstacle in self.obstacles:
             collision = obstacle.collides(agent_rect)
+            # print(obstacle.rect.topleft, obstacle.rect.width, obstacle.rect.height)
             intersects |= collision
             if collision:
                 obstacle.color = (255, 0, 0)
