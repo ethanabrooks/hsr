@@ -40,9 +40,6 @@ class ContinuousGridworld:
     def seed(seed):
         np.random.seed(seed)
 
-    def render(self, mode='human', close=False):
-        return self.render_agent()
-
     def agent_position_generator(self):
         return np.random.uniform(-1, 1, size=2)
 
@@ -67,7 +64,7 @@ class ContinuousGridworld:
             for obstacle in intersecting:
                 obstacle.color = 255, 0, 0
             if intersecting:
-                break # candidate position is not valid
+                break  # candidate position is not valid
             self.agent_position = candidate_position
 
         # get other step return values
@@ -113,7 +110,7 @@ class ContinuousGridworld:
 
     # Rendering
 
-    def render_agent(self):
+    def render(self, mode='human'):
         assert isinstance(self.agent_position, np.ndarray)
         assert isinstance(self.goal, np.ndarray)
 
@@ -125,7 +122,7 @@ class ContinuousGridworld:
 
         for obs in self.obstacles:
             obs.draw(self.screen, (0, 0, 0))
-        if self.visualize:
+        if mode == 'human':
             pygame.display.update()
             pygame.event.get()
         imgdata = pygame.surfarray.array3d(self.screen)
@@ -133,18 +130,6 @@ class ContinuousGridworld:
         return imgdata
 
     # Collision Handling
-
-    def get_non_intersecting_position2(self, generator):
-        intersects = True
-        while intersects:
-            intersects = False
-            position = generator()
-            tl = self.image_size * (position + 1) / 2. - 0.5 * (5 / np.sqrt(2))
-            agent_rect = pygame.Rect(tl[0], tl[1], 5 / np.sqrt(2), 5 / np.sqrt(2))
-            for obstacle in self.obstacles:
-                collision = obstacle.collides(agent_rect)
-                intersects |= collision
-        return position
 
     def get_non_intersecting_position(self, generator):
         while True:
@@ -160,39 +145,16 @@ class ContinuousGridworld:
         return [obstacle for obstacle in self.obstacles
                 if obstacle.rect.colliderect(rect)]
 
-    def check_intersects(self, agent_position, scaled_action, mult=1.0):
-        position = np.clip(agent_position + mult * scaled_action, -1, 1)
-        intersects = False
-
-        tl = (self.image_size * (position + 1)) / 2. - 0.01 / .2
-        agent_rect = pygame.Rect(tl[0], tl[1], 0.01, 0.01)
-        for obstacle in self.obstacles:
-            collision = obstacle.collides(agent_rect)
-            # print(obstacle.rect.topleft, obstacle.rect.width, obstacle.rect.height)
-            intersects |= collision
-            if collision:
-                obstacle.color = (255, 0, 0)
-            else:
-                obstacle.color = (0, 0, 0)
-            if intersects:
-                break
-        return intersects
-
-
-def instersects(position, obstacle):
-    assert isinstance(position, np.ndarray)
-    assert len(position) == 2
-    assert isinstance(obstacle, pygame.rect.Rect)
-    return obstacle.collidepoint(position)
-
-    raise NotImplemented
-
 
 class FourRoomExperiment(ContinuousGridworld):
     def __init__(self, visualize=False, image_size=64):
         from toy_environment import four_rooms_obstacle_list
-        self.position_mapping = {0: [-0.75, -0.75], 1: [-0.75, 0.75], 2: [0.75, 0.75], 3: [0.75, -0.75]}
-        super().__init__(four_rooms_obstacle_list.obstacle_list, visualize=visualize, image_size=image_size)
+        self.position_mapping = {0: [-0.75, -0.75],
+                                 1: [-0.75, 0.75],
+                                 2: [0.75, 0.75],
+                                 3: [0.75, -0.75]}
+        super().__init__(four_rooms_obstacle_list.obstacle_list,
+                         visualize=visualize, image_size=image_size)
 
     def agent_position_generator(self):
         return np.array(self.position_mapping[np.random.randint(0, 4)])
