@@ -58,17 +58,19 @@ class ContinuousGridworld:
             action /= radius
         action *= self.step_size
 
-        # TODO: I don't understand this
+        # check for clipping
         num_subchecks = 4
-        for i in range(1, num_subchecks):
-            if self.check_intersects(self.agent_position,  # TODO
-                                     action,
-                                     mult=i / float(num_subchecks)):
-                action *= (i - 1) / float(num_subchecks)
-                break
+        action /= float(num_subchecks)
+        for _ in range(num_subchecks):
+            candidate_position = np.clip(self.agent_position + action, -1, 1)
+            intersecting = self.intersecting_obstacles(candidate_position)
+            for obstacle in intersecting:
+                obstacle.color = 255, 0, 0
+            if intersecting:
+                break # candidate position is not valid
+            self.agent_position = candidate_position
 
-        # Execute action
-        self.agent_position = np.clip(self.agent_position + action, -1, 1)
+        # get other step return values
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs)
         reward = self.compute_reward(self.goal, obs)
@@ -147,13 +149,16 @@ class ContinuousGridworld:
     def get_non_intersecting_position(self, generator):
         while True:
             position = generator()
-            assert len(position) == 2
-            center = self.image_size * (position + 1) / 2.
-            offset = .1
-            rect = pygame.Rect(*(center + offset), offset, offset)
-            if not any(obstacle.rect.colliderect(rect)
-                       for obstacle in self.obstacles):
+            if not self.intersecting_obstacles(position):
                 return position
+
+    def intersecting_obstacles(self, agent_position):
+        assert len(agent_position) == 2
+        center = self.image_size * (agent_position + 1) / 2.
+        offset = .1
+        rect = pygame.Rect(*(center + offset), offset, offset)
+        return [obstacle for obstacle in self.obstacles
+                if obstacle.rect.colliderect(rect)]
 
     def check_intersects(self, agent_position, scaled_action, mult=1.0):
         position = np.clip(agent_position + mult * scaled_action, -1, 1)
