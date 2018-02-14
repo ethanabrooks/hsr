@@ -1,8 +1,7 @@
-from pygame import rect
-
 import numpy as np
 import pygame
 from gym import spaces
+from pygame import rect
 
 from toy_environment import room_obstacle_list
 
@@ -42,12 +41,7 @@ class ContinuousGridworld:
         np.random.seed(seed)
 
     def render(self, mode='human', close=False):
-        if mode == 'rgb_array':
-            return self.render_agent()
-        elif mode == 'human':
-            raise NotImplementedError
-        else:
-            raise RuntimeError('mode must be human|rgb_array')
+        return self.render_agent()
 
     def agent_position_generator(self):
         return np.random.uniform(-1, 1, size=2)
@@ -153,11 +147,11 @@ class ContinuousGridworld:
     def get_non_intersecting_position(self, generator):
         while True:
             position = generator()
-            tl = self.image_size * (position + 1) / 2. - 0.5 * (5 / np.sqrt(2))
-            agent_rect = pygame.Rect(tl[0], tl[1], 5 / np.sqrt(2), 5 / np.sqrt(2))
-            point = self.image_size * (position + 1) / 2.
             assert len(position) == 2
-            if not any(obstacle.rect.collidepoint(point)
+            center = self.image_size * (position + 1) / 2.
+            offset = .1
+            rect = pygame.Rect(*(center + offset), offset, offset)
+            if not any(obstacle.rect.colliderect(rect)
                        for obstacle in self.obstacles):
                 return position
 
@@ -204,18 +198,24 @@ class FourRoomExperiment(ContinuousGridworld):
 
 def main():
     # env = FourRoomExperiment(visualize=True)
-    env = ContinuousGridworld(room_obstacle_list.obstacle_list)
+    pygame.init()
+    env = ContinuousGridworld(room_obstacle_list.obstacle_list, visualize=True)
+    actions = {pygame.K_d: [1, 0],
+               pygame.K_a: [-1, 0],
+               pygame.K_s: [0, 1],
+               pygame.K_w: [0, -1]}
     # obs = env.reset()
     while True:
-        action = {'s': [1.0, 0],
-                  'w': [-1.0, 0],
-                  'd': [0, 1.0],
-                  'a': [0, -1.0]}.get(input('action:'), [0.0, 0.0])
-        # action = np.random.uniform(-1, 1, size=2)
-        obs, reward, terminal, info = env.step(action)
-        # image = env.render_agent()
-        if terminal:
-            env.reset()
+        pygame.event.pump()
+        keys = pygame.key.get_pressed()
+        for key, pressed in enumerate(keys):
+            if pressed:
+                if key == pygame.K_SPACE:
+                    print(env.agent_position)
+                else:
+                    action = np.array(actions.get(key, [0, 0])) * .1
+                    env.step(action)
+        env.render()
 
 
 if __name__ == '__main__':
