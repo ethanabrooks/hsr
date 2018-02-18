@@ -49,23 +49,26 @@ def run(port):
 
             action = np.zeros(5)
             action[0] = 45
-            action[1] = .65
-            action[3] = -0.001
-            action[4] = -0.001
+            action[1] = 1
+            action[2] = 0.1
+            action[3] = 0
+            action[4] = 0.0
             
             i += 1
 
-            if i > 100: 
+            if i > 25: 
                 action[0] = 0
-                action[1] = -0.45
-                action[2] = 0.001
-                action[3] = 0
-                action[4] = 0.25
-            if i > 200:
-                action[0] = 60
-                action[1] = -.78
-                action[3] = 0.001
-                action[4] = -0.05
+                action[1] = -1
+                action[2] = 0.1
+                action[3] = 0.0
+                action[4] = 0.0
+
+            if i > 100:
+                action[0] = -120
+                action[1] = -.8
+                action[2] = 0.1
+                action[3] = 0.0
+                action[4] = 0.0
 
             tick = time.time()
             # print(action, i)
