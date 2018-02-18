@@ -104,7 +104,7 @@
           <freejoint name='box2joint'/>
         </body>
 
-        <include file="2dof_mocap.mjcf"/>
+        <include file="hsr_mocap.mjcf"/>
     </worldbody>
     <actuator>
         <!-- <motor gear="1000.0" name="slide_x_motor" joint="slide_x"/> -->

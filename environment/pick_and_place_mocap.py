@@ -112,9 +112,9 @@ class PickAndPlaceMocapEnv(BaseEnv):
         # action[0] = desired distance betwen grippers
         # mirroring l / r gripper
 
-        # action = [wrist_roll, l_finger, r_finger]
+        # action = [slide_y, wrist_roll, l_finger, r_finger]
         action = [0, angle, action[0], action[0]]
-        super().step(action)
+        # super().step(action)
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
