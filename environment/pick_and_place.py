@@ -22,15 +22,19 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
+    def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1, use_mocap=False):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
 
+        world_file = 'world.xml'
+        if use_mocap:
+            world_file = 'world_mocap.xml'
+
         super().__init__(
             geofence=geofence,
             max_steps=max_steps,
-            xml_filepath=join('models', 'pick-and-place', 'world.xml'),
+            xml_filepath=join('models', 'pick-and-place', world_file),
             history_len=history_len,
             use_camera=False,
             neg_reward=neg_reward,
@@ -48,6 +52,10 @@ class PickAndPlaceEnv(BaseEnv):
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
         self._table_height = self.sim.get_body_xpos('pan')[2]
         self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
+
+        self.step = self.step_ctrl
+        if use_mocap:
+            self.step = self.step_mocap
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
@@ -127,7 +135,7 @@ class PickAndPlaceEnv(BaseEnv):
                             for name in self._finger_names]
         return (finger1 + finger2) / 2.
 
-    def step(self, action):
+    def step_ctrl(self, action):
         action = np.clip(action, -1, 1)
         for name in self._rotation_actuators:
             i = self.sim.name2id(ObjType.ACTUATOR, name)
@@ -153,3 +161,26 @@ class PickAndPlaceEnv(BaseEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
+
+    def step_mocap(self, action):
+        # Last three items are desired gripper pos
+        angle = action[1]
+        angle = np.clip(angle, -1, +1) * 180
+
+        mocap_pos = action[2:]
+        mocap_pos_relative = mocap_pos / np.linalg.norm(mocap_pos) * 0.01        
+        
+        # first two inputs are control:
+        # action[0] = desired distance betwen grippers
+        # mirroring l / r gripper
+
+        # action = [wrist_roll, l_finger, r_finger]
+        action = [angle, action[0], action[0]]
+        super().step(action)
+
+        # Split ctrl and mocap
+        if not np.all(mocap_pos == 0.0):
+            self.sim.mocap_pos[0:3] = self.sim.mocap_pos[0:3] + mocap_pos_relative
+
+        return super().step(action)
+

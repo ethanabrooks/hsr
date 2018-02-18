@@ -11,7 +11,7 @@ import time
 
 from environment.base import print1
 from environment.navigate import NavigateEnv
-from environment.pick_and_place_mocap import PickAndPlaceMocapEnv
+from environment.pick_and_place import PickAndPlaceEnv
 from environment.server import Server
 
 
@@ -22,16 +22,14 @@ def run(port):
     #     steps_per_action=100,
     #     geofence=.3,
     #     image_dimensions=image_dimensions[:2])
-    with PickAndPlaceMocapEnv(max_steps=999999,
-                         use_camera=False,
-                         geofence=.000003,
-                         image_dimensions=image_dimensions[:2]) as env:
+    with PickAndPlaceEnv(max_steps=999999,
+                         use_mocap=True) as env:
         if port:
             server = Server(port)
         env.reset()
         shape = env.action_space.shape
         shape, = shape
-        print(shape)
+        print(env.action_space)
         action = np.zeros(shape,)
         delta = .02
         i = 0
@@ -50,8 +48,10 @@ def run(port):
             action = np.zeros(5)
             action[0] = 45
             action[1] = 100
+            action[2] = 0.01
             action[3] = -0.0
-            action[4] = -0.001
+            action[4] = 0.
+
             
             i += 1
 
@@ -60,12 +60,13 @@ def run(port):
                 action[1] = -0.45
                 action[2] = 0.001
                 action[3] = 0
-                action[4] = 0.25
+                action[4] = 0
             if i > 200:
                 action[0] = 60
                 action[1] = -.78
-                action[3] = 0.001
-                action[4] = -0.05
+                action[2] = 0.01
+                action[3] = 0.000
+                action[4] = 0
 
             tick = time.time()
             # print(action, i)
