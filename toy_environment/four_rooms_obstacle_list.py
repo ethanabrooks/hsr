@@ -1,7 +1,6 @@
 import numpy as np
 from toy_environment.rectangle_object import RectangleObstacle
 wall_width = 0.05
-
 # (top_left, bottom_right)
 pre_obstacle_list = [
     ([0.5-wall_width, 0], [0.5+wall_width, 2./6]),

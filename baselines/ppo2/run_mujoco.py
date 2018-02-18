@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import argparse
 from baselines import bench, logger
-from environment.arm2pos import Arm2PosEnv
-from environment.navigate import NavigateEnv
-from environment.pick_and_place import PickAndPlaceEnv
-from toy_environment import continuous_gridworld, continuous_gridworld2
+#from environment.arm2pos import Arm2PosEnv
+from environment.navigate_old import NavigateEnv
+#from environment.pick_and_place import PickAndPlaceEnv
+from toy_environment import continuous_gridworld, continuous_gridworld
 
 def train(env_id, num_timesteps, seed):
     from baselines.common import set_global_seeds
@@ -23,11 +23,13 @@ def train(env_id, num_timesteps, seed):
         if env_id == 'toy':
             #env = continuous_gridworld.ContinuousGridworld('', max_steps=1000,
             #                                           obstacle_mode=continuous_gridworld.NO_OBJECTS)
-            env = continuous_gridworld2.ContinuousGridworld2()
+            from toy_environment import room_obstacle_list
+            env = continuous_gridworld.ContinuousGridworld(obstacle_list_generator=room_obstacle_list.obstacle_list)
         elif env_id == 'navigate':
             env = NavigateEnv(use_camera=False, continuous_actions=True, neg_reward=True, max_steps=500)
         elif env_id == 'arm2pos':
-            env = Arm2PosEnv(continuous=False, max_steps=500)
+            #env = Arm2PosEnv(continuous=False, max_steps=500)
+            pass
         else:
             env = gym.make(env_id)
         env = bench.Monitor(env, logger.get_dir())

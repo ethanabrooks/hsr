@@ -59,7 +59,8 @@ class DDPG(object):
         gamma=0.99, tau=0.001, normalize_returns=False, enable_popart=False, normalize_observations=True,
         batch_size=128, observation_range=(-5., 5.), action_range=(-1., 1.), return_range=(-np.inf, np.inf),
         adaptive_param_noise=True, adaptive_param_noise_policy_threshold=.1,
-        critic_l2_reg=0., actor_lr=1e-4, critic_lr=1e-3, clip_norm=None, reward_scale=1.):
+        critic_l2_reg=0., actor_lr=1e-4, critic_lr=1e-3, clip_norm=None, reward_scale=1., restore_path=None,
+        save_path=None):
         # Inputs.
         self.obs0 = tf.placeholder(tf.float32, shape=(None,) + observation_shape, name='obs0')
         self.obs1 = tf.placeholder(tf.float32, shape=(None,) + observation_shape, name='obs1')
@@ -90,6 +91,7 @@ class DDPG(object):
         self.batch_size = batch_size
         self.stats_sample = None
         self.critic_l2_reg = critic_l2_reg
+        self.restore_path = restore_path
 
         # Observation normalization.
         if self.normalize_observations:
@@ -320,6 +322,11 @@ class DDPG(object):
         self.sess.run(tf.global_variables_initializer())
         self.actor_optimizer.sync()
         self.critic_optimizer.sync()
+
+        if self.restore_path is not None:
+            model_vars = self.actor.trainable_vars() + self.critic.trainable_vars()
+            tf.train.Saver(vars=model_vars).restore(self.sess, self.restore_path)
+
         self.sess.run(self.target_init_updates)
 
     def update_target_net(self):

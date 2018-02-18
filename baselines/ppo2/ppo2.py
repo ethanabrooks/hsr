@@ -62,7 +62,7 @@ class Model(object):
                 td_map
             )[:-1]
 
-        self.loss_names = ['actor_loss', 'critic_loss', 'policy_entropy', 'approxkl', 'clipfrac']
+        self.loss_names = ['policy_loss', 'value_loss', 'policy_entropy', 'approxkl', 'clipfrac']
         self.train = train
         self.train_model = train_model
         self.act_model = act_model
@@ -231,6 +231,7 @@ def learn(*, policy, env, nsteps, total_timesteps, ent_coef, lr,
             logger.logkv("fps", fps)
             logger.logkv("explained_variance", float(ev))
             logger.logkv('reward', safemean([epinfo['r'] for epinfo in epinfobuf]))
+            logger.logkv('successes', safemean([epinfo['s'] for epinfo in epinfobuf]))
             logger.logkv('episode_steps', safemean([epinfo['l'] for epinfo in epinfobuf]))
             # logger.logkv('time_elapsed', tnow - tfirststart)
             for (lossval, lossname) in zip(lossvals, model.loss_names):

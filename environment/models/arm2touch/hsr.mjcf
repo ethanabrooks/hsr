@@ -1,8 +1,8 @@
 <mujoco model="hsrb">
-    <body name="base_link" pos="-.46 -.081 0">
+    <body name="base_link" pos="-.46 0 0">
         <site name="touchsensor_site" size="0.25 .5" pos="0 0 .5" type="cylinder" rgba="1 0 0 0"/>
-        <joint axis="1 0 0" damping="1000" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-.02 .02"/>
-        <joint axis="0 1 0" damping="1000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.02 .02"/>
+        <joint axis="1 0 0" damping="1000" name="slide_x" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
+        <joint axis="0 1 0" damping="1000" name="slide_y" pos="0 0 0" type="slide" limited="true" range="-.25 .25"/>
         <!--<joint axis="0 0 1" damping="1000" name="turn" pos="0 0 0" type="hinge"/>-->
         <inertial pos="-0.025978 -0.005498 0.17633" quat="0.995796 0.0411155 -0.0685908 0.0446655" mass="50"
                   diaginertia="0.378627 0.344913 0.145159"/>
@@ -128,8 +128,7 @@
             <body name="arm_flex_link" pos="0.141 0.078 0">
                 <inertial pos="0.000632 0.006404 0.118529" quat="0.999966 -0.00826681 1.5355e-06 -1.33584e-06"
                           mass="1.33929" diaginertia="2.51222 2.51222 2.51222"/>
-                <!--<joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-55 0" damping="100"/>-->
-                <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-63 0" damping="100"/>
+                <joint name="arm_flex_joint" pos="0 0 0" axis="0 -1 0" limited="true" range="-70 0" damping="100"/>
                 <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="arm_flex_light"/>
                 <geom type="mesh" mesh="arm_flex"/>
                 <body name="arm_roll_link" pos="0.005 0 0.345">
@@ -152,8 +151,7 @@
                             <inertial pos="-0.001416 -0.001547 0.081689"
                                       quat="0.988073 0.0424396 -0.0351605 -0.143785"
                                       mass="0.761692" diaginertia="0.000811657 0.000766039 0.000449422"/>
-                            <joint name="wrist_roll_joint" pos="0 0 0" axis="0 0 1" damping="100"/>
-                            <!--range="-90 90"/>-->
+                            <!--<joint name="wrist_roll_joint" pos="0 0 0" axis="0 0 1" limited="true" range="-2.8 2.8"/>-->
                                    <!--range="-1.92 3.67" />-->
                             <geom type="mesh" contype="0" conaffinity="0" group="1" mesh="wrist_roll"/>
                             <geom type="mesh" mesh="wrist_roll"/>
@@ -171,7 +169,7 @@
                                 </body>
                                 <body name="hand_l_proximal_link" pos="-0.01675 -0.0245 -0.0175">
                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                    <joint name="hand_l_proximal_joint" pos="0 0 0" axis="1 0 0" limited="true" range="0 20" damping="100"/>
+                                    <joint name="hand_l_proximal_joint" pos="0 0 0" axis="1 0 0" limited="true" range="30 70" damping="100"/>
                                     <body name="hand_l_spring_proximal_link" pos="0 0 0">
                                         <inertial pos="0.021418 0.00248 0.022688"
                                                   quat="0.701927 0.0145759 0.051882 0.710208" mass="0.043589"
@@ -184,7 +182,6 @@
                                             <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
                                             <!--<joint name="hand_l_mimic_distal_joint" pos="0 0 0" axis="1 0 0" limited="true" range="-0.698 0" />-->
                                             <body name="hand_l_distal_link" pos="0 0 0">
-                                                <site name="touchsensor_l_site" size="0.03" pos="0.015 0.01 0.025" rgba="0 1 0 0 "/>
                                                 <inertial pos="0.011116 0.005679 0.017532"
                                                           quat="0.643017 0.664219 -0.320716 0.206114" mass="0.027731"
                                                           diaginertia="3.13749e-06 3.13749e-06 3.13749e-06"/>
@@ -195,6 +192,7 @@
                                                 <body name="hand_l_finger_tip_frame" pos="0.01675 0.0193 0.0379"
                                                       quat="0.707107 -0.707107 0 0">
                                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
+                                                    <site name="touchsensor_l_site" size="0.03" pos="0 .01 0" rgba="0 1 0 .5"/>
                                                 </body>
                                                 <body name="hand_l_finger_vacuum_frame" pos="0.00475 -0.011539 0.03322"
                                                       quat="0.92388 0.382683 0 0">
@@ -208,7 +206,7 @@
                                 </body>
                                 <body name="hand_r_proximal_link" pos="-0.01675 0.0245 -0.0175">
                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
-                                    <joint name="hand_r_proximal_joint" pos="0 0 0" axis="-1 0 0" limited="true" range="0 20" damping="100"/>
+                                    <joint name="hand_r_proximal_joint" pos="0 0 0" axis="-1 0 0" limited="true" range="30 70" damping="100"/>
                                     <body name="hand_r_spring_proximal_link" pos="0 0 0">
                                         <inertial pos="0.013203 0.002096 0.023311"
                                                   quat="0.696227 -0.0447896 0.0033388 0.716415" mass="0.043956"
@@ -228,11 +226,10 @@
                                                 <geom type="mesh" contype="0" conaffinity="0" group="1"
                                                       rgba="0.33 0.33 0.33 1" mesh="r_distal"/>
                                                 <geom type="mesh" rgba="0.33 0.33 0.33 1" mesh="r_distal"/>
-                                                <site name="touchsensor_r_site" size="0.03" pos="0.015 -0.01 0.025" rgba="0 1 0 0"/>
-
                                                 <body name="hand_r_finger_tip_frame" pos="0.01675 -0.0193 0.0379"
                                                       quat="0.707107 0.707107 0 0">
                                                     <inertial pos="0 0 0" mass="0.15" diaginertia="0.015 0.015 0.015"/>
+                                                    <site name="touchsensor_r_site" size="0.03" pos="0 -.01 0" rgba="0 1 0 .5"/>
                                                 </body>
                                             </body>
                                         </body>

@@ -25,11 +25,11 @@ class BaseEnv(utils.EzPickle, Server):
         self._body_name = body_name
         self._steps_per_action = steps_per_action
         self._frames_per_step = frames_per_step
-        self._max_steps = max_steps
         self._use_camera = use_camera
         self._step_num = 0
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
+        self.max_steps = max_steps
 
         # required for OpenAI code
         self.metadata = {'render.modes': 'rgb_array'}
@@ -113,7 +113,7 @@ class BaseEnv(utils.EzPickle, Server):
         for _ in range(self._frames_per_step):
             self.sim.step()
 
-        hit_max_steps = self._step_num >= self._max_steps
+        hit_max_steps = self._step_num >= self.max_steps
         done = False
         if self._compute_terminal(self._goal(), self._obs()):
             # print('terminal')
@@ -191,8 +191,8 @@ class BaseEnv(utils.EzPickle, Server):
         _, obs_history = self.destructure_mlp_input(mlp_input)
         return self.mlp_input(goal, obs_history)
 
-    def compute_reward(self, goal, mlp_input):
-        _, obs_history = self.destructure_mlp_input(mlp_input)
+    def compute_reward(self, mlp_input):
+        goal, obs_history = self.destructure_mlp_input(mlp_input)
         return sum(self._compute_reward(goal, obs) for obs in obs_history)
 
     def compute_terminal(self, mlp_input):
