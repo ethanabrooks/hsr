@@ -11,7 +11,7 @@ import time
 
 from environment.base import print1
 from environment.navigate import NavigateEnv
-from environment.pick_and_place_mocap import PickAndPlaceMocapEnv
+from environment.pick_and_place import PickAndPlaceEnv
 from environment.server import Server
 
 
@@ -22,10 +22,8 @@ def run(port):
     #     steps_per_action=100,
     #     geofence=.3,
     #     image_dimensions=image_dimensions[:2])
-    with PickAndPlaceMocapEnv(max_steps=999999,
-                         use_camera=False,
-                         geofence=.000003,
-                         image_dimensions=image_dimensions[:2]) as env:
+    with PickAndPlaceEnv(max_steps=999999,
+                         use_mocap=False) as env:
         if port:
             server = Server(port)
         env.reset()

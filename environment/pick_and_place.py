@@ -49,7 +49,12 @@ class PickAndPlaceEnv(BaseEnv):
             map(np.size, self._goal()))
         assert obs_size != 0
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
+
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
+
+        if use_mocap:
+            self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 2 + 3) # Slide Y, One finger don't get; +3 for mocap
+            
         self._table_height = self.sim.get_body_xpos('pan')[2]
         self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
 
@@ -165,7 +170,7 @@ class PickAndPlaceEnv(BaseEnv):
     def step_mocap(self, action):
         # Last three items are desired gripper pos
         angle = action[1]
-        angle = np.clip(angle, -1, +1) * 180
+        angle = np.clip(angle, -1, +1) * 1800
 
         mocap_pos = action[2:]
         mocap_pos_relative = mocap_pos / np.linalg.norm(mocap_pos) * 0.01        
@@ -174,13 +179,12 @@ class PickAndPlaceEnv(BaseEnv):
         # action[0] = desired distance betwen grippers
         # mirroring l / r gripper
 
-        # action = [wrist_roll, l_finger, r_finger]
-        action = [angle, action[0], action[0]]
-        super().step(action)
+        # action = [slide_y, wrist_roll, l_finger, r_finger]
+        action = [0, angle, action[0], action[0]]
+        # super().step(action)
 
         # Split ctrl and mocap
         if not np.all(mocap_pos == 0.0):
             self.sim.mocap_pos[0:3] = self.sim.mocap_pos[0:3] + mocap_pos_relative
 
         return super().step(action)
-
