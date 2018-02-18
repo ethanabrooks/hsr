@@ -11,7 +11,7 @@ import time
 
 from environment.base import print1
 from environment.navigate import NavigateEnv
-from environment.pick_and_place import PickAndPlaceEnv
+from environment.pick_and_place_mocap import PickAndPlaceMocapEnv
 from environment.server import Server
 
 
@@ -22,14 +22,16 @@ def run(port):
     #     steps_per_action=100,
     #     geofence=.3,
     #     image_dimensions=image_dimensions[:2])
-    with PickAndPlaceEnv(max_steps=999999,
-                         use_mocap=True) as env:
+    with PickAndPlaceMocapEnv(max_steps=999999,
+                         use_camera=False,
+                         geofence=.000003,
+                         image_dimensions=image_dimensions[:2]) as env:
         if port:
             server = Server(port)
         env.reset()
         shape = env.action_space.shape
         shape, = shape
-        print(env.action_space)
+        print(shape)
         action = np.zeros(shape,)
         delta = .02
         i = 0
@@ -47,26 +49,26 @@ def run(port):
 
             action = np.zeros(5)
             action[0] = 45
-            action[1] = 100
-            action[2] = 0.01
-            action[3] = -0.0
-            action[4] = 0.
-
+            action[1] = 0.6
+            action[2] = 0.1
+            action[3] = 0
+            action[4] = 0.0
             
             i += 1
 
-            if i > 100: 
+            if i > 25: 
                 action[0] = 0
-                action[1] = -0.45
-                action[2] = 0.001
-                action[3] = 0
-                action[4] = 0
-            if i > 200:
-                action[0] = 60
-                action[1] = -.78
-                action[2] = 0.01
-                action[3] = 0.000
-                action[4] = 0
+                action[1] = -1
+                action[2] = 0.1
+                action[3] = 0.0
+                action[4] = 0.0
+
+            if i > 100:
+                action[0] = -120
+                action[1] = -.1
+                action[2] = 0.1
+                action[3] = 0.0
+                action[4] = 0.0
 
             tick = time.time()
             # print(action, i)
