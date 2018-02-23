@@ -72,8 +72,18 @@ class BaseEnv(utils.EzPickle, Server):
         done = False
 
         while not done and step < self._steps_per_action:
-            new_reward, done = self._step_inner(action)
-            reward += new_reward
+            self._perform_action(action)
+            hit_max_steps = self._step_num >= self.max_steps
+            done = False
+            if self._compute_terminal(self._goal(), self._obs()):
+                # print('terminal')
+                done = True
+            elif hit_max_steps:
+                # print('hit max steps')
+                done = True
+            elif self._currently_failed():
+                done = True
+            reward += self._current_reward()
             step += 1
 
         self._history_buffer.append(self._obs())
@@ -82,6 +92,7 @@ class BaseEnv(utils.EzPickle, Server):
 
     def _current_reward(self):
         return self._compute_reward(self._goal(), self._obs())
+
 
     @staticmethod
     def seed(seed):
@@ -92,6 +103,9 @@ class BaseEnv(utils.EzPickle, Server):
 
     def __exit__(self, *args):
         pass
+
+    def _perform_action(self, action):
+        raise NotImplemented
 
     def render(self, mode=None, camera_name=None, labels=None):
         raise NotImplemented
