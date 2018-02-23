@@ -25,8 +25,7 @@ def failed(resting_block_height, goal_block_height):
 class PickAndPlaceEnv(MujocoEnv):
     def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
-        self._resting_block_height = .428  # empirically determined
-        self._min_lift_height = 0.02
+        self._min_lift_height = 0
         self._geofence = geofence
 
         super().__init__(
@@ -57,15 +56,18 @@ class PickAndPlaceEnv(MujocoEnv):
 
     def reset_qpos(self):
         block_joint = self.sim.jnt_qposadr('block1joint')
-        # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
-        #     4) * 2 * np.pi
-        rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
-        rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
-        w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
-        self.init_qpos[block_joint + 3] = w
-        self.init_qpos[block_joint + 4] = x
-        self.init_qpos[block_joint + 5] = y
-        self.init_qpos[block_joint + 6] = z
+
+        # rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
+        # rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
+        # w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
+        # self.init_qpos[block_joint + 3] = w
+        # self.init_qpos[block_joint + 4] = x
+        # self.init_qpos[block_joint + 5] = y
+        # self.init_qpos[block_joint + 6] = z
+
+        self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
+        self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)
