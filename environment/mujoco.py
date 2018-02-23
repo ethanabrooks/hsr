@@ -33,7 +33,7 @@ class MujocoEnv(BaseEnv):
 
     def step(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
-        super().step(action)
+        return super().step(action)
 
     def _step_inner(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
