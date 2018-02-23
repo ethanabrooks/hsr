@@ -1,10 +1,8 @@
 """Create gym environment for HSR"""
 
-import os
 from collections import deque
 
 import gym
-import mujoco
 import numpy as np
 from gym import utils
 
@@ -15,24 +13,23 @@ class BaseEnv(utils.EzPickle, Server):
     """ The environment """
 
     def __init__(self, max_steps, history_len, image_dimensions,
-                 neg_reward, steps_per_action, frames_per_step=20):
+                 neg_reward, steps_per_action):
         utils.EzPickle.__init__(self)
 
         self._history_buffer = deque(maxlen=history_len)
         self._steps_per_action = steps_per_action
-        self._frames_per_step = frames_per_step
         self._step_num = 0
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
         self.max_steps = max_steps
 
+        self._history_buffer += [self._obs()] * history_len
+        self.observation_space = self.action_space = None
+
         # required for OpenAI code
         self.metadata = {'render.modes': 'rgb_array'}
         self.reward_range = -np.inf, np.inf
         self.spec = None
-
-        self._history_buffer += [self._obs()] * history_len
-        self.observation_space = self.action_space = None
 
     def mlp_input(self, goal, history):
         assert len(history) > 0
@@ -69,7 +66,6 @@ class BaseEnv(utils.EzPickle, Server):
         return goals, obs
 
     def step(self, action):
-        assert np.shape(action) == np.shape(self.sim.ctrl)
         self._step_num += 1
         step = 0
         reward = 0
@@ -84,38 +80,6 @@ class BaseEnv(utils.EzPickle, Server):
         mlp_input = self.mlp_input(self._goal(), self._history_buffer)
         return mlp_input, reward, done, {}
 
-    def _step_inner(self, action):
-        assert np.shape(action) == np.shape(self.sim.ctrl)
-        self.sim.ctrl[:] = action
-        for _ in range(self._frames_per_step):
-            self.sim.step()
-
-        hit_max_steps = self._step_num >= self.max_steps
-        done = False
-        if self._compute_terminal(self._goal(), self._obs()):
-            # print('terminal')
-            done = True
-        elif hit_max_steps:
-            # print('hit max steps')
-            done = True
-        elif self._currently_failed():
-            done = True
-        return self._current_reward(), done
-
-    def reset(self):
-        self.sim.reset()
-        self._step_num = 0
-
-        self._set_new_goal()
-        qpos = self.reset_qpos()
-        qvel = self.init_qvel + \
-               np.random.uniform(size=self.sim.nv, low=-0.01, high=0.01)
-        assert qpos.shape == (self.sim.nq,) and qvel.shape == (self.sim.nv,)
-        self.sim.qpos[:] = qpos
-        self.sim.qvel[:] = qvel
-        self.sim.forward()
-        return self.mlp_input(self._goal(), self._history_buffer)
-
     def _current_reward(self):
         return self._compute_reward(self._goal(), self._obs())
 
@@ -127,15 +91,19 @@ class BaseEnv(utils.EzPickle, Server):
         return self
 
     def __exit__(self, *args):
-        self.sim.__exit__()
+        pass
 
     def render(self, mode=None, camera_name=None, labels=None):
         raise NotImplemented
 
     def image(self, camera_name='rgb'):
-        return self.sim.render_offscreen(
-            *self._image_dimensions, camera_name)
+        raise NotImplemented
 
+    def _step_inner(self, action):
+        raise NotImplemented
+
+    def reset(self):
+        raise NotImplemented
 
     def reset_qpos(self):
         raise NotImplemented

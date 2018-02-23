@@ -1,7 +1,6 @@
 import numpy as np
 import pygame
 from gym import spaces
-from pygame import rect
 
 from environment.base import BaseEnv
 from toy_environment import room_obstacle_list
@@ -14,13 +13,15 @@ def sample_position():
 class Gridworld(BaseEnv):
     def __init__(self, obstacle_list_generator, visualize=False, image_size=64,
                  step_size=0.2, max_steps=1000, discrete=False):
-        self.observation_space = spaces.Box(-1, 1, shape=[4])
-        self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
         self.obstacles = obstacle_list_generator(image_size)
-
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         self.goal = self.get_non_intersecting_position(self.goal_position_generator)
+        super().__init__(max_steps, history_len=1, image_dimensions=None,
+                         neg_reward=False, steps_per_action=1)
+        self.observation_space = spaces.Box(-1, 1, shape=[4])
+        self.action_space = spaces.Box(-1, 1, shape=[2])
+
         if visualize:
             self.screen = pygame.display.set_mode((image_size, image_size), )
         else:
@@ -29,12 +30,6 @@ class Gridworld(BaseEnv):
         self.step_size = step_size
         self.geofence = 0.2
         self.max_steps = max_steps
-        self.step = 0
-
-        # required for OpenAI code
-        self.metadata = {'render.modes': 'rgb_array'}
-        self.reward_range = -np.inf, np.inf
-        self.spec = None
 
     @staticmethod
     def seed(seed):
@@ -68,13 +63,13 @@ class Gridworld(BaseEnv):
             self.agent_position = candidate_position
 
         # get other step return values
-        obs = self.obs()
-        terminal = self.compute_terminal(self.goal, obs)
-        reward = self.compute_reward(self.goal, obs)
+        obs = self._obs()
+        terminal = self._compute_terminal(self.goal, obs)
+        reward = self._compute_reward(self.goal, obs)
 
         # check if max steps has been reached
-        self.step += 1
-        if self.step >= self.max_steps:
+        self._step_num += 1
+        if self._step_num >= self.max_steps:
             terminal = True
 
         return obs, reward, terminal, {}
@@ -82,10 +77,10 @@ class Gridworld(BaseEnv):
     def reset(self):
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         self.goal = self.get_non_intersecting_position(self.goal_position_generator)
-        self.step = 0
-        return self.obs()
+        self._step_num = 0
+        return self._obs()
 
-    def obs(self):
+    def _obs(self):
         return np.concatenate([self.agent_position, self.goal], axis=0)
 
     # Hindsight Stuff
@@ -99,18 +94,17 @@ class Gridworld(BaseEnv):
         without_goal = obs[:-2]
         return np.concatenate([without_goal, goal], axis=0)
 
-    def compute_reward(self, goal, obs):
+    def _compute_reward(self, goal, obs):
         return 1.0 if self.at_goal(goal, obs) else -0.01
 
-    def compute_terminal(self, goal, obs):
+    def _compute_terminal(self, goal, obs):
         return self.at_goal(goal, obs)
 
     def obs_to_goal(self, obs):
         return obs[:2]
 
     # Rendering
-
-    def render(self, mode='human'):
+    def render(self, mode=None, camera_name=None, labels=None):
         assert isinstance(self.agent_position, np.ndarray)
         assert isinstance(self.goal, np.ndarray)
 
@@ -140,6 +134,7 @@ class Gridworld(BaseEnv):
     def intersecting_obstacles(self, agent_position):
         assert len(agent_position) == 2
         center = self.image_size * (agent_position + 1) / 2.
+        assert isinstance(center, np.ndarray)
         offset = .1
         rect = pygame.Rect(*(center + offset), offset, offset)
         return [obstacle for obstacle in self.obstacles
@@ -181,7 +176,7 @@ def main():
                     print(env.agent_position)
                 else:
                     action = np.array(actions.get(key, [0, 0])) * .1
-                    env.step(action)
+                    env._step_num(action)
         env.render()
 
 
