@@ -15,6 +15,7 @@ class MujocoEnv(BaseEnv):
         self.sim = mujoco.Sim(fullpath)
         self.init_qpos = self.sim.qpos.ravel().copy()
         self.init_qvel = self.sim.qvel.ravel().copy()
+        self._frames_per_step = frames_per_step
         super().__init__(max_steps, history_len, image_dimensions,
                          neg_reward, steps_per_action)
 
