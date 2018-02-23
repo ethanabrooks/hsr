@@ -1,0 +1,2 @@
+class AliceAndBob():
+    raise NotImplemented

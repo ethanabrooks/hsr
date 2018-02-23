@@ -14,18 +14,13 @@ from environment.server import Server
 class BaseEnv(utils.EzPickle, Server):
     """ The environment """
 
-    def __init__(self, geofence, max_steps,
-                 xml_filepath, history_len, image_dimensions, use_camera, neg_reward,
-                 steps_per_action, body_name,
-                 frames_per_step=20):
+    def __init__(self, max_steps, history_len, image_dimensions,
+                 neg_reward, steps_per_action, frames_per_step=20):
         utils.EzPickle.__init__(self)
 
         self._history_buffer = deque(maxlen=history_len)
-        self._geofence = geofence
-        self._body_name = body_name
         self._steps_per_action = steps_per_action
         self._frames_per_step = frames_per_step
-        self._use_camera = use_camera
         self._step_num = 0
         self._neg_reward = neg_reward
         self._image_dimensions = image_dimensions
@@ -36,26 +31,8 @@ class BaseEnv(utils.EzPickle, Server):
         self.reward_range = -np.inf, np.inf
         self.spec = None
 
-        fullpath = os.path.join(os.path.dirname(__file__), xml_filepath)
-        if not fullpath.startswith("/"):
-            fullpath = os.path.join(os.path.dirname(__file__), "assets", fullpath)
-        self.sim = mujoco.Sim(fullpath)
-        self.init_qpos = self.sim.qpos.ravel().copy()
-        self.init_qvel = self.sim.qvel.ravel().copy()
         self._history_buffer += [self._obs()] * history_len
         self.observation_space = self.action_space = None
-
-    def server_values(self):
-        return self.sim.qpos, self.sim.qvel
-
-    def render(self, mode=None, camera_name=None, labels=None):
-        if mode == 'rgb_array':
-            return self.sim.render_offscreen(height=256, width=256)
-        self.sim.render(camera_name, labels)
-
-    def image(self, camera_name='rgb'):
-        return self.sim.render_offscreen(
-            *self._image_dimensions, camera_name)
 
     def mlp_input(self, goal, history):
         assert len(history) > 0
@@ -152,8 +129,13 @@ class BaseEnv(utils.EzPickle, Server):
     def __exit__(self, *args):
         self.sim.__exit__()
 
-    def normalize(self, pos):
-        raise RuntimeError("This doesn't work")
+    def render(self, mode=None, camera_name=None, labels=None):
+        raise NotImplemented
+
+    def image(self, camera_name='rgb'):
+        return self.sim.render_offscreen(
+            *self._image_dimensions, camera_name)
+
 
     def reset_qpos(self):
         raise NotImplemented

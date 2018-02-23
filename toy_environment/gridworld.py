@@ -3,6 +3,7 @@ import pygame
 from gym import spaces
 from pygame import rect
 
+from environment.base import BaseEnv
 from toy_environment import room_obstacle_list
 
 
@@ -10,9 +11,9 @@ def sample_position():
     return np.random.uniform(-1, 1, size=[2])
 
 
-class ContinuousGridworld:
-    def __init__(self, obstacle_list_generator, visualize=False, image_size=64, step_size=0.2,
-                 max_time_steps=1000):
+class Gridworld(BaseEnv):
+    def __init__(self, obstacle_list_generator, visualize=False, image_size=64,
+                 step_size=0.2, max_steps=1000, discrete=False):
         self.observation_space = spaces.Box(-1, 1, shape=[4])
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
@@ -20,16 +21,15 @@ class ContinuousGridworld:
 
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         self.goal = self.get_non_intersecting_position(self.goal_position_generator)
-        self.visualize = visualize
         if visualize:
             self.screen = pygame.display.set_mode((image_size, image_size), )
         else:
             self.screen = pygame.Surface((image_size, image_size))
 
         self.step_size = step_size
-        self.dist_cutoff = 0.2
-        self.max_steps = max_time_steps
-        self.time_step = 0
+        self.geofence = 0.2
+        self.max_steps = max_steps
+        self.step = 0
 
         # required for OpenAI code
         self.metadata = {'render.modes': 'rgb_array'}
@@ -73,8 +73,8 @@ class ContinuousGridworld:
         reward = self.compute_reward(self.goal, obs)
 
         # check if max steps has been reached
-        self.time_step += 1
-        if self.time_step >= self.max_steps:
+        self.step += 1
+        if self.step >= self.max_steps:
             terminal = True
 
         return obs, reward, terminal, {}
@@ -82,7 +82,7 @@ class ContinuousGridworld:
     def reset(self):
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
         self.goal = self.get_non_intersecting_position(self.goal_position_generator)
-        self.time_step = 0
+        self.step = 0
         return self.obs()
 
     def obs(self):
@@ -93,7 +93,7 @@ class ContinuousGridworld:
     def at_goal(self, goal, obs):
         without_goal = obs[:-2]
         dist = np.linalg.norm(without_goal - goal, ord=2)
-        return dist <= self.dist_cutoff
+        return dist <= self.geofence
 
     def change_goal(self, goal, obs):
         without_goal = obs[:-2]
@@ -146,7 +146,7 @@ class ContinuousGridworld:
                 if obstacle.rect.colliderect(rect)]
 
 
-class FourRoomExperiment(ContinuousGridworld):
+class FourRoomExperiment(Gridworld):
     def __init__(self, visualize=False, image_size=64):
         from toy_environment import four_rooms_obstacle_list
         self.position_mapping = {0: [-0.75, -0.75],
@@ -154,7 +154,7 @@ class FourRoomExperiment(ContinuousGridworld):
                                  2: [0.75, 0.75],
                                  3: [0.75, -0.75]}
         super().__init__(four_rooms_obstacle_list.obstacle_list,
-                         visualize=visualize, image_size=image_size)
+                         image_size=image_size)
 
     def agent_position_generator(self):
         return np.array(self.position_mapping[np.random.randint(0, 4)])
@@ -166,7 +166,7 @@ class FourRoomExperiment(ContinuousGridworld):
 def main():
     # env = FourRoomExperiment(visualize=True)
     pygame.init()
-    env = ContinuousGridworld(room_obstacle_list.obstacle_list, visualize=True)
+    env = Gridworld(room_obstacle_list.obstacle_list, visualize=True)
     actions = {pygame.K_d: [1, 0],
                pygame.K_a: [-1, 0],
                pygame.K_s: [0, 1],
