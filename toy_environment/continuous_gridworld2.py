@@ -262,11 +262,11 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
 class FourRoomExperiment(ContinuousGridworld2):
 
-    def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=64):
+    def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=64, use_cnn=True):
         from toy_environment import four_rooms_obstacle_list
         self.position_mapping = {0: [-0.5, -0.5], 1: [-0.5, 0.5], 2: [0.5, 0.5], 3: [0.5, -0.5]}
         self.noisy_position = noisy_position
-        super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size)
+        super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size, use_cnn=use_cnn)
 	
     def agent_position_generator(self):
         pos = np.array(self.position_mapping[np.random.randint(0, 4)])
@@ -283,6 +283,17 @@ class FourRoomExperiment(ContinuousGridworld2):
                 break
 
         return goal
+
+
+class FourRoomDiscrete(FourRoomExperiment):
+	def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=84, use_cnn=True):
+		super().__init__(noise_type, visualize, noisy_position, image_size, use_cnn=use_cnn)
+		self.action_space = spaces.Discrete(4)
+		self.action_mapping = [[0., 0.01], [0., -0.01], [0.01, 0.], [-0.01, 0.]]
+
+	def _step(action):
+		action = self.action_mapping[action]
+		return super()._step(action)
 
 
 if __name__ == '__main__':
