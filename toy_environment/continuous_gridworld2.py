@@ -29,7 +29,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
         self.resolution = 0.025
         self.noise_type = noise_type
-        height = ((self.observation_space.high - self.observation_space.low) / self.resolution)[0]
+        height = 2.0 / self.resolution
         height = int(height)
 
         self.height = height
@@ -78,8 +78,8 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             #self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
 
         if reward == 1:
-            x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / self.resolution) - 1
-            y_goal = int((round(self.goal[1], 2) + self.observation_space.high[1]) / self.resolution) - 1
+            x_goal = int((round(self.goal[0], 2) + 1) / self.resolution) - 1
+            y_goal = int((round(self.goal[1], 2) + 1) / self.resolution) - 1
             x_goal = int(np.clip(x_goal, 0, self.height - 1))
             y_goal = int(np.clip(y_goal, 0, self.height - 1))
             self.achieved_goals[x_goal][y_goal] += 1
@@ -88,8 +88,8 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
         if self.time_step >= self.max_time_steps:
             if reward != 1:
-                x_goal = int((round(self.goal[0], 2) + self.observation_space.high[0]) / self.resolution) - 1
-                y_goal = int((round(self.goal[1], 2) + self.observation_space.high[1]) / self.resolution) - 1
+                x_goal = int((round(self.goal[0], 2) + 1) / self.resolution) - 1
+                y_goal = int((round(self.goal[1], 2) + 1) / self.resolution) - 1
                 x_goal = int(np.clip(x_goal, 0, self.height - 1))
                 y_goal = int(np.clip(y_goal, 0, self.height - 1))
 
@@ -278,7 +278,7 @@ class FourRoomExperiment(ContinuousGridworld2):
         goal = None
 
         while True:
-            goal = np.random.uniform(self.agent_position - 0.55, self.agent_position + 0.55)
+            goal = np.random.uniform(self.agent_position - 0.5, self.agent_position + 0.5)
             if goal[0] > -1 and goal[0] < 1 and goal[1] > -1 and goal[1] < 1:
                 break
 
