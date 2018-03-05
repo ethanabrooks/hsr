@@ -289,24 +289,26 @@ class FourRoomDiscrete(FourRoomExperiment):
 	def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=84, use_cnn=True):
 		super().__init__(noise_type, visualize, noisy_position, image_size, use_cnn=use_cnn)
 		self.action_space = spaces.Discrete(4)
-		self.action_mapping = [[0., 0.01], [0., -0.01], [0.01, 0.], [-0.01, 0.]]
+		self.action_mapping = [[1.0, 0], [-1.0, 0], [0, 1.0], [0, -1.0]]
 
-	def _step(action):
+	def _step(self, action):
 		action = self.action_mapping[action]
 		return super()._step(action)
 
 
 if __name__ == '__main__':
-    env = FourRoomExperiment(visualize=False)
+    env = FourRoomDiscrete(visualize=False)
     # env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
     obs = env.reset()
     print('pos:', obs[:2], 'goal:', obs[2:])
+
     while True:
-        action = {'s': [1.0, 0],
-                  'w': [-1.0, 0],
-                  'd': [0, 1.0],
-                  'a': [0, -1.0]}.get(input('action:'), [0.0, 0.0])
+        action = {'s': 0,
+                  'w': 1,
+                  'd': 2,
+                  'a': 3}.get(input('action:'), None)
         #action = np.random.uniform(-1, 1, size=2)
+        
         obs, reward, terminal, info = env.step(action)
         image = env.render_agent()
         cv2.imshow('game', image)
