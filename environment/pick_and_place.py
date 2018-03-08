@@ -60,9 +60,11 @@ class PickAndPlaceEnv(BaseEnv):
         block_joint = self.sim.jnt_qposadr('block1joint')
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi
-        rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
-        rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
-        w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
+        w, x, y, z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
+
+        # rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
+        # rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
+        # w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
         self.init_qpos[block_joint + 3] = w
         self.init_qpos[block_joint + 4] = x
         self.init_qpos[block_joint + 5] = y
