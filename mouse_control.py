@@ -52,9 +52,13 @@ def run(port, value_tensor=None, sess=None):
 
         for k in range(10):
             if lastkey == str(k):
-                i = k - 1
-                print('')
-                print(env.sim.id2name(ObjType.ACTUATOR, i))
+                if k <= len(action):
+                    i = k - 1
+                    print()
+                    print(env.sim.id2name(ObjType.ACTUATOR, i))
+                else:
+                    print('"{}" is not a valid selection. Agent only has {} '
+                            'DOFs.'.format(k, len(action)))
 
         # action[1] = .5
         # action *= .05
