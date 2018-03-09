@@ -60,15 +60,15 @@ class PickAndPlaceEnv(BaseEnv):
         block_joint = self.sim.jnt_qposadr('block1joint')
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi
-        w, x, y, z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
-
+        self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
+        self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
         # rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
         # rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
         # w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
-        self.init_qpos[block_joint + 3] = w
-        self.init_qpos[block_joint + 4] = x
-        self.init_qpos[block_joint + 5] = y
-        self.init_qpos[block_joint + 6] = z
+        # self.init_qpos[block_joint + 3] = w
+        # self.init_qpos[block_joint + 4] = x
+        # self.init_qpos[block_joint + 5] = y
+        # self.init_qpos[block_joint + 6] = z
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)
@@ -88,7 +88,7 @@ class PickAndPlaceEnv(BaseEnv):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > .5
+        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > 0
 
     def _block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
@@ -106,7 +106,7 @@ class PickAndPlaceEnv(BaseEnv):
         goal_pos, (should_lift,) = goal
         qpos, (fingers_touching, block_lifted) = obs
         _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
-        return _at_goal and should_lift == fingers_touching and block_lifted
+        return _at_goal and should_lift == (block_lifted and fingers_touching)
 
     def _compute_terminal(self, goal, obs):
         return self._achieved_goal(goal, obs)
