@@ -32,18 +32,6 @@ class BaseEnv(utils.EzPickle, Server):
         self.reward_range = -np.inf, np.inf
         self.spec = None
 
-    def server_values(self):
-        return self.sim.qpos, self.sim.qvel
-
-    def render(self, mode=None, camera_name=None, labels=None):
-        if mode == 'rgb_array':
-            return self.sim.render_offscreen(height=256, width=256)
-        self.sim.render(camera_name, labels)
-
-    def image(self, camera_name='rgb'):
-        return self.sim.render_offscreen(
-            *self._image_dimensions, camera_name)
-
     def mlp_input(self, goal, history):
         assert len(history) > 0
         obs_history = [np.concatenate(x, axis=0) for x in history]
@@ -94,50 +82,12 @@ class BaseEnv(utils.EzPickle, Server):
         mlp_input = self.mlp_input(self._goal(), self._history_buffer)
         return mlp_input, reward, done, {}
 
-    def _step_inner(self, action):
-        assert np.shape(action) == np.shape(self.sim.ctrl)
-        self.sim.ctrl[:] = action
-        for _ in range(self._frames_per_step):
-            self.sim.step()
-
-        hit_max_steps = self._step_num >= self.max_steps
-        done = False
-        if self._compute_terminal(self._goal(), self._obs()):
-            # print('terminal')
-            done = True
-        elif hit_max_steps:
-            # print('hit max steps')
-            done = True
-        elif self._currently_failed():
-            done = True
-        return self._current_reward(), done
-
-    def reset(self):
-        self.sim.reset()
-        self._step_num = 0
-
-        self._set_new_goal()
-        qpos = self.reset_qpos()
-        qvel = self.init_qvel + \
-               np.random.uniform(size=self.sim.nv, low=-0.01, high=0.01)
-        assert qpos.shape == (self.sim.nq,) and qvel.shape == (self.sim.nv,)
-        self.sim.qpos[:] = qpos
-        self.sim.qvel[:] = qvel
-        self.sim.forward()
-        return self.mlp_input(self._goal(), self._history_buffer)
-
     def _current_reward(self):
         return self._compute_reward(self._goal(), self._obs())
 
     @staticmethod
     def seed(seed):
         np.random.seed(seed)
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
-        self.sim.__exit__()
 
     def normalize(self, pos):
         raise RuntimeError("This doesn't work")
