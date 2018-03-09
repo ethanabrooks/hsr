@@ -25,7 +25,6 @@ def failed(resting_block_height, goal_block_height):
 class PickAndPlaceEnv(MujocoEnv):
     def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
-        self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
         self._geofence = geofence
 

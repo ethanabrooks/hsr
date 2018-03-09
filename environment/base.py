@@ -11,6 +11,7 @@ from environment.server import Server
 
 class BaseEnv(utils.EzPickle, Server):
     """ The environment """
+
     def __init__(self, max_steps, history_len, image_dimensions,
                  neg_reward, steps_per_action):
         utils.EzPickle.__init__(self)
@@ -91,6 +92,7 @@ class BaseEnv(utils.EzPickle, Server):
 
     def _current_reward(self):
         return self._compute_reward(self._goal(), self._obs())
+
 
     @staticmethod
     def seed(seed):
