@@ -5,6 +5,7 @@ from gym import spaces
 from mujoco import ObjType
 
 from environment.base import BaseEnv, at_goal, print1
+from environment.mujoco import MujocoEnv
 
 
 def quaternion_multiply(quaternion1, quaternion0):
@@ -21,20 +22,18 @@ def failed(resting_block_height, goal_block_height):
     # return resting_block_height - goal_block_height > .02  #.029
 
 
-class PickAndPlaceEnv(BaseEnv):
+class PickAndPlaceEnv(MujocoEnv):
     def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
         self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
+        self._geofence = geofence
 
         super().__init__(
-            geofence=geofence,
             max_steps=max_steps,
             xml_filepath=join('models', 'pick-and-place', 'world.xml'),
             history_len=history_len,
-            use_camera=False,
             neg_reward=neg_reward,
-            body_name="hand_palm_link",
             steps_per_action=10,
             image_dimensions=None)
 
