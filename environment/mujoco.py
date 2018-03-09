@@ -31,6 +31,10 @@ class MujocoEnv(BaseEnv):
         return self.sim.render_offscreen(
             *self._image_dimensions, camera_name)
 
+    def step(self, action):
+        assert np.shape(action) == np.shape(self.sim.ctrl)
+        return super().step(action)
+
     def _step_inner(self, action):
         assert np.shape(action) == np.shape(self.sim.ctrl)
         self.sim.ctrl[:] = action
@@ -48,6 +52,12 @@ class MujocoEnv(BaseEnv):
         elif self._currently_failed():
             done = True
         return self._current_reward(), done
+
+    def _perform_action(self, action):
+        assert np.shape(action) == np.shape(self.sim.ctrl)
+        self.sim.ctrl[:] = action
+        for _ in range(self._frames_per_step):
+            self.sim.step()
 
     def reset(self):
         self.sim.reset()
