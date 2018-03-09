@@ -8,8 +8,7 @@ if sys.version_info.major != 3:
 
 setup(name='baselines',
       packages=[package for package in find_packages()
-                if package.startswith('baselines')
-                or package.startswith('environment')],
+                if package in ['baselines', 'environment', 'toy_environment']],
       install_requires=[
           'gym[atari,classic_control]',
           'scipy',
