@@ -101,10 +101,15 @@
           <freejoint name='block1joint'/>
         </body>
 
-        <!--<body name="block2" pos="0 0 .44">-->
-          <!--<geom type="box" size=".0317 .0317 .0234" rgba=".1 .8 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>-->
-          <!--<freejoint name='box2joint'/>-->
-        <!--</body>-->
+        <body name="block2" pos="0 0 .44">
+          <geom type="box" size=".0317 .0317 .0234" rgba=".1 .8 .1 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
+          <freejoint name='box2joint'/>
+        </body>
+
+        <body name="block3" pos="0 .2 .44">
+            <geom type="box" size=".0317 .0317 .0234" rgba=".1 .1 .8 1" condim="4" solimp="0.99 0.99 0.01" solref="0.01 1"/>
+            <freejoint name='box3joint'/>
+        </body>
 
         <include file="hsr.mjcf"/>
     </worldbody>

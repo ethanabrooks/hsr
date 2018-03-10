@@ -26,9 +26,8 @@ def run(port, value_tensor=None, sess=None):
     shape, = env.action_space.shape
 
     i = 0
-    j = 0
     action = np.zeros(shape)
-    moving = False
+    moving = True
     pause = False
     total_reward = 0
 
