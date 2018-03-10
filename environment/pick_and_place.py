@@ -5,6 +5,16 @@ from gym import spaces
 from mujoco import ObjType
 
 from environment.base import BaseEnv, at_goal, print1
+from environment.mujoco import MujocoEnv
+
+
+def quaternion_multiply(quaternion1, quaternion0):
+    w0, x0, y0, z0 = quaternion0
+    w1, x1, y1, z1 = quaternion1
+    return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float64)
 
 
 def failed(resting_block_height, goal_block_height):
@@ -12,20 +22,17 @@ def failed(resting_block_height, goal_block_height):
     # return resting_block_height - goal_block_height > .02  #.029
 
 
-class PickAndPlaceEnv(BaseEnv):
+class PickAndPlaceEnv(MujocoEnv):
     def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
-        self._resting_block_height = .428  # empirically determined
         self._min_lift_height = 0.02
+        self._geofence = geofence
 
         super().__init__(
-            geofence=geofence,
             max_steps=max_steps,
             xml_filepath=join('models', 'pick-and-place', 'world.xml'),
             history_len=history_len,
-            use_camera=False,
             neg_reward=neg_reward,
-            body_name="hand_palm_link",
             steps_per_action=10,
             image_dimensions=None)
 
@@ -42,7 +49,7 @@ class PickAndPlaceEnv(BaseEnv):
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
-                                                     # size=(n_orientations, 4))
+        # size=(n_orientations, 4))
         # self._rewards = np.ones(n_orientations) * -np.inf
         # self._usage = np.zeros(n_orientations)
         # self._current_orienation = None
@@ -53,6 +60,13 @@ class PickAndPlaceEnv(BaseEnv):
         #     4) * 2 * np.pi
         self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
         self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+        # rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
+        # rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
+        # w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
+        # self.init_qpos[block_joint + 3] = w
+        # self.init_qpos[block_joint + 4] = x
+        # self.init_qpos[block_joint + 5] = y
+        # self.init_qpos[block_joint + 6] = z
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)
@@ -72,10 +86,13 @@ class PickAndPlaceEnv(BaseEnv):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2)
+        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > 0
+
+    def _block_pos(self):
+        return self.sim.get_body_xpos(self._goal_block_name)
 
     def _goal(self):
-        return self.sim.get_body_xpos(self._goal_block_name), [True]
+        return self._block_pos(), [True]
 
     def goal_3d(self):
         return self._goal()[0]
@@ -136,4 +153,3 @@ class PickAndPlaceEnv(BaseEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
-

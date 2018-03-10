@@ -7,7 +7,7 @@ from baselines.ppo2.policies import MlpPolicy
 from environment.arm2pos import Arm2PosEnv
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
-from toy_environment.continuous_gridworld2 import ContinuousGridworld2
+from toy_environment.gridworld import Gridworld
 from toy_environment import room_obstacle_list
 
 
@@ -36,11 +36,12 @@ def train(env_id, num_timesteps, seed, policy, record_path, restore_path,
     def make_env(rank):
         def env_fn():
             if env_id == 'toy':
-                env = ContinuousGridworld2(room_obstacle_list.obstacle_list, max_action_step=0.2, visualize=True)
+                env = Gridworld(room_obstacle_list.obstacle_list,
+                                step_size=0.2, visualize=False)
             elif env_id == 'arm2pos':
                 env = Arm2PosEnv(continuous=True, max_steps=500)
             elif env_id == 'pick-and-place':
-                env = PickAndPlaceEnv(max_steps=500)
+                env = PickAndPlaceEnv(max_steps=500, neg_reward=False)
             elif env_id == 'navigate':
                 env = NavigateEnv(continuous=True, max_steps=500, geofence=.5)
             else:
