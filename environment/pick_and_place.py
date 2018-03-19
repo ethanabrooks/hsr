@@ -42,8 +42,8 @@ class PickAndPlaceEnv(MujocoEnv):
         obs_size = history_len * sum(map(np.size, self._obs())) + sum(
             map(np.size, self._goal()))
         assert obs_size != 0
-        self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
-        self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
+        self.observation_space = spaces.Box(-np.inf, np.inf, shape=(obs_size,), dtype=np.float32)
+        self.action_space = spaces.Box(-1, 1, shape=(self.sim.nu - 1,), dtype=np.float32)
         self._table_height = self.sim.get_body_xpos('pan')[2]
         self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
 
