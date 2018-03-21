@@ -1,4 +1,5 @@
 import os
+from abc import abstractmethod
 
 import mujoco
 import numpy as np
@@ -54,6 +55,10 @@ class MujocoEnv(BaseEnv):
         self.sim.qvel[:] = qvel
         self.sim.forward()
         return self.mlp_input(self._goal(), self._history_buffer)
+
+    @abstractmethod
+    def reset_qpos(self):
+        raise NotImplemented
 
     def __enter__(self):
         return self

@@ -7,6 +7,7 @@ import numpy as np
 from gym import utils
 
 from environment.server import Server
+from abc import abstractmethod
 
 
 class BaseEnv(utils.EzPickle, Server):
@@ -101,42 +102,51 @@ class BaseEnv(utils.EzPickle, Server):
     def __exit__(self, *args):
         pass
 
+    @abstractmethod
     def _perform_action(self, action):
         raise NotImplemented
 
+    @abstractmethod
     def render(self, mode=None, camera_name=None, labels=None):
         raise NotImplemented
 
+    @abstractmethod
     def image(self, camera_name='rgb'):
         raise NotImplemented
 
+    @abstractmethod
     def _step_inner(self, action):
         raise NotImplemented
 
+    @abstractmethod
     def reset(self):
         raise NotImplemented
 
-    def reset_qpos(self):
-        raise NotImplemented
-
+    @abstractmethod
     def _set_new_goal(self):
         raise NotImplemented
 
+    @abstractmethod
     def _obs(self):
         raise NotImplemented
 
+    @abstractmethod
     def _goal(self):
         raise NotImplemented
 
+    @abstractmethod
     def goal_3d(self):
         raise NotImplemented
 
+    @abstractmethod
     def _currently_failed(self):
         raise NotImplemented
 
+    @abstractmethod
     def _compute_terminal(self, goal, obs):
         raise NotImplemented
 
+    @abstractmethod
     def _compute_reward(self, goal, obs, action):
         raise NotImplemented
 
