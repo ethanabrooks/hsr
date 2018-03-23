@@ -68,8 +68,8 @@ class MujocoEnv(BaseEnv):
         qvel = self.init_qvel + \
                np.random.uniform(size=self.sim.nv, low=-0.01, high=0.01)
         assert qpos.shape == (self.sim.nq,) and qvel.shape == (self.sim.nv,)
-        self.sim.qpos[:] = qpos
-        self.sim.qvel[:] = qvel
+        self.sim.qpos[:] = qpos.copy()
+        self.sim.qvel[:] = qvel.copy()
         self.sim.forward()
         return self.mlp_input(self._goal(), self._history_buffer)
 

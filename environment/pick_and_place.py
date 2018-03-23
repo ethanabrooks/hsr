@@ -153,3 +153,13 @@ class PickAndPlaceEnv(MujocoEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
+
+    def get_state(self):
+        return self.sim.qpos.copy(), self.sim.qvel.copy()
+
+    def set_state(self, qpos_qvel):
+        qpos, qvel = qpos_qvel
+        self.sim.qpos[:] = qpos
+        self.sim.qvel[:] = qvel
+        self.sim.forward()
+
