@@ -61,7 +61,7 @@ class NavigateEnv(BaseEnv):
         qpos, = obs
         return at_goal(self._gripper_pos(qpos), goal, self._geofence)
 
-    def _compute_reward(self, goal, obs):
+    def _compute_reward(self, goal, obs, action):
         goal_pos, = goal
         qpos, = obs
         if at_goal(self._gripper_pos(qpos), goal_pos, self._geofence):
