@@ -1,4 +1,5 @@
 from os.path import join
+from typing import Tuple
 
 import numpy as np
 from gym import spaces
@@ -155,11 +156,12 @@ class PickAndPlaceEnv(MujocoEnv):
         return super().step(action)
 
     def get_state(self):
-        return self.sim.qpos.copy(), self.sim.qvel.copy()
+        return self.sim.qpos.copy(), self.sim.qvel.copy(), self._step_num
 
-    def set_state(self, qpos_qvel):
-        qpos, qvel = qpos_qvel
+    def set_state(self, state: Tuple[np.ndarray, np.ndarray, int]):
+        qpos, qvel, step_num = state
         self.sim.qpos[:] = qpos
         self.sim.qvel[:] = qvel
+        self._step_num = step_num
         self.sim.forward()
 
