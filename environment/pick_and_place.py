@@ -24,9 +24,9 @@ def failed(resting_block_height, goal_block_height):
 
 
 class PickAndPlaceEnv(MujocoEnv):
-    def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1):
+    def __init__(self, max_steps, min_lift_height=.02, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
-        self._min_lift_height = 0.02
+        self._min_lift_height = min_lift_height
         self._geofence = geofence
 
         super().__init__(
@@ -56,11 +56,14 @@ class PickAndPlaceEnv(MujocoEnv):
         # self._current_orienation = None
 
     def reset_qpos(self):
+
         block_joint = self.sim.jnt_qposadr('block1joint')
-        # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
-        #     4) * 2 * np.pi
+
         self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
         self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+
+        # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
+        #     4) * 2 * np.pi
         # rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
         # rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
         # w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
@@ -87,7 +90,7 @@ class PickAndPlaceEnv(MujocoEnv):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > 0
+        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
 
     def _block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
@@ -154,14 +157,4 @@ class PickAndPlaceEnv(MujocoEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
-
-    def get_state(self):
-        return self.sim.qpos.copy(), self.sim.qvel.copy(), self._step_num
-
-    def set_state(self, state: Tuple[np.ndarray, np.ndarray, int]):
-        qpos, qvel, step_num = state
-        self.sim.qpos[:] = qpos
-        self.sim.qvel[:] = qvel
-        self._step_num = step_num
-        self.sim.forward()
 
