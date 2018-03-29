@@ -22,7 +22,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
         self.action_space = spaces.Box(-1, 1, shape=[2])
         self.image_size = image_size
-        self.obstacles = obstacle_list_generator(image_size)
+        self.obstacles = obstacle_list_generator(image_size, eval_=eval_)
 
         self.use_cnn = use_cnn
         self.agent_position = self.get_non_intersecting_position(self.agent_position_generator)
