@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 
 class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
-    def __init__(self, obstacle_list_generator, noise_type, use_cnn=False, visualize=False, image_size=64, max_action_step=0.2, max_time_steps=1000, eval_=False):   
+    def __init__(self, obstacle_list_generator, noise_type, use_cnn=False, visualize=False, image_size=64, max_action_step=0.05, max_time_steps=1000, eval_=False):   
         utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.use_cnn = use_cnn
         self.eval = eval_
+        self.room = 0
 
         if self.use_cnn:
             self.observation_space = spaces.Box(-1, 1, shape=[image_size, image_size, 4])
@@ -56,7 +57,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
     def _step(self, action):
         action = self.preprocess_action(action)
-        num_subchecks = 4
+        num_subchecks = 16
         for i in range(1, num_subchecks):
             intersects = self.check_intersects(self.agent_position, action, mult=i / float(num_subchecks))
             if intersects:
@@ -65,9 +66,9 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
         self.time_step += 1
 
-        if self.time_step % 1000 == 0:
-            self.generate_heatmap(filename='achieved_eval_{}'.format(self.eval))
-            self.generate_heatmap(filename='missed_eval_{}'.format(self.eval))
+        # if self.time_step % 1000 == 0:
+        #     self.generate_heatmap(filename='achieved_eval_{}'.format(self.eval))
+        #     self.generate_heatmap(filename='missed_eval_{}'.format(self.eval))
         
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs, xy=self.agent_position)
@@ -304,23 +305,27 @@ class FourRoomDiscrete(FourRoomExperiment):
 
 
 if __name__ == '__main__':
-    env = FourRoomDiscrete(visualize=False)
-    # env = ContinuousGridworld2(room_obstacle_list.obstacle_list)
+    # env = FourRoomDiscrete(visualize=False)
+    env = ContinuousGridworld2(four_rooms_obstacle_list.obstacle_list, noise_type=None, eval_=True)
     obs = env.reset()
-    print('pos:', obs[:2], 'goal:', obs[2:])
+    # print('pos:', obs[:2], 'goal:', obs[2:])
 
     while True:
-        action = {'s': 0,
-                  'w': 1,
-                  'd': 2,
-                  'a': 3}.get(input('action:'), None)
-        #action = np.random.uniform(-1, 1, size=2)
-        
+        # action = {'s': 0,
+        #           'w': 1,
+        #           'd': 2,
+        #           'a': 3}.get(input('action:'), None)
+        action = np.random.uniform(-1, 1, size=2)
+        # action = input()
+        # action = action.split()
+        # action = np.array([float(action[0]), float(action[1])])
+
         obs, reward, terminal, info = env.step(action)
         image = env.render_agent()
         cv2.imshow('game', image)
         cv2.waitKey(1)
-        print('pos:', obs[:2], 'goal:', obs[2:], 'reward:', reward)
+        # print('pos:', obs[:2], 'goal:', obs[2:], 'reward:', reward)
         if terminal:
+            print("yay")
             env.reset()
 
