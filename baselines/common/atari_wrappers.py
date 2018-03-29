@@ -122,8 +122,8 @@ class WarpFrame(gym.ObservationWrapper):
         self.observation_space = spaces.Box(low=0, high=255, shape=(self.height, self.width, 1))
 
     def _observation(self, frame):
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-        frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
+#        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+#        frame = cv2.resize(frame, (self.width, self.height), interpolation=cv2.INTER_AREA)
         return frame[:, :, None]
 
 class FrameStack(gym.Wrapper):
@@ -192,8 +192,8 @@ def wrap_deepmind(env, episode_life=True, clip_rewards=True, frame_stack=False, 
     """
     if episode_life:
         env = EpisodicLifeEnv(env)
-    if 'FIRE' in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
+    #if 'FIRE' in env.unwrapped.get_action_meanings():
+    #    env = FireResetEnv(env)
     env = WarpFrame(env)
     if scale:
         env = ScaledFloatFrame(env)

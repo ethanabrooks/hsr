@@ -29,6 +29,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
 
     use_cnn = kwargs['use_cnn']
     del kwargs['use_cnn']
+    use_cnn = False #TODO Find bug
     # for toy env
     noisy_pos = kwargs['use_noisy_pos']
     del kwargs['use_noisy_pos']
@@ -48,14 +49,16 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
         #env = PickAndPlaceEnv(max_steps=500)
         pass
     elif env_id == 'four-rooms':
-        env = continuous_gridworld2.FourRoomExperiment(noise_type, visualize=False, noisy_position=noisy_pos)
+        env = continuous_gridworld2.FourRoomExperiment(noise_type, visualize=False, noisy_position=noisy_pos, use_cnn=use_cnn)
+        eval_env = continuous_gridworld2.FourRoomExperiment(noise_type, visualize=False, noisy_position=noisy_pos, use_cnn=use_cnn, eval_=True)
     else:
         env = gym.make(env_id)
     env = bench.Monitor(env, logger.get_dir() and os.path.join(logger.get_dir(), str(rank)))
     # env = gym.wrappers.Monitor(env, '/tmp/ddpg/', force=True)
     gym.logger.setLevel(logging.WARN)
 
-    if evaluation and rank == 0:
+    if env_id == 'four-rooms': pass
+    elif evaluation and rank == 0:
         eval_env = gym.make(env_id)
         eval_env = bench.Monitor(eval_env, os.path.join(logger.get_dir(), 'gym_eval'))
         env = bench.Monitor(env, None)
@@ -85,7 +88,8 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
             raise RuntimeError('unknown noise type "{}"'.format(current_noise_type))
 
     # Configure components.
-    memory = Memory(limit=int(1e6), action_shape=env.action_space.shape, observation_shape=env.observation_space.shape)
+    memory = Memory(limit=int(1e5), action_shape=env.action_space.shape, observation_shape=env.observation_space.shape)
+    print('actions: {} {}\n\n'.format(nb_actions, use_cnn))
     #critic = CriticGoalTrunk(layer_norm=layer_norm)
     #actor = ActorGoalTrunk(nb_actions, layer_norm=layer_norm)
     if not use_cnn:

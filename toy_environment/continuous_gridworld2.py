@@ -10,9 +10,11 @@ import matplotlib.pyplot as plt
 
 class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
-    def __init__(self, obstacle_list_generator, noise_type, use_cnn=False, visualize=False, image_size=64, max_action_step=0.2, max_time_steps=1000):
+    def __init__(self, obstacle_list_generator, noise_type, use_cnn=False, visualize=False, image_size=64, max_action_step=0.2, max_time_steps=1000, eval_=False):   
         utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.use_cnn = use_cnn
+        self.eval = eval_
+
         if self.use_cnn:
             self.observation_space = spaces.Box(-1, 1, shape=[image_size, image_size, 4])
         else:
@@ -33,8 +35,8 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         height = int(height)
 
         self.height = height
-        self.achieved_goals = np.zeros((height, height), dtype=int)
-        self.missed_goals = np.zeros((height, height), dtype=int)
+        self.achieved_goals = [np.zeros((height, height), dtype=int) for i in range(4)]
+        self.missed_goals = [np.zeros((height, height), dtype=int) for i in range(4)]
 
         if visualize:
             self.screen = pygame.display.set_mode((image_size, image_size),)
@@ -64,8 +66,8 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.time_step += 1
 
         if self.time_step % 1000 == 0:
-            self.generate_heatmap(filename='achieved')
-            self.generate_heatmap(filename='missed')
+            self.generate_heatmap(filename='achieved_eval_{}'.format(self.eval))
+            self.generate_heatmap(filename='missed_eval_{}'.format(self.eval))
         
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs, xy=self.agent_position)
@@ -82,7 +84,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             y_goal = int((round(self.goal[1], 2) + 1) / self.resolution) - 1
             x_goal = int(np.clip(x_goal, 0, self.height - 1))
             y_goal = int(np.clip(y_goal, 0, self.height - 1))
-            self.achieved_goals[x_goal][y_goal] += 1
+            self.achieved_goals[self.room][x_goal][y_goal] += 1
 	
             print('AT GOAL')
 
@@ -93,7 +95,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
                 x_goal = int(np.clip(x_goal, 0, self.height - 1))
                 y_goal = int(np.clip(y_goal, 0, self.height - 1))
 
-                self.missed_goals[x_goal][y_goal] += 1
+                self.missed_goals[self.room][x_goal][y_goal] += 1
             
             terminal = True
 
@@ -218,12 +220,13 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
     def generate_heatmap(self, filename):
         target = None
-        if filename is 'achieved':
-            target = self.achieved_goals
-        else:
-            target = self.missed_goals
+        for i in range(4):
+            if filename is 'achieved':
+                target = self.achieved_goals[i]
+            else:
+                target = self.missed_goals[i]
 
-        plt.imsave('{}-noisy_pos-{}-noise-{}.png'.format(filename, self.noisy_position, self.noise_type), target)
+            plt.imsave('{}-noisy_pos-{}-noise-{}-room-{}.png'.format(filename, self.noisy_position, self.noise_type, i), target)
 
     ### Collision Handling
 
@@ -262,20 +265,24 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
 class FourRoomExperiment(ContinuousGridworld2):
 
-    def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=64, use_cnn=True):
+    def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=64, use_cnn=False, eval_=False):
         from toy_environment import four_rooms_obstacle_list
         self.position_mapping = {0: [-0.5, -0.5], 1: [-0.5, 0.5], 2: [0.5, 0.5], 3: [0.5, -0.5]}
         self.noisy_position = noisy_position
-        super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size, use_cnn=use_cnn)
+        super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size, use_cnn=use_cnn, eval_=eval_)
 	
     def agent_position_generator(self):
-        pos = np.array(self.position_mapping[np.random.randint(0, 4)])
+        self.room = np.random.randint(0,4)
+        pos = np.array(self.position_mapping[self.room])
         if self.noisy_position:
             pos = np.add(pos, np.random.uniform(low=-0.05, high=0.05, size=2))
         return pos 
  
     def goal_position_generator(self):
         goal = None
+        if self.eval:
+            goal = np.random.uniform(low=-1., high=1., size=2)
+            return goal
 
         while True:
             goal = np.random.uniform(self.agent_position - 0.5, self.agent_position + 0.5)
@@ -286,8 +293,8 @@ class FourRoomExperiment(ContinuousGridworld2):
 
 
 class FourRoomDiscrete(FourRoomExperiment):
-	def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=84, use_cnn=True):
-		super().__init__(noise_type, visualize, noisy_position, image_size, use_cnn=use_cnn)
+	def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=84, use_cnn=True, eval_=False):
+		super().__init__(noise_type, visualize, noisy_position, image_size, use_cnn=use_cnn, eval_=eval_)
 		self.action_space = spaces.Discrete(4)
 		self.action_mapping = [[1.0, 0], [-1.0, 0], [0, 1.0], [0, -1.0]]
 

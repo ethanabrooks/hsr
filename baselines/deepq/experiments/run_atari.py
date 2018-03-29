@@ -7,6 +7,8 @@ import argparse
 from baselines import logger
 from baselines.common.atari_wrappers import make_atari
 
+from toy_environment import continuous_gridworld2
+
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--env', help='environment ID', default='FourRoomDiscrete')
@@ -20,7 +22,7 @@ def main():
     if args.env != 'FourRoomDiscrete':
         env = make_atari(args.env)
     else:
-        env = FourRoomDiscrete(visualize=False)
+        env = continuous_gridworld2.FourRoomDiscrete(visualize=False)
 
     env = bench.Monitor(env, logger.get_dir())
     env = deepq.wrap_atari_dqn(env)
