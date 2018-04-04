@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
-    def __init__(self, obstacle_list_generator, noise_type, use_cnn=False, visualize=False, image_size=64, max_action_step=0.05, max_time_steps=1000, eval_=False):   
+    def __init__(self, obstacle_list_generator, noise_type, use_cnn=False, visualize=False, image_size=64, max_action_step=0.01, max_time_steps=1000, eval_=False):   
         utils.EzPickle.__init__(self, 'ContinuousGridworld2', 'image')
         self.use_cnn = use_cnn
         self.eval = eval_
@@ -66,9 +66,9 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
         self.agent_position = np.clip(self.agent_position + action, -1, 1)
         self.time_step += 1
 
-        # if self.time_step % 1000 == 0:
-        #     self.generate_heatmap(filename='achieved_eval_{}'.format(self.eval))
-        #     self.generate_heatmap(filename='missed_eval_{}'.format(self.eval))
+        if self.time_step % 1000 == 0:
+            self.generate_heatmap(filename='achieved_eval_{}'.format(self.eval))
+            self.generate_heatmap(filename='missed_eval_{}'.format(self.eval))
         
         obs = self.obs()
         terminal = self.compute_terminal(self.goal, obs, xy=self.agent_position)
@@ -227,7 +227,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
             else:
                 target = self.missed_goals[i]
 
-            plt.imsave('{}-noisy_pos-{}-noise-{}-room-{}.png'.format(filename, self.noisy_position, self.noise_type, i), target)
+            plt.imsave('{}-noisy_pos-{}-noise-{}-room-{}-stepsz-{}.png'.format(filename, self.noisy_position, self.noise_type, i, self.max_action_step), target)
 
     ### Collision Handling
 
@@ -266,11 +266,11 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
 
 class FourRoomExperiment(ContinuousGridworld2):
 
-    def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=64, use_cnn=False, eval_=False):
+    def __init__(self, noise_type=None, visualize=False, noisy_position=False, image_size=64, use_cnn=False, eval_=False, max_action_step=0.01):
         from toy_environment import four_rooms_obstacle_list
         self.position_mapping = {0: [-0.5, -0.5], 1: [-0.5, 0.5], 2: [0.5, 0.5], 3: [0.5, -0.5]}
         self.noisy_position = noisy_position
-        super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size, use_cnn=use_cnn, eval_=eval_)
+        super().__init__(four_rooms_obstacle_list.obstacle_list, noise_type, visualize=visualize, image_size=image_size, max_action_step=max_action_step, use_cnn=use_cnn, eval_=eval_)
 	
     def agent_position_generator(self):
         self.room = np.random.randint(0,4)
