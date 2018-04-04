@@ -222,7 +222,7 @@ class ContinuousGridworld2(gym.Env, utils.EzPickle):
     def generate_heatmap(self, filename):
         target = None
         for i in range(4):
-            if filename is 'achieved':
+            if 'achieved' is in filename:
                 target = self.achieved_goals[i]
             else:
                 target = self.missed_goals[i]
