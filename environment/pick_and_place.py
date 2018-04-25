@@ -37,6 +37,7 @@ class PickAndPlaceEnv(MujocoEnv):
             steps_per_action=10,
             image_dimensions=None)
 
+        self._initial_block_pos = self._block_pos()
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name,
                               left_finger_name.replace('_l_', '_r_')]
@@ -84,19 +85,20 @@ class PickAndPlaceEnv(MujocoEnv):
         pass
 
     def _obs(self):
-        return self.sim.qpos, [self._fingers_touching(), self._block_lifted()]
+        return self.sim.qpos,
 
-    def _fingers_touching(self):
-        return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
+    # def _fingers_touching(self):
+    #     return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
-    def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
+    # def _block_lifted(self):
+    #     return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
 
     def _block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
 
     def _goal(self):
-        return self._block_pos(), [True]
+        goal_pos = self._initial_block_pos() + np.array([0, 0, self._min_lift_height])
+        return goal_pos, goal_pos
 
     def goal_3d(self):
         return self._goal()[0]
@@ -105,10 +107,10 @@ class PickAndPlaceEnv(MujocoEnv):
         return False
 
     def _achieved_goal(self, goal, obs):
-        goal_pos, (should_lift,) = goal
-        qpos, (fingers_touching, block_lifted) = obs
-        _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
-        return _at_goal and should_lift == (block_lifted and fingers_touching)
+        gripper_goal_pos, block_goal_pos = goal
+        gripper_at_goal = at_goal(self._gripper_pos(obs[0]), gripper_goal_pos, self._geofence)
+        block_at_goal = at_goal(self._block_pos(), block_goal_pos, self._geofence)
+        return gripper_at_goal, block_at_goal
 
     def _compute_terminal(self, goal, obs):
         return self._achieved_goal(goal, obs)
@@ -123,8 +125,7 @@ class PickAndPlaceEnv(MujocoEnv):
 
     def _obs_to_goal(self, obs):
         qpos, block_lifted = obs
-        should_lift = block_lifted
-        return self._gripper_pos(qpos), should_lift
+        return self._gripper_pos(qpos), self._block_pos()
 
     def _gripper_pos(self, qpos=None):
         finger1, finger2 = [self.sim.get_body_xpos(name, qpos)
