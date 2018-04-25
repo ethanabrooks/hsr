@@ -84,7 +84,7 @@ class BaseEnv(utils.EzPickle, Server):
                 done = True
             elif self._currently_failed():
                 done = True
-            reward += self._compute_reward(self._goal(), self._obs(), action)
+            reward += self._compute_reward(self._goal(), self._obs())
             step += 1
 
         self._history_buffer.append(self._obs())
@@ -147,7 +147,7 @@ class BaseEnv(utils.EzPickle, Server):
         raise NotImplemented
 
     @abstractmethod
-    def _compute_reward(self, goal, obs, action):
+    def _compute_reward(self, goal, obs):
         raise NotImplemented
 
     # hindsight stuff

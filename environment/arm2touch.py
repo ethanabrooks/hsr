@@ -100,7 +100,7 @@ class Arm2TouchEnv(BaseEnv):
         qpos, = obs
         return self.at_goal(qpos, goal)
 
-    def _compute_reward(self, goal, obs, action):
+    def _compute_reward(self, goal, obs):
         qpos, = obs
         if self.at_goal(qpos, goal):
             return 1

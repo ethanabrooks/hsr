@@ -113,7 +113,7 @@ class PickAndPlaceEnv(MujocoEnv):
     def _compute_terminal(self, goal, obs):
         return self._achieved_goal(goal, obs)
 
-    def _compute_reward(self, goal, obs, action):
+    def _compute_reward(self, goal, obs):
         if self._achieved_goal(goal, obs):
             return 1
         elif self._neg_reward:
