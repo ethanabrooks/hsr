@@ -37,6 +37,7 @@ class PickAndPlaceEnv(MujocoEnv):
             steps_per_action=10,
             image_dimensions=None)
 
+        self.initial_qpos = np.copy(self.init_qpos)
         self._initial_block_pos = np.copy(self._block_pos())
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name,
@@ -47,7 +48,7 @@ class PickAndPlaceEnv(MujocoEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(obs_size,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, shape=(self.sim.nu - 1,), dtype=np.float32)
         self._table_height = self.sim.get_body_xpos('pan')[2]
-        self._rotation_actuators = ["arm_flex_motor"] # , "wrist_roll_motor"]
+        self._rotation_actuators = ["arm_flex_motor"]  # , "wrist_roll_motor"]
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
@@ -57,13 +58,22 @@ class PickAndPlaceEnv(MujocoEnv):
         # self._current_orienation = None
 
     def reset_qpos(self):
-        # 7.450e-05 - 3.027e-03
-        # 4.385e-01
-        # 1.000e+00
-        # 3.693e-17
-        # 7.590e-19 - 6.184e-04 - 1.101e+00 - 9.759e-07
-        # 3.573e-01
-        # 3.574e-01
+        if np.random.uniform(0, 1) < .5:
+            self.init_qpos = np.array([
+                7.450e-05,
+                -3.027e-03,
+                4.385e-01,
+                1.000e+00,
+                0,
+                0,
+                -6.184e-04,
+                -1.101e+00,
+                0,
+                3.573e-01,
+                3.574e-01,
+            ])
+        else:
+            self.init_qpos = self.initial_qpos
 
         # block_joint = self.sim.jnt_qposadr('block1joint')
 
@@ -98,8 +108,8 @@ class PickAndPlaceEnv(MujocoEnv):
     #     return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     # def _block_lifted(self):
-        # return self._block_pos()[2] > self._min_lift_height - self._geofence
-        # return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
+    # return self._block_pos()[2] > self._min_lift_height - self._geofence
+    # return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
 
     def _block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
@@ -167,4 +177,3 @@ class PickAndPlaceEnv(MujocoEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
-
