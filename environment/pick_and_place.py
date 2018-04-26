@@ -97,7 +97,7 @@ class PickAndPlaceEnv(MujocoEnv):
         return self.sim.get_body_xpos(self._goal_block_name)
 
     def _goal(self):
-        goal_pos = self._initial_block_pos() + np.array([0, 0, self._min_lift_height])
+        goal_pos = self._initial_block_pos + np.array([0, 0, self._min_lift_height])
         return goal_pos, goal_pos
 
     def goal_3d(self):
@@ -110,7 +110,7 @@ class PickAndPlaceEnv(MujocoEnv):
         gripper_goal_pos, block_goal_pos = goal
         gripper_at_goal = at_goal(self._gripper_pos(obs[0]), gripper_goal_pos, self._geofence)
         block_at_goal = at_goal(self._block_pos(), block_goal_pos, self._geofence)
-        return gripper_at_goal, block_at_goal
+        return gripper_at_goal and block_at_goal
 
     def _compute_terminal(self, goal, obs):
         return self._achieved_goal(goal, obs)
