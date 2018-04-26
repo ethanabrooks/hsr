@@ -118,10 +118,6 @@ class PickAndPlaceEnv(MujocoEnv):
         gripper_goal_pos, block_goal_pos = goal
         gripper_at_goal = at_goal(self._gripper_pos(obs[0]), gripper_goal_pos, self._geofence)
         block_at_goal = at_goal(self._block_pos(), block_goal_pos, self._geofence)
-        print1('gripper to goal: {:.5f} | block to goal: {:.5f}'.format(
-            distance_between(self._gripper_pos(obs[0]),gripper_goal_pos),
-            distance_between(self._block_pos(), block_goal_pos)
-        ))
         return gripper_at_goal and block_at_goal
 
     def _compute_terminal(self, goal, obs):
