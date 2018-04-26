@@ -26,7 +26,7 @@ def failed(resting_block_height, goal_block_height):
 class PickAndPlaceEnv(MujocoEnv):
     def __init__(self, max_steps, min_lift_height=.02, geofence=.06, neg_reward=True, history_len=1):
         self._goal_block_name = 'block1'
-        self._min_lift_height = min_lift_height
+        self._min_lift_height = min_lift_height + geofence
         self._geofence = geofence
 
         super().__init__(
@@ -91,7 +91,8 @@ class PickAndPlaceEnv(MujocoEnv):
     #     return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     # def _block_lifted(self):
-    #     return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
+        # return self._block_pos()[2] > self._min_lift_height - self._geofence
+        # return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
 
     def _block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
@@ -117,6 +118,7 @@ class PickAndPlaceEnv(MujocoEnv):
 
     def _compute_reward(self, goal, obs):
         if self._achieved_goal(goal, obs):
+            print('block height', self._block_pos()[2] - self._initial_block_pos[2])
             return 1
         elif self._neg_reward:
             return -.0001
