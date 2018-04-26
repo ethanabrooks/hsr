@@ -47,7 +47,7 @@ class PickAndPlaceEnv(MujocoEnv):
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(obs_size,), dtype=np.float32)
         self.action_space = spaces.Box(-1, 1, shape=(self.sim.nu - 1,), dtype=np.float32)
         self._table_height = self.sim.get_body_xpos('pan')[2]
-        self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
+        self._rotation_actuators = ["arm_flex_motor"] # , "wrist_roll_motor"]
 
         # self._n_block_orientations = n_orientations = 8
         # self._block_orientations = np.random.uniform(0, 2 * np.pi,
@@ -57,11 +57,18 @@ class PickAndPlaceEnv(MujocoEnv):
         # self._current_orienation = None
 
     def reset_qpos(self):
+        # 7.450e-05 - 3.027e-03
+        # 4.385e-01
+        # 1.000e+00
+        # 3.693e-17
+        # 7.590e-19 - 6.184e-04 - 1.101e+00 - 9.759e-07
+        # 3.573e-01
+        # 3.574e-01
 
-        block_joint = self.sim.jnt_qposadr('block1joint')
+        # block_joint = self.sim.jnt_qposadr('block1joint')
 
-        self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
-        self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+        # self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
+        # self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
 
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi

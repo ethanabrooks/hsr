@@ -11,6 +11,7 @@ from environment.arm2touch import Arm2TouchEnv
 from environment.base import print1
 from environment.navigate import NavigateEnv
 from environment.pick_and_place import PickAndPlaceEnv
+import pickle
 
 saved_pos = None
 
@@ -30,7 +31,10 @@ def run(port, value_tensor=None, sess=None):
     action = np.zeros(shape)
     moving = False
     pause = False
+    done = False
     total_reward = 0
+    s1 = None
+    traj = []
 
     while True:
         lastkey = env.sim.get_last_key_press()
@@ -48,7 +52,7 @@ def run(port, value_tensor=None, sess=None):
             moving = not moving
             print('\rmoving:', moving)
         if lastkey is 'P':
-            print(env._gripper_pos())
+            print(env.sim.qpos)
 
         for k in range(10):
             if lastkey == str(k):
@@ -58,8 +62,13 @@ def run(port, value_tensor=None, sess=None):
 
         # action[1] = .5
         # action *= .05
-        if not pause:
-            obs, r, done, _ = env.step(action * .05)
+        if not pause and not np.allclose(action, 0):
+            print('.', end='')
+            a = np.clip(action * .05, -1, 1)
+            s2, r, done, _ = env.step(a)
+            if s1 is not None:
+                traj.append((s1, a, r, s2, done))
+            s1 = s2
             total_reward += r
             # run_tests(env, obs)
 
@@ -68,6 +77,8 @@ def run(port, value_tensor=None, sess=None):
                 print('\nresetting', total_reward)
             pause = True
             total_reward = 0
+            with open('success_trajectory.pkl', mode='wb') as f:
+                pickle.dump(traj, f)
         env.render(labels={'x': env.goal_3d()})
 
 
