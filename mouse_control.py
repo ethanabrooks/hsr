@@ -52,7 +52,7 @@ def run(port, value_tensor=None, sess=None):
             moving = not moving
             print('\rmoving:', moving)
         if lastkey is 'P':
-            print(env._gripper_pos())
+            print(env.sim.qpos)
 
         for k in range(10):
             if lastkey == str(k):

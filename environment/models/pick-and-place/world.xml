@@ -96,7 +96,7 @@
             <!--<geom type="box" size=".1651 .001 .381" pos="0 -.6096  .381" class="cubby"/>-->
         <!--</body>-->
 
-        <body name="block1" pos="0 0 .49">
+        <body name="block1" pos="0 0 .43">
           <geom type="box" mass="1" size=".0635 .0317 .0234" rgba=".8 .1 .1 1" condim="6" solimp="0.99 0.99 0.01" solref="0.01 1"/>
           <freejoint name='block1joint'/>
         </body>
@@ -111,12 +111,12 @@
     <actuator>
         <!--<motor gear="1000.0" name="slide_x_motor" joint="slide_x"/>-->
         <!--<motor gear="1000.0" name="slide_y_motor" joint="slide_y"/>-->
-        <position gear="1" kp="1000" name="slide_x_motor" joint="slide_x"
-                  forcelimited="true" forcerange="-15 35"/>
-        <position gear="1" kp="1000" name="slide_y_motor" joint="slide_y"
-                  forcelimited="true" forcerange="-15 35"/>
-        <position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint"
-                  forcelimited="true" forcerange="-15 35"/>
+        <!--<position gear="1" kp="1000" name="slide_x_motor" joint="slide_x"-->
+                  <!--forcelimited="true" forcerange="-15 35"/>-->
+        <!--<position gear="1" kp="1000" name="slide_y_motor" joint="slide_y"-->
+                  <!--forcelimited="true" forcerange="-15 35"/>-->
+        <!--<position gear="1" kp="1000" name="arm_flex_motor" joint="arm_flex_joint"-->
+                  <!--forcelimited="true" forcerange="-15 35"/>-->
         <!--<motor gear="1000.0" name="arm_lift_motor" joint="arm_lift_joint"/>-->
         <!--<motor gear="1000.0" name="arm_roll_motor" joint="arm_roll_joint"/>-->
         <!--<motor gear="1000.0" name="wrist_flex_motor" joint="wrist_flex_joint"/>-->
