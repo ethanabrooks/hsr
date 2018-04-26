@@ -61,7 +61,7 @@ def run(port, value_tensor=None, sess=None):
         if not pause:
             obs, r, done, _ = env.step(action * .05)
             total_reward += r
-            run_tests(env, obs)
+            # run_tests(env, obs)
 
         if done:
             if not pause:

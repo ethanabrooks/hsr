@@ -5,7 +5,7 @@ import numpy as np
 from gym import spaces
 from mujoco import ObjType
 
-from environment.base import BaseEnv, at_goal, print1
+from environment.base import BaseEnv, at_goal, print1, distance_between
 from environment.mujoco import MujocoEnv
 
 
@@ -37,7 +37,7 @@ class PickAndPlaceEnv(MujocoEnv):
             steps_per_action=10,
             image_dimensions=None)
 
-        self._initial_block_pos = self._block_pos()
+        self._initial_block_pos = np.copy(self._block_pos())
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name,
                               left_finger_name.replace('_l_', '_r_')]
@@ -111,6 +111,10 @@ class PickAndPlaceEnv(MujocoEnv):
         gripper_goal_pos, block_goal_pos = goal
         gripper_at_goal = at_goal(self._gripper_pos(obs[0]), gripper_goal_pos, self._geofence)
         block_at_goal = at_goal(self._block_pos(), block_goal_pos, self._geofence)
+        print1('gripper to goal: {:.5f} | block to goal: {:.5f}'.format(
+            distance_between(self._gripper_pos(obs[0]),gripper_goal_pos),
+            distance_between(self._block_pos(), block_goal_pos)
+        ))
         return gripper_at_goal and block_at_goal
 
     def _compute_terminal(self, goal, obs):
