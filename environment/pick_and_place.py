@@ -1,4 +1,3 @@
-from collections import namedtuple
 from os.path import join
 
 import numpy as np
@@ -6,7 +5,7 @@ from gym import spaces
 from mujoco import ObjType
 
 from environment.base import at_goal
-from environment.mujoco import MujocoEnv
+from environment.mujoco import MujocoEnv, Goal, State
 
 
 def quaternion_multiply(quaternion1, quaternion0):
@@ -26,9 +25,6 @@ def failed(resting_block_height, goal_block_height):
     return False
 
 
-Goal = namedtuple('Goal', 'gripper block')
-
-
 class PickAndPlaceEnv(MujocoEnv):
     def __init__(self,
                  max_steps,
@@ -39,6 +35,7 @@ class PickAndPlaceEnv(MujocoEnv):
         self._goal_block_name = 'block1'
         self._min_lift_height = min_lift_height + geofence
         self._geofence = geofence
+        self._initial_block_pos = 0
 
         super().__init__(
             max_steps=max_steps,
@@ -59,9 +56,9 @@ class PickAndPlaceEnv(MujocoEnv):
             map(np.size, self.goal()))
         assert obs_size != 0
         self.observation_space = spaces.Box(
-            -np.inf, np.inf, shape=(obs_size, ), dtype=np.float32)
+            -np.inf, np.inf, shape=(obs_size,), dtype=np.float32)
         self.action_space = spaces.Box(
-            -1, 1, shape=(self.sim.nu - 1, ), dtype=np.float32)
+            -1, 1, shape=(self.sim.nu - 1,), dtype=np.float32)
         self._table_height = self.sim.get_body_xpos('pan')[2]
         self._rotation_actuators = ["arm_flex_motor"]  # , "wrist_roll_motor"]
 
@@ -117,14 +114,14 @@ class PickAndPlaceEnv(MujocoEnv):
         pass
 
     def _obs(self):
-        return self.sim.qpos,
+        return State(obs=self.sim.qpos, goal=self.goal())
 
     def block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
 
     def goal(self):
         goal_pos = self._initial_block_pos + \
-            np.array([0, 0, self._min_lift_height])
+                   np.array([0, 0, self._min_lift_height])
         return Goal(gripper=goal_pos, block=goal_pos)
 
     def goal_3d(self):
@@ -183,3 +180,9 @@ class PickAndPlaceEnv(MujocoEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
+
+    def preprocess(self, history):
+        return np.concatenate([
+            np.concatenate([s.obs, s.goal.gripper, s.goal.block])
+            for s in history
+        ])

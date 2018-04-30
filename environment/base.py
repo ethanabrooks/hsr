@@ -54,7 +54,7 @@ class BaseEnv(utils.EzPickle, Server):
             step += 1
 
         self._history_buffer.append(self._obs())
-        return self._history_buffer, reward, done, {}
+        return self.preprocess(self._history_buffer), reward, done, {}
 
     @staticmethod
     def seed(seed):
@@ -109,6 +109,10 @@ class BaseEnv(utils.EzPickle, Server):
     @abstractmethod
     def compute_reward(self, goal, obs):
         raise NotImplementedError
+
+    @abstractmethod
+    def preprocess(self, obs):
+        raise NotImplemented
 
 
 def quaternion2euler(w, x, y, z):
