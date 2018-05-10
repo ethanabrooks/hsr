@@ -61,7 +61,7 @@ class MujocoEnv(BaseEnv):
         self.sim.qpos[:] = qpos.copy()
         self.sim.qvel[:] = qvel.copy()
         self.sim.forward()
-        return self.preprocess(self._history_buffer)
+        return self._history_buffer
 
     @abstractmethod
     def reset_qpos(self):
@@ -72,7 +72,3 @@ class MujocoEnv(BaseEnv):
 
     def __exit__(self, *args):
         self.sim.__exit__()
-
-
-Goal = namedtuple('Goal', 'gripper block')
-State = namedtuple('State', 'obs goal')
