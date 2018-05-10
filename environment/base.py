@@ -53,7 +53,7 @@ class BaseEnv(utils.EzPickle, Server):
             step += 1
 
         self._history_buffer.append(self._obs())
-        return deepcopy(self._history_buffer), reward, done, {}
+        return self._obs_vector(), reward, done, {}
 
     def hit_max_steps(self):
         return self._step_num >= self.max_steps
@@ -90,6 +90,10 @@ class BaseEnv(utils.EzPickle, Server):
 
     @abstractmethod
     def _obs(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _obs_vector(self):
         raise NotImplementedError
 
     @abstractmethod

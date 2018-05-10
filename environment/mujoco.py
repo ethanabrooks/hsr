@@ -61,7 +61,7 @@ class MujocoEnv(BaseEnv):
         self.sim.qpos[:] = qpos.copy()
         self.sim.qvel[:] = qvel.copy()
         self.sim.forward()
-        return self._history_buffer
+        return self._obs_vector()
 
     @abstractmethod
     def reset_qpos(self):
