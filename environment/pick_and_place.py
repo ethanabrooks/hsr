@@ -22,10 +22,6 @@ def quaternion_multiply(quaternion1, quaternion0):
         dtype=np.float64)
 
 
-def failed(resting_block_height, goal_block_height):
-    return False
-
-
 Goal = namedtuple('Goal', 'gripper block')
 
 
@@ -132,6 +128,9 @@ class PickAndPlaceEnv(MujocoEnv):
     def _obs(self):
         return np.copy(self.sim.qpos),
 
+    def _obs_vector(self):
+        return np.concatenate([o for o, in self._history_buffer])
+
     def block_pos(self, qpos=None):
         return self.sim.get_body_xpos(self._goal_block_name, qpos)
 
@@ -198,3 +197,4 @@ class PickAndPlaceEnv(MujocoEnv):
                                        self.action_space.shape)
         action = np.insert(action, mirroring_indexes, action[mirrored_indexes])
         return super().step(action)
+
