@@ -36,3 +36,4 @@ MUJOCO_LOG.TXT
 .runsrc
 .runs
 env
+.ropeproject
