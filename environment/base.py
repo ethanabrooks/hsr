@@ -1,8 +1,8 @@
 """Create gym environment for HSR"""
 
 from collections import deque
+from copy import deepcopy
 
-import gym
 import numpy as np
 from gym import utils
 
@@ -13,8 +13,8 @@ from abc import abstractmethod
 class BaseEnv(utils.EzPickle, Server):
     """ The environment """
 
-    def __init__(self, max_steps, history_len, image_dimensions,
-                 neg_reward, steps_per_action):
+    def __init__(self, max_steps, history_len, image_dimensions, neg_reward,
+                 steps_per_action):
         utils.EzPickle.__init__(self)
 
         self._history_buffer = deque(maxlen=history_len)
@@ -32,40 +32,6 @@ class BaseEnv(utils.EzPickle, Server):
         self.reward_range = -np.inf, np.inf
         self.spec = None
 
-    def mlp_input(self, goal, history):
-        assert len(history) > 0
-        obs_history = [np.concatenate(x, axis=0) for x in history]
-        return np.concatenate(list(goal) + obs_history, axis=0)
-
-    def destructure_mlp_input(self, mlp_input):
-        assert isinstance(self.observation_space, gym.Space)
-        assert self.observation_space.contains(mlp_input)
-        goal_shapes = [np.size(x) for x in self._goal()]
-        goal_size = sum(goal_shapes)
-
-        # split mlp_input into goal and obs pieces
-        goal_vector, obs_history = mlp_input[:goal_size], mlp_input[goal_size:]
-
-        history_len = len(self._history_buffer)
-        assert np.size(goal_vector) == goal_size
-        assert (np.size(obs_history)) % history_len == 0
-
-        # break goal vector into individual goals
-        goals = np.split(goal_vector, np.cumsum(goal_shapes), axis=0)[:-1]
-
-        # break history into individual observations in history
-        history = np.split(obs_history, history_len, axis=0)
-
-        obs_shapes = [np.size(x) for x in self._obs()]
-        obs = []
-
-        # break each observation in history into observation pieces
-        for o in history:
-            assert np.size(o) == sum(obs_shapes)
-            obs.append(np.split(o, np.cumsum(obs_shapes), axis=0)[:-1])
-
-        return goals, obs
-
     def step(self, action):
         self._step_num += 1
         step = 0
@@ -74,23 +40,23 @@ class BaseEnv(utils.EzPickle, Server):
 
         while not done and step < self._steps_per_action:
             self._perform_action(action)
-            hit_max_steps = self._step_num >= self.max_steps
             done = False
-            if self._compute_terminal(self._goal(), self._obs()):
+            if self.compute_terminal(self.goal(), self._obs()):
                 # print('terminal')
                 done = True
-            elif hit_max_steps:
+            elif self.hit_max_steps():
                 # print('hit max steps')
                 done = True
             elif self._currently_failed():
                 done = True
-            reward += self._compute_reward(self._goal(), self._obs())
+            reward += self.compute_reward(self.goal(), self._obs())
             step += 1
 
         self._history_buffer.append(self._obs())
-        mlp_input = self.mlp_input(self._goal(), self._history_buffer)
-        return mlp_input, reward, done, {}
+        return deepcopy(self._history_buffer), reward, done, {}
 
+    def hit_max_steps(self):
+        return self._step_num >= self.max_steps
 
     @staticmethod
     def seed(seed):
@@ -104,71 +70,47 @@ class BaseEnv(utils.EzPickle, Server):
 
     @abstractmethod
     def _perform_action(self, action):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def render(self, mode=None, camera_name=None, labels=None):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def image(self, camera_name='rgb'):
-        raise NotImplemented
-
-    @abstractmethod
-    def _step_inner(self, action):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def reset(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def _set_new_goal(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def _obs(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
-    def _goal(self):
-        raise NotImplemented
+    def goal(self):
+        raise NotImplementedError
 
     @abstractmethod
     def goal_3d(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def _currently_failed(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
-    def _compute_terminal(self, goal, obs):
-        raise NotImplemented
+    def compute_terminal(self, goal, obs):
+        raise NotImplementedError
 
     @abstractmethod
-    def _compute_reward(self, goal, obs):
-        raise NotImplemented
-
-    # hindsight stuff
-    def _obs_to_goal(self, obs):
-        raise NotImplemented
-
-    def obs_to_goal(self, mlp_input):
-        goal, obs_history = self.destructure_mlp_input(mlp_input)
-        return self._obs_to_goal(obs_history[-1])
-
-    def change_goal(self, goal, mlp_input):
-        _, obs_history = self.destructure_mlp_input(mlp_input)
-        return self.mlp_input(goal, obs_history)
-
-    def compute_reward(self, mlp_input):
-        goal, obs_history = self.destructure_mlp_input(mlp_input)
-        return sum(self._compute_reward(goal, obs) for obs in obs_history)
-
-    def compute_terminal(self, mlp_input):
-        goal, obs_history = self.destructure_mlp_input(mlp_input)
-        return any(self._compute_terminal(goal, obs) for obs in obs_history)
+    def compute_reward(self, goal, obs):
+        raise NotImplementedError
 
 
 def quaternion2euler(w, x, y, z):
@@ -202,7 +144,7 @@ def at_goal(pos, goal, geofence):
 def escaped(pos, world_upper_bound, world_lower_bound):
     # noinspection PyTypeChecker
     return np.any(pos > world_upper_bound) \
-           or np.any(pos < world_lower_bound)
+        or np.any(pos < world_lower_bound)
 
 
 def get_limits(pos, size):
