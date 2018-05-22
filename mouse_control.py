@@ -20,7 +20,7 @@ def run(port, value_tensor=None, sess=None):
     # env = NavigateEnv(continuous=True, max_steps=1000, geofence=.5)
     #env = Arm2PosEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
     # env = Arm2TouchEnv(action_multiplier=.01, history_len=1, continuous=True, max_steps=9999999, neg_reward=True)
-    env = PickAndPlaceEnv(max_steps=9999999)
+    env = PickAndPlaceEnv(max_steps=9999999, use_mocap=True)
     np.set_printoptions(precision=3, linewidth=800)
     env.reset()
 
