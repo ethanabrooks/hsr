@@ -4,20 +4,18 @@ import numpy as np
 from gym import spaces
 
 from environment.base import at_goal, BaseEnv
+from environment.mujoco import MujocoEnv
 
 
-class Arm2PosEnv(BaseEnv):
-    def __init__(self, continuous, max_steps, geofence=.08, history_len=1, neg_reward=True,
+class Arm2PosEnv(MujocoEnv):
+    def __init__(self, continuous, max_steps, history_len=1, neg_reward=True,
                  action_multiplier=1):
 
-        BaseEnv.__init__(self,
-                         geofence=geofence,
+        super().__init__(
                          max_steps=max_steps,
                          xml_filepath=join('models', 'arm2pos', 'world.xml'),
                          history_len=history_len,
-                         use_camera=False,  # TODO
                          neg_reward=neg_reward,
-                         body_name="hand_palm_link",
                          steps_per_action=10,
                          image_dimensions=None)
 

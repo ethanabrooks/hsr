@@ -1,10 +1,12 @@
 from os.path import join
+from typing import Tuple
 
 import numpy as np
 from gym import spaces
 from mujoco import ObjType
 
-from environment.base import BaseEnv, at_goal, print1
+from environment.base import BaseEnv, at_goal, print1, distance_between
+from environment.mujoco import MujocoEnv
 
 
 def quaternion_multiply(quaternion1, quaternion0):
@@ -21,42 +23,42 @@ def failed(resting_block_height, goal_block_height):
     # return resting_block_height - goal_block_height > .02  #.029
 
 
-class PickAndPlaceEnv(BaseEnv):
-    def __init__(self, max_steps, geofence=.06, neg_reward=True, history_len=1, use_mocap=False):
+class PickAndPlaceEnv(MujocoEnv):
+    def __init__(self, max_steps, min_lift_height=.02, geofence=.06, neg_reward=True, history_len=1, use_mocap=False):
         self._goal_block_name = 'block1'
-        self._resting_block_height = .428  # empirically determined
-        self._min_lift_height = 0.02
+        self._min_lift_height = min_lift_height
+        self._geofence = geofence
 
         world_file = 'world.xml'
         if use_mocap:
             world_file = 'world_mocap.xml'
 
         super().__init__(
-            geofence=geofence,
             max_steps=max_steps,
             xml_filepath=join('models', 'pick-and-place', world_file),
             history_len=history_len,
-            use_camera=False,
             neg_reward=neg_reward,
-            body_name="hand_palm_link",
             steps_per_action=10,
             image_dimensions=None)
 
+        self.initial_qpos = np.copy(self.init_qpos)
+        self._initial_block_pos = np.copy(self._block_pos())
         left_finger_name = 'hand_l_distal_link'
         self._finger_names = [left_finger_name,
                               left_finger_name.replace('_l_', '_r_')]
         obs_size = history_len * sum(map(np.size, self._obs())) + sum(
             map(np.size, self._goal()))
         assert obs_size != 0
+
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=obs_size)
 
         self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 1)
 
         if use_mocap:
             self.action_space = spaces.Box(-1, 1, shape=self.sim.nu - 2 + 3) # Slide Y, One finger don't get; +3 for mocap
-            
+
         self._table_height = self.sim.get_body_xpos('pan')[2]
-        self._rotation_actuators = ["arm_flex_motor", "wrist_roll_motor"]
+        self._rotation_actuators = ["arm_flex_motor"]  # , "wrist_roll_motor"]
 
         self.step = self.step_ctrl
         if use_mocap:
@@ -70,16 +72,37 @@ class PickAndPlaceEnv(BaseEnv):
         # self._current_orienation = None
 
     def reset_qpos(self):
-        block_joint = self.sim.jnt_qposadr('block1joint')
+        if np.random.uniform(0, 1) < .5:
+            self.init_qpos = np.array([
+                7.450e-05,
+                - 3.027e-03,
+                4.385e-01,
+                1.000e+00,
+                0,
+                0,
+                - 6.184e-04,
+                - 1.101e+00,
+                0,
+                3.573e-01,
+                3.574e-01,
+            ])
+        else:
+            self.init_qpos = self.initial_qpos
+
+        # block_joint = self.sim.jnt_qposadr('block1joint')
+
+        # self.init_qpos[block_joint + 3] = np.random.uniform(0, 1)
+        # self.init_qpos[block_joint + 6] = np.random.uniform(-1, 1)
+
         # self.init_qpos[block_joint + 3:block_joint + 7] = np.random.random(
         #     4) * 2 * np.pi
-        rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
-        rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
-        w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
-        self.init_qpos[block_joint + 3] = w
-        self.init_qpos[block_joint + 4] = x
-        self.init_qpos[block_joint + 5] = y
-        self.init_qpos[block_joint + 6] = z
+        # rotate_around_x = [np.random.uniform(0, 1), np.random.uniform(-1, 1), 0, 0]
+        # rotate_around_z = [np.random.uniform(0, 1), 0, 0, np.random.uniform(-1, 1)]
+        # w, x, y, z = quaternion_multiply(rotate_around_z, rotate_around_x)
+        # self.init_qpos[block_joint + 3] = w
+        # self.init_qpos[block_joint + 4] = x
+        # self.init_qpos[block_joint + 5] = y
+        # self.init_qpos[block_joint + 6] = z
         # mean_rewards = self._rewards / np.maximum(self._usage, 1)
         # self._current_orienation = i = np.argmin(mean_rewards)
         # print('rewards:', mean_rewards, 'argmin:', i)
@@ -99,7 +122,7 @@ class PickAndPlaceEnv(BaseEnv):
         return not np.allclose(self.sim.sensordata[1:], [0, 0], atol=1e-2)
 
     def _block_lifted(self):
-        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > .5
+        return np.allclose(self.sim.sensordata[:1], [0], atol=1e-2) and self._block_pos()[2] > self._min_lift_height
 
     def _block_pos(self):
         return self.sim.get_body_xpos(self._goal_block_name)
@@ -117,7 +140,7 @@ class PickAndPlaceEnv(BaseEnv):
         goal_pos, (should_lift,) = goal
         qpos, (fingers_touching, block_lifted) = obs
         _at_goal = at_goal(self._gripper_pos(qpos), goal_pos, self._geofence)
-        return _at_goal and should_lift == fingers_touching and block_lifted
+        return _at_goal and should_lift == (block_lifted and fingers_touching)
 
     def _compute_terminal(self, goal, obs):
         return self._achieved_goal(goal, obs)

@@ -26,23 +26,24 @@ class Model(object):
         CLIPRANGE = tf.placeholder(tf.float32, [])
 
         neglogpac = train_model.pd.neglogp(A)
-        entropy = tf.reduce_mean(train_model.pd.entropy())
+        self.entropy = tf.reduce_mean(train_model.pd.entropy())
+        self.ent_coef = ent_coef
 
         vpred = train_model.vf
         vpredclipped = OLDVPRED + tf.clip_by_value(train_model.vf - OLDVPRED, - CLIPRANGE, CLIPRANGE)
         vf_losses1 = tf.square(vpred - R)
         vf_losses2 = tf.square(vpredclipped - R)
-        vf_loss = .5 * tf.reduce_mean(tf.maximum(vf_losses1, vf_losses2))
+        self.vf_loss = .5 * tf.reduce_mean(tf.maximum(vf_losses1, vf_losses2))
+        self.vf_coef = vf_coef
         ratio = tf.exp(OLDNEGLOGPAC - neglogpac)
         pg_losses = -ADV * ratio
         pg_losses2 = -ADV * tf.clip_by_value(ratio, 1.0 - CLIPRANGE, 1.0 + CLIPRANGE)
-        pg_loss = tf.reduce_mean(tf.maximum(pg_losses, pg_losses2))
+        self.pg_loss = tf.reduce_mean(tf.maximum(pg_losses, pg_losses2))
         approxkl = .5 * tf.reduce_mean(tf.square(neglogpac - OLDNEGLOGPAC))
         clipfrac = tf.reduce_mean(tf.to_float(tf.greater(tf.abs(ratio - 1.0), CLIPRANGE)))
-        loss = pg_loss - entropy * ent_coef + vf_loss * vf_coef
         with tf.variable_scope('model'):
             params = tf.trainable_variables()
-        grads = tf.gradients(loss, params)
+        grads = tf.gradients(self.loss, params)
         if max_grad_norm is not None:
             grads, _grad_norm = tf.clip_by_global_norm(grads, max_grad_norm)
         grads = list(zip(grads, params))
@@ -58,7 +59,7 @@ class Model(object):
                 td_map[train_model.S] = states
                 td_map[train_model.M] = masks
             return sess.run(
-                [pg_loss, vf_loss, entropy, approxkl, clipfrac, _train],
+                [self.pg_loss, self.vf_loss, self.entropy, approxkl, clipfrac, _train],
                 td_map
             )[:-1]
 
@@ -71,6 +72,10 @@ class Model(object):
         self.initial_state = act_model.initial_state
         self.sess = sess
         tf.global_variables_initializer().run(session=sess)  # pylint: disable=E1101
+
+    @property
+    def loss(self):
+        return self.pg_loss - self.entropy * self.ent_coef + self.vf_loss * self.vf_coef
 
 
 class Runner(object):
