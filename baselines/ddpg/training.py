@@ -191,10 +191,11 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
                         distance = agent.adapt_param_noise()
                         epoch_adaptive_distances.append(distance)
 
-                    cl, al = agent.train()
-                    epoch_critic_losses.append(cl)
-                    epoch_actor_losses.append(al)
-                    agent.update_target_net()
+                    agent.train_planning()
+                    # cl, al = agent.train()
+                    # epoch_critic_losses.append(cl)
+                    # epoch_actor_losses.append(al)
+                    # agent.update_target_net()
 
                 # Evaluate.
                 eval_episode_rewards = []

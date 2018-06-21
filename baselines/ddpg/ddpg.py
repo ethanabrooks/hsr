@@ -317,6 +317,19 @@ class DDPG(object):
 
         return critic_loss, actor_loss
 
+
+    def train_planning(self):
+        pass
+        """
+        initialize two variables in another function (s1, s2)
+        Load the old model
+        Gradient descent on critic_tf(s1, pi(s1)) ...
+        tf.train.AdamOptimizer().minimize(-V(s, s1) * V(s1, s2) * V(s2, g), var_list=[s1, s2])
+        Print(s1, s2)
+        Always feed in the same g, no noise (in g)
+        """
+
+
     def initialize(self, sess):
         self.sess = sess
         self.sess.run(tf.global_variables_initializer())
