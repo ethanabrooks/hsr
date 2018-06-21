@@ -151,7 +151,7 @@ def parse_args():
     parser.add_argument('--nb-train-steps', type=int, default=50)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-eval-steps', type=int, default=100)  # per epoch cycle and MPI worker
     parser.add_argument('--nb-rollout-steps', type=int, default=100)  # per epoch cycle and MPI worker
-    parser.add_argument('--noise-type', type=str, default='normal_0.01')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
+    parser.add_argument('--noise-type', type=str, default='normal_0.005')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
     parser.add_argument('--restore-path', type=str, default=None)
@@ -159,7 +159,7 @@ def parse_args():
     parser.add_argument('--hindsight-mode', type=str, default=None)
     parser.add_argument('--use-cnn', type=bool, default=False)
     parser.add_argument('--use-noisy-pos', type=bool, default=False)
-    parser.add_argument('--max-action-step', type=float, default=0.01)
+    parser.add_argument('--max-action-step', type=float, default=0.0025)
     boolean_flag(parser, 'evaluation', default=False)
     args = parser.parse_args()
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
