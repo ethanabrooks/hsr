@@ -84,7 +84,7 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
     eval_episode_rewards_history = deque(maxlen=100)
     episode_rewards_history = deque(maxlen=100)
     with U.single_threaded_session() as sess:
-        if restore_path is not None:
+        if restore == True:
             logger.info("Restoring from saved model")
             saver.restore(sess, tf.train.latest_checkpoint(save_path))
 
