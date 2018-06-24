@@ -84,9 +84,9 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
     eval_episode_rewards_history = deque(maxlen=100)
     episode_rewards_history = deque(maxlen=100)
     with U.single_threaded_session() as sess:
-    	if restore_path is not None:
-    		logger.info("Restoring from saved model")
-			saver.restore(sess, tf.train.latest_checkpoint(save_path))
+        if restore_path is not None:
+            logger.info("Restoring from saved model")
+            saver.restore(sess, tf.train.latest_checkpoint(save_path))
 
         # Prepare everything.
         agent.initialize(sess)
@@ -261,8 +261,8 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
             logdir = logger.get_dir()
 
             logger.info('saving model...')
-			saver.save(sess, save_path, global_step=epoch, write_meta_graph=False)
-			logger.info('done saving model!')
+            saver.save(sess, save_path, global_step=epoch, write_meta_graph=False)
+            logger.info('done saving model!')
             
             if rank == 0 and logdir:
                 if hasattr(env, 'get_state'):
