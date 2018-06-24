@@ -114,7 +114,7 @@ def run(env_id, seed, noise_type, layer_norm, evaluation, **kwargs):
     if rank == 0:
         start_time = time.time()
     del kwargs['tb_dir']
-    del kwargs['save_path']
+    # del kwargs['save_path']
     hindsight_mode = kwargs['hindsight_mode']
     del kwargs['hindsight_mode']
     del kwargs['max_action_step']
@@ -154,7 +154,7 @@ def parse_args():
     parser.add_argument('--noise-type', type=str, default='normal_0.005')  # choices are adaptive-param_xx, ou_xx, normal_xx, none
     parser.add_argument('--tb-dir', type=str, default=None)
     parser.add_argument('--num-timesteps', type=int, default=None)
-    parser.add_argument('--restore-path', type=str, default=None)
+    parser.add_argument('--restore', type=bool, default=False) # restores latest from save-path
     parser.add_argument('--save-path', type=str, default=None)
     parser.add_argument('--hindsight-mode', type=str, default=None)
     parser.add_argument('--use-cnn', type=bool, default=False)
@@ -165,7 +165,7 @@ def parse_args():
     # we don't directly specify timesteps for this script, so make sure that if we do specify them
     # they agree with the other parameters
     if args.save_path is not None:
-        print('Warning: saving is not implemented yet')
+        print('Current Save Path: {}'.format(args.save_path))
     if args.num_timesteps is not None:
         assert (args.num_timesteps == args.nb_epochs * args.nb_epoch_cycles * args.nb_rollout_steps)
     dict_args = vars(args)
