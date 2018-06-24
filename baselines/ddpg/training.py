@@ -260,9 +260,10 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
             logger.info('')
             logdir = logger.get_dir()
 
-            logger.info('saving model...')
-            saver.save(sess, save_path, global_step=epoch, write_meta_graph=False)
-            logger.info('done saving model!')
+            if t % 1000 == 0 and rank == 0:
+	            logger.info('saving model to: {}'.format(save_path))
+	            saver.save(sess, save_path, global_step=epoch, write_meta_graph=False)
+	            logger.info('done saving model!')
             
             if rank == 0 and logdir:
                 if hasattr(env, 'get_state'):
