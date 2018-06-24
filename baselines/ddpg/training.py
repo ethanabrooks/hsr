@@ -65,7 +65,6 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
     assert (np.abs(env.action_space.low) == env.action_space.high).all()  # we assume symmetric actions.
     max_action = env.action_space.high
     logger.info('scaling actions by {} before executing in env'.format(max_action))
-    print('ACTION_SPACE: {}'.format(env.action_space.shape))
     agent = DDPG(actor, critic, memory, env.observation_space.shape, env.action_space.shape,
         gamma=gamma, tau=tau, normalize_returns=normalize_returns, normalize_observations=normalize_observations,
         batch_size=batch_size, action_noise=action_noise, param_noise=param_noise, critic_l2_reg=critic_l2_reg,
@@ -85,6 +84,10 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
     eval_episode_rewards_history = deque(maxlen=100)
     episode_rewards_history = deque(maxlen=100)
     with U.single_threaded_session() as sess:
+    	if restore_path is not None:
+    		logger.info("Restoring from saved model")
+			saver.restore(sess, tf.train.latest_checkpoint(save_path))
+
         # Prepare everything.
         agent.initialize(sess)
         sess.graph.finalize()
@@ -191,11 +194,11 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
                         distance = agent.adapt_param_noise()
                         epoch_adaptive_distances.append(distance)
 
-                    agent.train_planning()
-                    # cl, al = agent.train()
-                    # epoch_critic_losses.append(cl)
-                    # epoch_actor_losses.append(al)
-                    # agent.update_target_net()
+                    # agent.train_planning()
+                    cl, al = agent.train()
+                    epoch_critic_losses.append(cl)
+                    epoch_actor_losses.append(al)
+                    agent.update_target_net()
 
                 # Evaluate.
                 eval_episode_rewards = []
@@ -256,6 +259,11 @@ def train(env, nb_epochs, nb_epoch_cycles, render_eval, reward_scale, render, pa
             logger.dump_tabular()
             logger.info('')
             logdir = logger.get_dir()
+
+            logger.info('saving model...')
+			saver.save(sess, save_path, global_step=epoch, write_meta_graph=False)
+			logger.info('done saving model!')
+            
             if rank == 0 and logdir:
                 if hasattr(env, 'get_state'):
                     with open(os.path.join(logdir, 'env_state.pkl'), 'wb') as f:
